@@ -1,90 +1,86 @@
 # OpenConstructionERP
 
-**Open-Source ERP Platform for Infrastructure Construction Projects**
-
+**Open-source platform for managing the full lifecycle of large infrastructure construction projects**
 Metro · Tunnels · Railways · Hydraulic Structures · EPC/EPCM
+
+> **Status: pre-alpha.** Architecture is defined and baselined; the working code today is the
+> BOQ (Bill of Quantities) module: schema, data generator and dashboard prototype.
+> Everything else is a specification, not a promise of existing code. We build in the open.
 
 ---
 
-## Overview
+## What this is
 
-OpenConstructionERP is a next-generation digital platform for managing the full lifecycle of large infrastructure construction projects — from lead to operation. Built on modern architecture with AI, BIM, GIS, and real-time analytics.
+Not "an accounting system with BIM bolted on", but an **ontology-first project operating system**:
+every entity — a lining ring, an RFI, a payment certificate, an excavator, a borehole — is an object
+in one semantic graph with full bitemporal history. Modules are applications over that shared graph.
+Domain state changes are Kafka events, which gives banks/auditors a complete audit trail and gives
+delay analysis an as-of-any-date view out of the box.
 
-## Key Features
+The reference domain is what generic tools handle worst: **tunneling** — TBM telemetry, ring register,
+segment traceability, NATM, microtunnelling, instrumentation & settlement — designed by practitioners
+running metro and tunnel EPC projects, offline-first for crews underground.
 
-- **Project Management** — WBS, milestones, portfolio
-- **Cost Management** — Budget, EVM, CBS, cash flow, multi-currency
-- **Schedule Management** — CPM, P6-compatible, resource leveling
-- **Document Control** — RFI, NCR, submittals, transmittals, correspondence
-- **Contract Management** — EPC/EPCM, subcontracts, variations, claims
-- **TBM Module** — Real-time telemetry, ring building, segment tracking
-- **BIM Module** — IFC viewer, clash detection, 4D/5D/6D/7D
-- **AI Module** — Copilot, document analysis, delay prediction, risk analysis
-- **GIS Module** — Maps, geolocation, survey data, drone orthophoto
-- **Finance** — Invoicing, payments, retention, guarantees, bank loans
-- **HSE** — Incidents, permits, safety analytics
-- **Quality** — ITP, NCR, inspection, test records
-- **Equipment** — TBM, cranes, fleet, maintenance, fuel
-- **Procurement** — RFQ, PO, supplier management, warehouse
-- **Reporting** — Dashboards, KPI, Power BI export, custom reports
+## Authoritative documentation
 
-## Architecture
+| Document | Purpose |
+|----------|---------|
+| [SAD Tom 1 — Architecture](docs/sad/SAD-Tom1-Architecture-v1.0.md) | System architecture, 15 general decisions, 112-module registry, role model, data conventions, roadmap |
+| [ADR-001…016](docs/adr/README.md) | Architecture Decision Records — every core decision with rejected alternatives |
+| [Archived draft v0](docs/archive/architecture-draft-v0-SUPERSEDED.md) | Early draft, superseded by SAD Tom 1 |
+
+## Stack (baselined — see ADRs)
 
 ```
-Frontend:    React 18 + TypeScript + Next.js 14
-Backend:     NestJS (Node.js) + FastAPI (Python) + Go + Rust
-Database:    PostgreSQL 16 + TimescaleDB + Neo4j + Elasticsearch
-Storage:     MinIO (S3-compatible)
-Message:     RabbitMQ + Kafka + NATS
-AI/ML:       LangChain + LlamaIndex + vLLM + Qdrant
-BIM:         IFC.js + IfcOpenShell + Three.js
-GIS:         MapLibre GL + CesiumJS + GeoServer
-Auth:        Keycloak (OAuth 2.0 / OIDC / SAML)
-Deployment:  Docker + Kubernetes + Helm
-CI/CD:       GitHub Actions + ArgoCD
-Monitoring:  Prometheus + Grafana + Loki + OpenTelemetry
+Core:        Go modular monolith (ontology, IAM, workflow, CDE) — ADR-002
+Services:    Python (AI / BIM / analytics), Go (telemetry, CPM)  — ADR-003
+Frontend:    React 18 + TypeScript, Module Federation            — ADR-007
+Mobile:      Flutter, offline-first (SQLite + event-log sync)    — ADR-008
+Database:    PostgreSQL 16 + PostGIS + TimescaleDB + pgvector + Apache AGE — ADR-004
+Analytics:   ClickHouse (CDC via Debezium)                       — ADR-005
+Events:      Kafka (event store) + NATS (realtime)               — ADR-006
+Storage:     MinIO (S3, WORM for contractual docs)               — ADR-010
+Search:      OpenSearch (BM25 + kNN hybrid RAG)                  — ADR-011
+BIM:         IfcOpenShell (IFC 4.3) + xeokit + BCF 3.0 server    — ADR-012
+AI:          LiteLLM gateway + LangGraph agents, LLM-agnostic    — ADR-013
+Auth:        Keycloak + OPA (RBAC x ABAC)                        — ADR-009
+Deploy:      Kubernetes/Helm/ArgoCD + single-node Compose profile — ADR-015
 ```
 
-## Modules
+## What works today
 
-100+ modules organized into domains:
-- Core (20) — Project, Cost, Schedule, Document, Contract, etc.
-- Tunnel (15) — TBM, NATM, Microtunnelling, Rings, Segments, etc.
-- BIM (10) — IFC, Clash, 4D-7D, Digital Twin
-- AI (15) — Copilot, Planner, Risk, Claims, Vision
-- Finance (12) — Budget, EVM, Cash Flow, Funding, Invoicing
-- Document Control (10) — RFI, NCR, ITP, Submittals, Reports
-- Integration (8) — Primavera, SAP, Autodesk, Bentley, Telegram
+- `database/migrations/` — V000 core foundation + V001 BOQ module (CBS, sections, BOQ items, LTREE hierarchies)
+- `scripts/generate_boq.py` — test-data generator for a linear railway project
+- `apps/web/boq-dashboard.html` — BOQ dashboard prototype
 
-## Getting Started
+## Quick start
 
-### Prerequisites
-- Docker & Docker Compose
-- Node.js 22+
-- Python 3.12+
-- Go 1.22+
-
-### Quick Start
 ```bash
 git clone https://github.com/ua5191086-boop/OpenConstructionERP.git
 cd OpenConstructionERP
 docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
+# PostgreSQL :5432 (oce/oce_dev_only), MinIO console :9001, Adminer :8080
+# Migrations from database/migrations/ are applied automatically on first start.
 ```
+
+## Roadmap (summary — full version with exit criteria in SAD Tom 1, §11)
+
+| Phase | Focus | Exit criterion |
+|-------|-------|----------------|
+| MVP | Ontology core, CDE, schedule import (XER), daily reports + offline foreman app, budget/IPC, tunnel minimum, exec dashboard | A real project runs its daily cycle only in the system for 60 days |
+| Beta | Full CPM + baselines, EVM/cash flow, VO+claims, procurement/warehouse, TBM telemetry realtime, BIM viewer + BCF + 4D, AI copilot | Parallel run vs Primavera/Aconex, <1% divergence, legacy switched off |
+| 1.0 | All 112 modules baseline, public GraphQL API, delay analysis, 5D, i18n (EN/RU/DE/TR/UZ) | Market-ready |
+| Enterprise | Multi-cluster/DR, holding consolidation, digital twin 6D/7D, ML forecasting, SOC2 | Commercial open-core offering |
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Architecture changes go through ADRs, never through drive-by PRs.
+Licensing note: the open-core split (ADR-016) is pending sign-off; external contributions may require a CLA.
 
 ## License
 
-GNU Affero General Public License v3.0 (AGPL-3.0)
-
-## Roadmap
-
-| Phase | Timeline | Focus |
-|-------|----------|-------|
-| MVP | 6-9 months | Core modules + BOQ + Schedule + Cost |
-| Beta | 9-12 months | TBM + BIM + AI + GIS |
-| Release | 12-18 months | All modules + Enterprise features |
-| Enterprise | 18-24 months | Digital Twin + Global scale |
+AGPL-3.0 (open-core split under evaluation — see [ADR-016](docs/adr/ADR-016-licensing.md)).
 
 ## Contact
 
-Project Owner: Ruslan Sarybaev
-Architecture: OpenConstructionERP Team
+Project Owner: Ruslan Sarybaev — Deputy Chairman of the Board, CAI Interbudmontazh GmbH

@@ -1,0 +1,55 @@
+# OpenConstructionERP — developer stack (single node)
+# Usage: docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
+# Migrations in database/migrations/ are applied automatically on first start (V000 -> V001 ...).
+name: oce-dev
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg16
+    container_name: oce-postgres
+    environment:
+      POSTGRES_DB: oce
+      POSTGRES_USER: oce
+      POSTGRES_PASSWORD: oce_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../../database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oce -d oce"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    container_name: oce-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: oce
+      MINIO_ROOT_PASSWORD: oce_dev_only
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: oce-redis
+    ports:
+      - "6379:6379"
+
+  adminer:
+    image: adminer:latest
+    container_name: oce-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  miniodata:

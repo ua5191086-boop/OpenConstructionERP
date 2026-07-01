@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-07-02):** This early draft is kept for history. The authoritative document is [docs/sad/SAD-Tom1-Architecture-v1.0.md](../sad/SAD-Tom1-Architecture-v1.0.md). Key differences resolved by ADR-001..015: modular-monolith core (not 22 microservices), Kafka+NATS only, PostgreSQL+AGE (not Neo4j), OpenSearch (not Elasticsearch), Flutter (not React Native).
+
 # OpenConstructionERP — Software Architecture Document
 
 ## Executive Summary
