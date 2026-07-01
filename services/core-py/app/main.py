@@ -13,7 +13,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from psycopg_pool import AsyncConnectionPool
 
-from app.routers import projects, ontology, boq, tunnel, cost
+from app.routers import projects, ontology, boq, tunnel, cost, documents
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://oce:oce_dev_only@localhost:5432/oce"
@@ -47,6 +47,7 @@ app.include_router(ontology.router, prefix="/api/v1/core", tags=["ontology"])
 app.include_router(boq.router, prefix="/api/v1/projects", tags=["boq"])
 app.include_router(tunnel.router, prefix="/api/v1/projects", tags=["tunnel"])
 app.include_router(cost.router, prefix="/api/v1/projects", tags=["cost"])
+app.include_router(documents.router, prefix="/api/v1/projects", tags=["documents"])
 
 
 @app.get("/health")
