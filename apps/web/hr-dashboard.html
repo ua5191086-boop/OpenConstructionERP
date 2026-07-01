@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Кадры</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.stat-card .label{color:#94a3b8;font-size:13px;text-transform:uppercase}
+.stat-card .value{font-size:28px;font-weight:700;margin-top:8px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.purple{color:#a855f7}
+.stat-card .value.orange{color:#f97316}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:16px;margin-bottom:16px}
+.chart-card canvas{max-height:300px}
+.employees{padding:0 30px 30px}
+.employees h2{font-size:20px;margin-bottom:16px;color:#f8fafc}
+.emp-card{background:#1e293b;border:1px solid #334155;border-radius:12px;margin-bottom:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center}
+.emp-card .name{font-weight:600;color:#f8fafc}
+.emp-card .position{color:#94a3b8;font-size:13px}
+.emp-card .dept{color:#3b82f6;font-size:12px}
+.emp-card .salary{color:#22c55e;font-weight:600}
+.emp-card .status{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}
+.status-active{background:#1a3a2a;color:#4ade80}
+.status-terminated{background:#3a1a1a;color:#f87171}
+.filter-bar{display:flex;gap:12px;padding:0 30px 20px;flex-wrap:wrap}
+.filter-bar select,.filter-bar input{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;color:#e2e8f0;font-size:14px}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:#3b82f6}
+.filter-bar select{min-width:150px}
+.filter-bar input{flex:1;min-width:200px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>👥 <span>OpenConstructionERP</span> — Кадры</h1><div style="color:#94a3b8;font-size:14px;margin-top:4px;">Модуль управления персоналом</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="filter-bar">
+  <select id="filterDept" onchange="apply()"><option value="all">Все отделы</option></select>
+  <select id="filterStatus" onchange="apply()">
+    <option value="all">Все статусы</option><option value="active">Активен</option><option value="terminated">Уволен</option>
+  </select>
+  <input type="text" id="filterSearch" placeholder="🔍 Поиск..." oninput="apply()">
+</div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 По отделам</h3><canvas id="deptChart"></canvas></div>
+  <div class="chart-card"><h3>💰 ФОТ по отделам</h3><canvas id="salaryChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Распределение зарплат</h3><canvas id="distChart"></canvas></div>
+  <div class="chart-card"><h3>🏢 Типы занятости</h3><canvas id="typeChart"></canvas></div>
+</div>
+<div class="employees" id="empList"><h2>📋 Сотрудники</h2></div>
+<script>
+const DEPTS=['Дирекция','Проектный офис','Инженерный отдел','Производственный отдел','Отдел закупок','Финансовый отдел','Отдел кадров','Охрана труда','Контроль качества','Логистика','Юридический отдел','IT-отдел'];
+const POSITIONS={'Дирекция':['Генеральный директор','Технический директор','Финансовый директор'],'Проектный офис':['Руководитель проектов','Менеджер проектов','Планировщик'],'Инженерный отдел':['Главный инженер','Инженер-строитель','Инженер-геотехник','Инженер-геодезист'],'Производственный отдел':['Начальник участка','Производитель работ','Мастер СМР','Бригадир'],'Отдел закупок':['Начальник отдела закупок','Специалист по закупкам','Кладовщик'],'Финансовый отдел':['Главный бухгалтер','Бухгалтер','Экономист'],'Отдел кадров':['Начальник отдела кадров','HR-специалист'],'Охрана труда':['Инженер по охране труда'],'Контроль качества':['Инженер ОТК'],'Логистика':['Начальник логистики','Логист','Водитель'],'Юридический отдел':['Юрисконсульт'],'IT-отдел':['Системный администратор','Разработчик']};
+const FIRST_M=['Алексей','Дмитрий','Сергей','Андрей','Владимир','Иван','Михаил','Александр','Олег','Максим'];
+const FIRST_F=['Елена','Ольга','Наталья','Ирина','Анна','Татьяна','Мария','Екатерина'];
+const LAST=['Иванов','Петров','Сидоров','Кузнецов','Смирнов','Попов','Васильев','Зайцев','Павлов','Соколов','Михайлов','Федоров','Морозов','Волков','Алексеев','Лебедев','Семенов','Егоров','Козлов','Новиков'];
+function rand(a,b){return Math.random()*(b-a)+a;}
+function randInt(a,b){return Math.floor(rand(a,b+1));}
+function genData(n){
+  const data=[];
+  for(let i=0;i<n;i++){
+    const dept=DEPTS[randInt(0,DEPTS.length-1)];
+    const pos=POSITIONS[dept][randInt(0,POSITIONS[dept].length-1)];
+    const isM=i<n*0.7;
+    const first=isM?FIRST_M[randInt(0,FIRST_M.length-1)]:FIRST_F[randInt(0,FIRST_F.length-1)];
+    const last=LAST[randInt(0,LAST.length-1)];
+    const salary=Math.round(rand(1500,15000)*100)/100;
+    const status=i<n-2?'active':'terminated';
+    const type=rand()<0.8?'full_time':rand()<0.5?'contract':'part_time';
+    data.push({code:'E-2026-'+(i+1).toString().padStart(3,'0'),name:last+' '+first,position:pos,department:dept,salary,status,type});
+  }
+  return data;
+}
+const emps=genData(20);
+function renderStats(){
+  const active=emps.filter(e=>e.status==='active').length;
+  const fot=emps.filter(e=>e.status==='active').reduce((s,e)=>s+e.salary,0);
+  const avg=fot/active;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="label">Всего сотрудников</div><div class="value blue">${emps.length}</div></div>
+    <div class="stat-card"><div class="label">Активных</div><div class="value green">${active}</div></div>
+    <div class="stat-card"><div class="label">ФОТ / мес</div><div class="value yellow">$${(fot/1e3).toFixed(1)}K</div></div>
+    <div class="stat-card"><div class="label">Средняя зарплата</div><div class="value purple">$${avg.toFixed(0)}</div></div>`;
+}
+function renderCharts(){
+  const dc={};emps.filter(e=>e.status==='active').forEach(e=>{dc[e.department]=(dc[e.department]||0)+1;});
+  const colors=['#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#ef4444','#06b6d4','#84cc16','#d946ef','#14b8a6','#f43f5e','#6366f1'];
+  new Chart(document.getElementById('deptChart'),{type:'doughnut',data:{labels:Object.keys(dc),datasets:[{data:Object.values(dc),backgroundColor:colors.slice(0,Object.keys(dc).length),borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10}}}}}});
+  const sc={};emps.filter(e=>e.status==='active').forEach(e=>{sc[e.department]=(sc[e.department]||0)+e.salary;});
+  const se=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+  new Chart(document.getElementById('salaryChart'),{type:'bar',data:{labels:se.map(e=>e[0].length>15?e[0].slice(0,15)+'...':e[0]),datasets:[{label:'ФОТ, $',data:se.map(e=>e[1]/1e3),backgroundColor:'#22c55e',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)+'K',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+  const salaries=emps.filter(e=>e.status==='active').map(e=>e.salary);
+  new Chart(document.getElementById('distChart'),{type:'bar',data:{labels:['1-2K','2-3K','3-5K','5-7K','7-10K','10K+'],datasets:[{label:'Сотрудников',data:[salaries.filter(s=>s<2000).length,salaries.filter(s=>s>=2000&&s<3000).length,salaries.filter(s=>s>=3000&&s<5000).length,salaries.filter(s=>s>=5000&&s<7000).length,salaries.filter(s=>s>=7000&&s<10000).length,salaries.filter(s=>s>=10000).length],backgroundColor:'#a855f7',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+  const tc={};emps.filter(e=>e.status==='active').forEach(e=>{tc[e.type]=(tc[e.type]||0)+1;});
+  const tl={full_time:'Полный день',contract:'Контракт',part_time:'Частичная'};
+  new Chart(document.getElementById('typeChart'),{type:'doughnut',data:{labels:Object.keys(tc).map(k=>tl[k]||k),datasets:[{data:Object.values(tc),backgroundColor:['#3b82f6','#22c55e','#eab308'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+}
+function renderEmps(filtered){
+  const sl={active:'Активен',terminated:'Уволен'};
+  const tl={full_time:'Полный день',contract:'Контракт',part_time:'Частичная'};
+  let html='<h2>📋 Сотрудники</h2>';
+  filtered.forEach(e=>{
+    html+=`<div class="emp-card"><div><div class="name">${e.name}</div><div class="position">${e.position}</div><div class="dept">${e.department} · ${tl[e.type]||e.type}</div></div><div style="text-align:right"><div class="salary">$${e.salary.toLocaleString()}</div><div class="status status-${e.status}">${sl[e.status]||e.status}</div></div></div>`;
+  });
+  document.getElementById('empList').innerHTML=html;
+}
+function apply(){
+  const d=document.getElementById('filterDept').value;
+  const s=document.getElementById('filterStatus').value;
+  const q=document.getElementById('filterSearch').value.toLowerCase();
+  renderEmps(emps.filter(e=>(d==='all'||e.department===d)&&(s==='all'||e.status===s)&&(!q||e.name.toLowerCase().includes(q)||e.position.toLowerCase().includes(q)||e.department.toLowerCase().includes(q))));
+}
+// Init filters
+const deptSelect=document.getElementById('filterDept');
+DEPTS.forEach(d=>{const o=document.createElement('option');o.value=d;o.textContent=d;deptSelect.appendChild(o);});
+document.getElementById('updateTime').textContent='Обновлено: '+new Date().toLocaleString('ru-RU');
+renderStats();renderCharts();renderEmps(emps);
+</script>
+</body>
+</html>
