@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — BIM</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.stat-card .label{color:#94a3b8;font-size:13px;text-transform:uppercase}
+.stat-card .value{font-size:28px;font-weight:700;margin-top:8px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:16px;margin-bottom:16px}
+.chart-card canvas{max-height:300px}
+.content{padding:0 30px 30px;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.content h2{font-size:20px;margin-bottom:16px;color:#f8fafc;grid-column:1/-1}
+.elem-list{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;max-height:500px;overflow-y:auto}
+.elem-list h3{color:#3b82f6;font-size:14px;margin-bottom:12px}
+.elem-item{padding:8px 0;border-bottom:1px solid #1e293b;display:flex;justify-content:space-between;font-size:13px}
+.elem-item .name{color:#e2e8f0}
+.elem-item .type{color:#94a3b8}
+.elem-item .level{color:#3b82f6;font-size:11px}
+.clash-list{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;max-height:500px;overflow-y:auto}
+.clash-list h3{color:#ef4444;font-size:14px;margin-bottom:12px}
+.clash-item{padding:8px 0;border-bottom:1px solid #1e293b;font-size:13px}
+.clash-item .severe{color:#ef4444;font-weight:600}
+.clash-item .medium{color:#eab308;font-weight:600}
+.clash-item .low{color:#22c55e}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🏗️ <span>OpenConstructionERP</span> — BIM</h1><div style="color:#94a3b8;font-size:14px;margin-top:4px;">Информационное моделирование</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 Элементы по типам</h3><canvas id="typeChart"></canvas></div>
+  <div class="chart-card"><h3>📊 По уровням</h3><canvas id="levelChart"></canvas></div>
+  <div class="chart-card"><h3>🔴 Коллизии по статусам</h3><canvas id="clashChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Коллизии по серьёзности</h3><canvas id="sevChart"></canvas></div>
+</div>
+<div class="content">
+  <h2>📋 Детализация</h2>
+  <div class="elem-list" id="elemList"><h3>🏗️ Элементы модели (50)</h3></div>
+  <div class="clash-list" id="clashList"><h3>🔴 Коллизии (10)</h3></div>
+</div>
+<script>
+const IFC_TYPES=['IfcWall','IfcSlab','IfcBeam','IfcColumn','IfcPipeSegment','IfcDuctSegment','IfcCableSegment','IfcStair','IfcRamp','IfcDoor','IfcWindow','IfcCovering'];
+const LEVELS=['B1','B2','L1','L2','L3','L4','L5','Roof'];
+const MATERIALS=['Бетон B25','Бетон B40','Сталь С245','Сталь С345','Кирпич','Гипсокартон','Стекло','Алюминий'];
+function rand(a,b){return Math.random()*(b-a)+a;}
+function randInt(a,b){return Math.floor(rand(a,b+1));}
+const elements=[];
+for(let i=0;i<50;i++){
+  const t=IFC_TYPES[randInt(0,IFC_TYPES.length-1)];
+  elements.push({id:'IFC-'+(i+1).toString().padStart(6,'0'),type:t,name:t.replace('Ifc','')+' #'+(i+1),level:LEVELS[randInt(0,LEVELS.length-1)],material:MATERIALS[randInt(0,MATERIALS.length-1)],volume:Math.round(rand(0.5,50)*100)/100,area:Math.round(rand(5,200)*100)/100,length:Math.round(rand(1,30)*100)/100,weight:Math.round(rand(100,50000)*100)/100});
+}
+const clashes=[];
+for(let i=0;i<10;i++){
+  let a=randInt(0,49),b=randInt(0,49);
+  while(b===a)b=randInt(0,49);
+  clashes.push({type:['hard','soft','clearance'][randInt(0,2)],severity:['critical','high','medium','low'][randInt(0,3)],status:['open','in_progress','resolved'][randInt(0,2)],elemA:elements[a].id,elemB:elements[b].id,distance:Math.round(rand(0,0.5)*10000)/10000});
+}
+function renderStats(){
+  const total=elements.length;
+  const types=new Set(elements.map(e=>e.type)).size;
+  const openC=clashes.filter(c=>c.status==='open').length;
+  const critC=clashes.filter(c=>c.severity==='critical'||c.severity==='high').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="label">Элементов</div><div class="value blue">${total}</div></div>
+    <div class="stat-card"><div class="label">Типов</div><div class="value green">${types}</div></div>
+    <div class="stat-card"><div class="label">Коллизий</div><div class="value ${openC>0?'red':'green'}">${clashes.length}</div></div>
+    <div class="stat-card"><div class="label">Критичных</div><div class="value red">${critC}</div></div>`;
+}
+function renderCharts(){
+  const tc={};elements.forEach(e=>{const t=e.type.replace('Ifc','');tc[t]=(tc[t]||0)+1;});
+  const colors=['#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#ef4444','#06b6d4','#84cc16','#d946ef','#14b8a6','#f43f5e','#6366f1'];
+  new Chart(document.getElementById('typeChart'),{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:colors.slice(0,Object.keys(tc).length),borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10}}}}}});
+  const lc={};elements.forEach(e=>{lc[e.level]=(lc[e.level]||0)+1;});
+  new Chart(document.getElementById('levelChart'),{type:'bar',data:{labels:Object.keys(lc),datasets:[{label:'Элементов',data:Object.values(lc),backgroundColor:'#3b82f6',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+  const cc={};clashes.forEach(c=>{cc[c.status]=(cc[c.status]||0)+1;});
+  const cl={open:'Открыта',in_progress:'В работе',resolved:'Решена'};
+  new Chart(document.getElementById('clashChart'),{type:'doughnut',data:{labels:Object.keys(cc).map(k=>cl[k]||k),datasets:[{data:Object.values(cc),backgroundColor:['#ef4444','#eab308','#22c55e'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+  const sc={};clashes.forEach(c=>{sc[c.severity]=(sc[c.severity]||0)+1;});
+  new Chart(document.getElementById('sevChart'),{type:'bar',data:{labels:Object.keys(sc),datasets:[{label:'Коллизий',data:Object.values(sc),backgroundColor:['#ef4444','#f97316','#eab308','#22c55e'],borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{stepSize:1,color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+}
+function renderLists(){
+  document.getElementById('elemList').innerHTML='<h3>🏗️ Элементы модели ('+elements.length+')</h3>'+elements.map(e=>`<div class="elem-item"><span><span class="name">${e.name}</span><br><span class="type">${e.type.replace('Ifc','')}</span> · <span class="level">${e.level}</span></span><span style="color:#94a3b8;font-size:11px">${e.material}</span></div>`).join('');
+  const sl={open:'🔴 Открыта',in_progress:'🟡 В работе',resolved:'🟢 Решена'};
+  document.getElementById('clashList').innerHTML='<h3>🔴 Коллизии ('+clashes.length+')</h3>'+clashes.map(c=>`<div class="clash-item"><span class="${c.severity==='critical'||c.severity==='high'?'severe':c.severity==='medium'?'medium':'low'}">${c.elemA} ↔ ${c.elemB}</span><br>${c.type} · ${c.distance.toFixed(4)}м · ${sl[c.status]||c.status}</div>`).join('');
+}
+document.getElementById('updateTime').textContent='Обновлено: '+new Date().toLocaleString('ru-RU');
+renderStats();renderCharts();renderLists();
+</script>
+</body>
+</html>
