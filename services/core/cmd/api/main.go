@@ -13,37 +13,25 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/rs/zerolog"
+	"github.com/openconstructionerp/oce/services/core/internal/db"
+	"github.com/openconstructionerp/oce/services/core/internal/handlers"
 )
 
 func main() {
-	logger := zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}).
-		With().Timestamp().Caller().Logger()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.Println("[Core API] OpenConstructionERP Core API starting...")
 
-	cfg := loadConfig()
-	db := connectDB(cfg, &logger)
-	defer db.Close()
-
-	redis := connectRedis(cfg, &logger)
-	defer redis.Close()
-
-	kafka := connectKafka(cfg, &logger)
-	defer kafka.Close()
-
-	minio := connectMinIO(cfg, &logger)
-
-	search := connectOpenSearch(cfg, &logger)
-
-	// Initialize domain services
-	ontologySvc := ontology.NewService(db, redis, kafka, &logger)
-	iamSvc := iam.NewService(db, redis, cfg.JWTSecret, &logger)
-	cdeSvc := cde.NewService(db, minio, kafka, &logger)
-	workflowSvc := workflow.NewService(db, kafka, &logger)
-	notifySvc := notify.NewService(db, kafka, &logger)
-	reportSvc := report.NewService(db, search, &logger)
+	// Connect to database
+	database, err := db.New()
+	if err != nil {
+		log.Fatalf("[Core API] Failed to connect to database: %v", err)
+	}
+	defer database.Close()
 
 	// API router
 	r := chi.NewRouter()
+
+	// Middleware
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
@@ -52,8 +40,8 @@ func main() {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Idempotency-Key"},
-		ExposedHeaders:   []string{"Link"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "Idempotency-Key", "X-API-Key"},
+		ExposedHeaders:   []string{"Link", "X-Total-Count"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
@@ -62,87 +50,48 @@ func main() {
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"status":"ok","version":"0.1.0","time":"%s"}`, time.Now().UTC().Format(time.RFC3339))
+		fmt.Fprintf(w, `{"status":"ok","service":"oce-core-api","version":"0.1.0","time":"%s"}`, time.Now().UTC().Format(time.RFC3339))
 	})
 
 	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Use(iamSvc.AuthMiddleware)
+		// BOQ Module
+		boqHandler := handlers.NewBOQHandler(database.DB)
+		boqHandler.RegisterRoutes(r)
 
-		// Ontology
-		r.Route("/ontology", func(r chi.Router) {
-			r.Get("/object-types", ontologySvc.ListObjectTypes)
-			r.Post("/object-types", ontologySvc.CreateObjectType)
-			r.Get("/object-types/{id}", ontologySvc.GetObjectType)
-			r.Put("/object-types/{id}", ontologySvc.UpdateObjectType)
-			r.Get("/objects", ontologySvc.ListObjects)
-			r.Post("/objects", ontologySvc.CreateObject)
-			r.Get("/objects/{id}", ontologySvc.GetObject)
-			r.Put("/objects/{id}", ontologySvc.UpdateObject)
-			r.Get("/links", ontologySvc.ListLinks)
-			r.Post("/links", ontologySvc.CreateLink)
-		})
+		// Tenders Module
+		tendersHandler := handlers.NewTendersHandler(database.DB)
+		tendersHandler.RegisterRoutes(r)
 
-		// IAM
-		r.Route("/iam", func(r chi.Router) {
-			r.Post("/login", iamSvc.Login)
-			r.Post("/refresh", iamSvc.RefreshToken)
-			r.Post("/users", iamSvc.CreateUser)
-			r.Get("/users", iamSvc.ListUsers)
-			r.Get("/users/me", iamSvc.GetCurrentUser)
-			r.Put("/users/me", iamSvc.UpdateCurrentUser)
-			r.Get("/roles", iamSvc.ListRoles)
-			r.Post("/roles", iamSvc.CreateRole)
-		})
+		// Contracts Module
+		contractsHandler := handlers.NewContractsHandler(database.DB)
+		contractsHandler.RegisterRoutes(r)
 
-		// CDE (Document Control)
-		r.Route("/projects/{projectId}/documents", func(r chi.Router) {
-			r.Get("/", cdeSvc.ListDocuments)
-			r.Post("/", cdeSvc.CreateDocument)
-			r.Get("/{id}", cdeSvc.GetDocument)
-			r.Put("/{id}", cdeSvc.UpdateDocument)
-			r.Post("/{id}/upload", cdeSvc.UploadFile)
-			r.Get("/{id}/download", cdeSvc.DownloadFile)
-			r.Post("/{id}/transmit", cdeSvc.TransmitDocument)
-			r.Post("/{id}/approve", cdeSvc.ApproveDocument)
-			r.Post("/{id}/reject", cdeSvc.RejectDocument)
-		})
+		// HR Module
+		hrHandler := handlers.NewHRHandler(database.DB)
+		hrHandler.RegisterRoutes(r)
 
-		// Workflow
-		r.Route("/workflows", func(r chi.Router) {
-			r.Get("/", workflowSvc.ListWorkflows)
-			r.Post("/", workflowSvc.CreateWorkflow)
-			r.Get("/{id}", workflowSvc.GetWorkflow)
-			r.Post("/{id}/execute", workflowSvc.ExecuteWorkflow)
-			r.Get("/instances", workflowSvc.ListInstances)
-			r.Get("/instances/{id}", workflowSvc.GetInstance)
-			r.Post("/instances/{id}/transition", workflowSvc.Transition)
-		})
+		// Finance Module
+		financeHandler := handlers.NewFinanceHandler(database.DB)
+		financeHandler.RegisterRoutes(r)
 
-		// Notifications
-		r.Route("/notifications", func(r chi.Router) {
-			r.Get("/", notifySvc.ListNotifications)
-			r.Post("/", notifySvc.CreateNotification)
-			r.Put("/{id}/read", notifySvc.MarkAsRead)
-			r.Get("/unread-count", notifySvc.UnreadCount)
-		})
+		// Procurement Module
+		procurementHandler := handlers.NewProcurementHandler(database.DB)
+		procurementHandler.RegisterRoutes(r)
 
-		// Reports
-		r.Route("/reports", func(r chi.Router) {
-			r.Get("/", reportSvc.ListReports)
-			r.Post("/", reportSvc.CreateReport)
-			r.Get("/{id}", reportSvc.GetReport)
-			r.Post("/{id}/generate", reportSvc.GenerateReport)
-			r.Get("/{id}/download", reportSvc.DownloadReport)
-		})
+		// BIM Module
+		bimHandler := handlers.NewBIMHandler(database.DB)
+		bimHandler.RegisterRoutes(r)
+
+		// AI Module
+		aiHandler := handlers.NewAIHandler(database.DB)
+		aiHandler.RegisterRoutes(r)
 	})
 
-	// GraphQL endpoint
-	r.Post("/graphql", graphQLHandler(ontologySvc, cdeSvc, iamSvc, &logger))
-
 	// Start server
+	port := getEnv("PORT", "8081")
 	srv := &http.Server{
-		Addr:         fmt.Sprintf(":%s", cfg.Port),
+		Addr:         fmt.Sprintf(":%s", port),
 		Handler:      r,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 60 * time.Second,
@@ -150,9 +99,9 @@ func main() {
 	}
 
 	go func() {
-		logger.Info().Str("port", cfg.Port).Msg("OpenConstructionERP Core API starting")
+		log.Printf("[Core API] Server listening on port %s", port)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			logger.Fatal().Err(err).Msg("server failed")
+			log.Fatalf("[Core API] Server failed: %v", err)
 		}
 	}()
 
@@ -161,42 +110,10 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	logger.Info().Msg("shutting down...")
+	log.Println("[Core API] Shutting down...")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	srv.Shutdown(ctx)
-}
-
-type Config struct {
-	Port        string
-	DatabaseURL string
-	RedisURL    string
-	KafkaURL    string
-	MinIOEndpoint string
-	MinIOAccessKey string
-	MinIOSecretKey string
-	OpenSearchURL string
-	JWTSecret   string
-}
-
-func loadConfig() *Config {
-	return &Config{
-		Port:           getEnv("PORT", "8081"),
-		DatabaseURL:    fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
-			getEnv("DB_USER", "oce"), getEnv("DB_PASSWORD", "oce_secret"),
-			getEnv("DB_HOST", "localhost"), getEnv("DB_PORT", "5432"),
-			getEnv("DB_NAME", "oce")),
-		RedisURL:       fmt.Sprintf("redis://:%s@%s:%s/0",
-			getEnv("REDIS_PASSWORD", "oce_secret"),
-			getEnv("REDIS_HOST", "localhost"), getEnv("REDIS_PORT", "6379")),
-		KafkaURL:       getEnv("KAFKA_BROKERS", "localhost:9092"),
-		MinIOEndpoint:  getEnv("MINIO_ENDPOINT", "localhost:9000"),
-		MinIOAccessKey: getEnv("MINIO_ACCESS_KEY", "oce"),
-		MinIOSecretKey: getEnv("MINIO_SECRET_KEY", "oce_secret"),
-		OpenSearchURL:  fmt.Sprintf("http://%s:%s",
-			getEnv("OPENSEARCH_HOST", "localhost"), getEnv("OPENSEARCH_PORT", "9200")),
-		JWTSecret:      getEnv("JWT_SECRET", "oce-jwt-secret"),
-	}
 }
 
 func getEnv(key, fallback string) string {
@@ -204,38 +121,4 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
-}
-
-func connectDB(cfg *Config, log *zerolog.Logger) *pgxpool.Pool {
-	// In real implementation: pgxpool.New(ctx, cfg.DatabaseURL)
-	log.Info().Msg("connecting to PostgreSQL...")
-	return nil
-}
-
-func connectRedis(cfg *Config, log *zerolog.Logger) *redis.Client {
-	log.Info().Msg("connecting to Redis...")
-	return nil
-}
-
-func connectKafka(cfg *Config, log *zerolog.Logger) *kafka.Conn {
-	log.Info().Msg("connecting to Kafka...")
-	return nil
-}
-
-func connectMinIO(cfg *Config, log *zerolog.Logger) *minio.Client {
-	log.Info().Msg("connecting to MinIO...")
-	return nil
-}
-
-func connectOpenSearch(cfg *Config, log *zerolog.Logger) *opensearch.Client {
-	log.Info().Msg("connecting to OpenSearch...")
-	return nil
-}
-
-func graphQLHandler(ontologySvc *ontology.Service, cdeSvc *cde.Service, iamSvc *iam.Service, log *zerolog.Logger) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, `{"data":{"__schema":{"types":[]}}}`)
-	}
 }
