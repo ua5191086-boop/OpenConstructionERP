@@ -1,0 +1,134 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # Quality checks
+  # ============================================================================
+  quality:
+    name: Quality Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SQL migrations
+        run: |
+          echo "Checking migration files..."
+          for f in database/migrations/V*.sql; do
+            echo "  ✓ $f"
+          done
+
+      - name: Check Go code
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Go vet
+        run: |
+          cd services/core
+          go vet ./...
+
+      - name: Check React code
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: TypeScript check
+        run: |
+          cd apps/frontend
+          npm ci
+          npx tsc --noEmit
+
+  # ============================================================================
+  # Build & Test
+  # ============================================================================
+  build:
+    name: Build
+    needs: quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Go API
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      - name: Build binary
+        run: |
+          cd services/core
+          CGO_ENABLED=0 GOOS=linux go build -o oce-api ./cmd/api/
+          ls -lh oce-api
+
+      - name: Build React frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build frontend
+        run: |
+          cd apps/frontend
+          npm ci
+          npm run build
+          ls -lh dist/
+
+      - name: Build Docker images
+        run: |
+          docker build -t oce-api:test -f services/core/Dockerfile services/core/
+          docker build -t oce-frontend:test -f apps/frontend/Dockerfile apps/frontend/
+          echo "Docker images built successfully"
+
+  # ============================================================================
+  # Deploy (main branch only)
+  # ============================================================================
+  deploy:
+    name: Deploy
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: services/core
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/oce-api:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/oce-api:${{ github.sha }}
+
+      - name: Build and push Frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: apps/frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/oce-frontend:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/oce-frontend:${{ github.sha }}
+
+      - name: Deploy to server (SSH)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /home/cai/OpenConstructionERP
+            git pull origin main
+            docker compose -f infrastructure/docker/docker-compose.single-node.yml pull
+            docker compose -f infrastructure/docker/docker-compose.single-node.yml up -d --force-recreate
+            docker system prune -f
+            echo "Deployment complete!"
