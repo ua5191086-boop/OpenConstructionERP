@@ -1,0 +1,3725 @@
+{
+  "project": {
+    "id": "701bf92e-676d-4136-8b06-e46a21913f57",
+    "code": "RL-AB-001",
+    "name": "Railway Line Alpha-Beta",
+    "total_length_km": 120,
+    "stations": [
+      "Station A",
+      "Station B",
+      "Station C",
+      "Station D",
+      "Station E"
+    ],
+    "currency": "USD"
+  },
+  "cbs_chapters": [
+    {
+      "id": "8acfeaa9-66bc-408f-bf54-e4746fa27714",
+      "code": "01",
+      "name": "Site Preparation",
+      "level": 1
+    },
+    {
+      "id": "51f2a919-3138-4fe3-af45-9d2999cf9f33",
+      "code": "01.01",
+      "name": "Land Acquisition",
+      "level": 2
+    },
+    {
+      "id": "9817ec72-8dae-4ee9-bc4b-0f9ce2e985cf",
+      "code": "01.02",
+      "name": "Utility Relocation",
+      "level": 2
+    },
+    {
+      "id": "72498b49-4dea-435c-a08c-5986d3494d5b",
+      "code": "01.03",
+      "name": "Demolition",
+      "level": 2
+    },
+    {
+      "id": "304d292a-1a1d-4047-953b-cdd921a6038b",
+      "code": "01.04",
+      "name": "Preliminary & Auxiliary Works",
+      "level": 2
+    },
+    {
+      "id": "2eb50ad7-b874-4931-8a73-29b9d84b5fea",
+      "code": "02",
+      "name": "Earthworks",
+      "level": 1
+    },
+    {
+      "id": "6c4a6fe6-fe84-4e04-8b30-706404c4b235",
+      "code": "02.01",
+      "name": "Excavation",
+      "level": 2
+    },
+    {
+      "id": "3f6b3dc9-8067-40ac-88e0-f4de6f8edb51",
+      "code": "02.02",
+      "name": "Embankment",
+      "level": 2
+    },
+    {
+      "id": "a6f445f1-f776-4a59-93d3-e0cdd5aa108e",
+      "code": "02.03",
+      "name": "Drainage",
+      "level": 2
+    },
+    {
+      "id": "7b4414ac-8523-47be-8f73-db3512f985ab",
+      "code": "02.04",
+      "name": "Slope Stabilization",
+      "level": 2
+    },
+    {
+      "id": "60021ef3-5e07-4877-bb88-c3c9b28a3283",
+      "code": "02.05",
+      "name": "Geotechnical Structures",
+      "level": 2
+    },
+    {
+      "id": "fa15c931-b2ba-4048-ab5a-9a844d67b3a3",
+      "code": "03",
+      "name": "Civil Structures",
+      "level": 1
+    },
+    {
+      "id": "989fe615-6dcf-4b3b-8110-69e113453365",
+      "code": "03.01",
+      "name": "Bridges",
+      "level": 2
+    },
+    {
+      "id": "dba895cc-c63b-4696-947c-47f5018b410e",
+      "code": "03.02",
+      "name": "Elevated Structures",
+      "level": 2
+    },
+    {
+      "id": "5db9cf91-3022-4926-a674-eb9b5a9a0c42",
+      "code": "03.03",
+      "name": "Viaducts",
+      "level": 2
+    },
+    {
+      "id": "9286605e-c0b7-4d39-92ee-1e18977f989a",
+      "code": "03.04",
+      "name": "Tunnels",
+      "level": 2
+    },
+    {
+      "id": "14ade2e1-c0b9-43e6-924d-4d3228b19b1a",
+      "code": "03.05",
+      "name": "Culverts",
+      "level": 2
+    },
+    {
+      "id": "ef0f0e04-1544-4870-ba57-3474ddd0b403",
+      "code": "03.06",
+      "name": "Retaining Walls",
+      "level": 2
+    },
+    {
+      "id": "f73bc582-7e26-43a5-acc9-9a7865e905a6",
+      "code": "04",
+      "name": "Track Works",
+      "level": 1
+    },
+    {
+      "id": "528c22c7-8970-4fd9-a0f3-0e375905d12b",
+      "code": "04.01",
+      "name": "Ballast",
+      "level": 2
+    },
+    {
+      "id": "ecc8d0ce-3835-4ce8-bf98-a84bf92350a1",
+      "code": "04.02",
+      "name": "Track Structure (Rails & Sleepers)",
+      "level": 2
+    },
+    {
+      "id": "b1ddfb81-f82d-4932-a10c-bbedd2aa907f",
+      "code": "04.03",
+      "name": "Turnouts & Crossovers",
+      "level": 2
+    },
+    {
+      "id": "3b12a439-472b-4cd7-b34d-95bedd480afc",
+      "code": "04.04",
+      "name": "Continuous Welded Rail",
+      "level": 2
+    },
+    {
+      "id": "f6d6f02e-8181-4fc8-bf2f-25b004f89659",
+      "code": "04.05",
+      "name": "Level Crossings",
+      "level": 2
+    },
+    {
+      "id": "816ecdc4-833f-4467-b473-1b7c0885c2bd",
+      "code": "05",
+      "name": "Signalling, Control & Communication",
+      "level": 1
+    },
+    {
+      "id": "a82ef70d-de91-4387-89be-0ada60df3d07",
+      "code": "05.01",
+      "name": "Signalling Systems",
+      "level": 2
+    },
+    {
+      "id": "f430902e-883a-4203-a6f1-6d222274428f",
+      "code": "05.02",
+      "name": "Interlocking",
+      "level": 2
+    },
+    {
+      "id": "60175066-e3ec-4956-833f-b734c0a81b46",
+      "code": "05.03",
+      "name": "Block Systems",
+      "level": 2
+    },
+    {
+      "id": "32cd8ca9-349f-4e5c-a7c1-779b1dfff42a",
+      "code": "05.04",
+      "name": "Telecommunications",
+      "level": 2
+    },
+    {
+      "id": "b13deed8-cc1e-4a9f-a52c-6def64ba36b4",
+      "code": "05.05",
+      "name": "Fibre Optic Lines",
+      "level": 2
+    },
+    {
+      "id": "6d312e4d-548d-4571-b166-5382fecf19fe",
+      "code": "05.06",
+      "name": "Radio Communication",
+      "level": 2
+    },
+    {
+      "id": "6f457f45-c97c-4553-b704-4b09683eab61",
+      "code": "05.07",
+      "name": "Data Transmission Systems",
+      "level": 2
+    },
+    {
+      "id": "03f0f942-c277-4dd1-bd95-3e9e06117002",
+      "code": "05.08",
+      "name": "Control Centres",
+      "level": 2
+    },
+    {
+      "id": "058156c4-b00c-403a-a9e1-1cae642c939d",
+      "code": "05.09",
+      "name": "Equipment Rooms",
+      "level": 2
+    },
+    {
+      "id": "3ae25321-98ad-497a-b6c5-9f93680af590",
+      "code": "05.10",
+      "name": "Dispatch Centres",
+      "level": 2
+    },
+    {
+      "id": "76bfc262-718e-41f0-bfa0-8d62d3840f28",
+      "code": "06",
+      "name": "Buildings & Structures",
+      "level": 1
+    },
+    {
+      "id": "d8646a18-7891-40dc-a1b4-5ec88b028bed",
+      "code": "06.01",
+      "name": "Railway Stations",
+      "level": 2
+    },
+    {
+      "id": "a5e271b4-5568-461d-824e-3d62adc05ea5",
+      "code": "06.02",
+      "name": "Station Buildings",
+      "level": 2
+    },
+    {
+      "id": "19bb80b2-3f5d-4884-acbf-2e84233fbcb2",
+      "code": "06.03",
+      "name": "Locomotive Depots",
+      "level": 2
+    },
+    {
+      "id": "4bfd58e6-42cd-437a-b489-884732572594",
+      "code": "06.04",
+      "name": "Rolling Stock Depots",
+      "level": 2
+    },
+    {
+      "id": "455c2408-7c71-44b8-be53-0899cf7e0a71",
+      "code": "06.05",
+      "name": "Service Facilities",
+      "level": 2
+    },
+    {
+      "id": "42e0ee7c-5bf3-4abd-b7b9-d05227f1cdf1",
+      "code": "06.06",
+      "name": "Administrative Buildings",
+      "level": 2
+    },
+    {
+      "id": "e6d9c114-7846-498e-9efe-d062f20876ee",
+      "code": "06.07",
+      "name": "Warehouse Complexes",
+      "level": 2
+    },
+    {
+      "id": "86b8860b-1731-41e2-b032-fb702446c267",
+      "code": "06.08",
+      "name": "Industrial Buildings",
+      "level": 2
+    },
+    {
+      "id": "1a9e1c78-b102-41fc-870e-cfb4d813b3d4",
+      "code": "07",
+      "name": "Power Supply System",
+      "level": 1
+    },
+    {
+      "id": "1aa97530-d499-4584-9dbd-a696f5c7c268",
+      "code": "07.01",
+      "name": "Traction Substations",
+      "level": 2
+    },
+    {
+      "id": "80bea615-80bb-449f-83cf-ee68d2576993",
+      "code": "07.02",
+      "name": "Transformer Substations",
+      "level": 2
+    },
+    {
+      "id": "c007b2a1-678a-4ab0-b345-2746ac2623df",
+      "code": "07.03",
+      "name": "Overhead Contact Lines",
+      "level": 2
+    },
+    {
+      "id": "0a986a28-4232-4340-b9e8-b82d76bbbbc1",
+      "code": "07.04",
+      "name": "External Power Supply",
+      "level": 2
+    },
+    {
+      "id": "ff2b9252-9a6f-4bac-a754-3d9280564ee1",
+      "code": "07.05",
+      "name": "Cable Networks",
+      "level": 2
+    },
+    {
+      "id": "007a4a6e-7d1a-4d2a-87e0-4e288015bbdb",
+      "code": "07.06",
+      "name": "Lighting Systems",
+      "level": 2
+    },
+    {
+      "id": "2db2ab63-3631-45a6-bbe3-e0dfeae2b4b8",
+      "code": "07.07",
+      "name": "Power Distribution & Management",
+      "level": 2
+    },
+    {
+      "id": "42a4d86e-3a47-455e-b3f2-022381540e36",
+      "code": "07.08",
+      "name": "Distribution Substations",
+      "level": 2
+    },
+    {
+      "id": "8bf43216-6f80-4a2e-9d74-81c4b1db95c1",
+      "code": "07.09",
+      "name": "Energy Dispatch Facilities",
+      "level": 2
+    },
+    {
+      "id": "24c27b01-1755-4e84-b3ed-a51332f6c66f",
+      "code": "08",
+      "name": "Utilities",
+      "level": 1
+    },
+    {
+      "id": "fb2d42d5-7557-43cc-b1cf-c79511a3b8e5",
+      "code": "08.01",
+      "name": "Water Supply",
+      "level": 2
+    },
+    {
+      "id": "dbafbfb0-dcfa-4060-8b16-8b1f8ca80e84",
+      "code": "08.02",
+      "name": "Sewerage",
+      "level": 2
+    },
+    {
+      "id": "b3f5c301-9538-4dcb-a19c-405703f0b068",
+      "code": "08.03",
+      "name": "Heating",
+      "level": 2
+    },
+    {
+      "id": "41e78506-8b94-49ac-838f-e882268edf53",
+      "code": "08.04",
+      "name": "Gas Supply",
+      "level": 2
+    },
+    {
+      "id": "d2cf46ad-ba58-4595-a79a-4541a00ed698",
+      "code": "08.05",
+      "name": "Drainage",
+      "level": 2
+    },
+    {
+      "id": "9df3bafe-a71d-4424-9a61-69c11f5055b3",
+      "code": "08.06",
+      "name": "Stormwater",
+      "level": 2
+    },
+    {
+      "id": "72214129-d397-4946-ae14-95ac318116cd",
+      "code": "08.07",
+      "name": "External Utilities",
+      "level": 2
+    },
+    {
+      "id": "34716e1d-97f2-4e0c-8957-9c39a7d18bbf",
+      "code": "09",
+      "name": "Rolling Stock, Equipment, Furniture & Inventory",
+      "level": 1
+    },
+    {
+      "id": "88c1060f-76b7-4fbf-8460-2c8839bb23eb",
+      "code": "09.01",
+      "name": "Locomotives",
+      "level": 2
+    },
+    {
+      "id": "a8094012-587f-43fe-a1ad-526d04641318",
+      "code": "09.02",
+      "name": "Electric Multiple Units (EMU)",
+      "level": 2
+    },
+    {
+      "id": "340f5cf2-c285-42dd-b322-dd78cb430d63",
+      "code": "09.03",
+      "name": "Passenger Cars",
+      "level": 2
+    },
+    {
+      "id": "07d46852-26e4-4213-bd75-50d01b90bd4b",
+      "code": "09.04",
+      "name": "Freight Cars",
+      "level": 2
+    },
+    {
+      "id": "14577f31-ff4e-42c5-9c34-e23048f27485",
+      "code": "09.05",
+      "name": "Process & Operational Equipment",
+      "level": 2
+    },
+    {
+      "id": "90cd2842-a8d2-4710-9c11-a75ca002d7fe",
+      "code": "09.06",
+      "name": "Furniture",
+      "level": 2
+    },
+    {
+      "id": "be8e6023-fe9e-4085-b9a5-b131bdced761",
+      "code": "09.07",
+      "name": "Inventory",
+      "level": 2
+    },
+    {
+      "id": "72b1e7ba-0447-4a34-98a8-b033e7fc69d1",
+      "code": "09.08",
+      "name": "Operational Equipment",
+      "level": 2
+    },
+    {
+      "id": "6b317886-b0fc-462e-9303-e04b1d94fe59",
+      "code": "10",
+      "name": "Temporary Buildings & Facilities",
+      "level": 1
+    },
+    {
+      "id": "3cf8988d-75d9-4002-a635-8c0d48181c28",
+      "code": "10.01",
+      "name": "Construction Camps",
+      "level": 2
+    },
+    {
+      "id": "67637aa9-c324-4d32-931b-feded9cd78bd",
+      "code": "10.02",
+      "name": "Temporary Warehouses",
+      "level": 2
+    },
+    {
+      "id": "a15171e3-0bca-491c-9c4c-4e1a21f0e983",
+      "code": "10.03",
+      "name": "Temporary Utilities",
+      "level": 2
+    },
+    {
+      "id": "dc0aec00-394b-4753-b22f-9b2b5272a2ed",
+      "code": "10.04",
+      "name": "Temporary Roads",
+      "level": 2
+    },
+    {
+      "id": "6ba08886-30d8-46e8-8b31-fa984cff201b",
+      "code": "10.05",
+      "name": "Temporary Power Supply",
+      "level": 2
+    },
+    {
+      "id": "15891c42-dc99-4c47-8516-030f6282c647",
+      "code": "11",
+      "name": "Training & Employer Organization Costs",
+      "level": 1
+    },
+    {
+      "id": "342aed92-114d-44c4-b807-b5ec81ef342c",
+      "code": "11.01",
+      "name": "Personnel Training",
+      "level": 2
+    },
+    {
+      "id": "cd5badd1-a226-463b-bea3-7ba12aed2db3",
+      "code": "11.02",
+      "name": "Staff Development",
+      "level": 2
+    },
+    {
+      "id": "769bfaa3-acb6-42c4-87d3-d16f45d915c2",
+      "code": "11.03",
+      "name": "Employer Organization Costs",
+      "level": 2
+    },
+    {
+      "id": "35c3db39-58dd-4127-809a-79972d7b1295",
+      "code": "11.04",
+      "name": "Construction Supervision",
+      "level": 2
+    },
+    {
+      "id": "cc56f8ed-ad11-451b-b855-2308bf810b11",
+      "code": "11.05",
+      "name": "Design Supervision",
+      "level": 2
+    },
+    {
+      "id": "fb01b8d3-941d-4ea9-92d7-35dddb32cca4",
+      "code": "11.06",
+      "name": "Consultancy Services",
+      "level": 2
+    },
+    {
+      "id": "4811bdcf-0364-491a-8267-9f11cbc6ffea",
+      "code": "12",
+      "name": "Other Costs",
+      "level": 1
+    },
+    {
+      "id": "8cd96c95-a09f-42d9-968a-61044230f125",
+      "code": "12.01",
+      "name": "Design & Engineering Services",
+      "level": 2
+    },
+    {
+      "id": "a2484959-12e9-454a-9c7a-8ff29180c27d",
+      "code": "12.02",
+      "name": "Expertise & Approvals",
+      "level": 2
+    },
+    {
+      "id": "3dee05c4-c275-4557-ac92-7eb2895ae546",
+      "code": "12.03",
+      "name": "Studies & Surveys",
+      "level": 2
+    },
+    {
+      "id": "e5599ad8-22f8-4487-a91b-a32805395b78",
+      "code": "12.04",
+      "name": "Permits & Initial Documentation",
+      "level": 2
+    },
+    {
+      "id": "75e49ae9-e8f0-4692-8e5b-e9e8b06069c4",
+      "code": "12.05",
+      "name": "Insurance",
+      "level": 2
+    },
+    {
+      "id": "1c845d0f-8cab-44ce-97a8-048cdb6b8ff3",
+      "code": "12.06",
+      "name": "Regulatory Approvals",
+      "level": 2
+    },
+    {
+      "id": "91230610-5696-4030-ba72-6a6a081a032b",
+      "code": "12.07",
+      "name": "Other Related Costs",
+      "level": 2
+    }
+  ],
+  "sections": [
+    {
+      "id": "2e92c0fa-6983-4dc3-b447-28370604e959",
+      "code": "TR-01",
+      "name": "Track Section KM 0-30",
+      "section_type": "Track",
+      "start_km": 0,
+      "end_km": 30,
+      "length_km": 30
+    },
+    {
+      "id": "ac825018-1efd-4d37-b9f2-7621bb454904",
+      "code": "TR-02",
+      "name": "Track Section KM 30-60",
+      "section_type": "Track",
+      "start_km": 30,
+      "end_km": 60,
+      "length_km": 30
+    },
+    {
+      "id": "1079ad1a-ad80-4221-ac9a-b2fa336d03e8",
+      "code": "TR-03",
+      "name": "Track Section KM 60-90",
+      "section_type": "Track",
+      "start_km": 60,
+      "end_km": 90,
+      "length_km": 30
+    },
+    {
+      "id": "c021f63b-d18c-4720-8ccf-0ab0cf63eeac",
+      "code": "TR-04",
+      "name": "Track Section KM 90-120",
+      "section_type": "Track",
+      "start_km": 90,
+      "end_km": 120,
+      "length_km": 30
+    },
+    {
+      "id": "dfc9f6ec-3429-4ce0-89ec-37a9ad91bb90",
+      "code": "ST-01",
+      "name": "Station A",
+      "section_type": "Station",
+      "start_km": null,
+      "end_km": null,
+      "length_km": null
+    },
+    {
+      "id": "24060702-264a-4f5e-bc25-d40bb87f7ce3",
+      "code": "ST-02",
+      "name": "Station B",
+      "section_type": "Station",
+      "start_km": null,
+      "end_km": null,
+      "length_km": null
+    },
+    {
+      "id": "0e0dda49-c543-419b-9b6d-88881825ee4d",
+      "code": "ST-03",
+      "name": "Station C",
+      "section_type": "Station",
+      "start_km": null,
+      "end_km": null,
+      "length_km": null
+    },
+    {
+      "id": "750c46a7-5049-472c-b4ec-ddeb04d8faef",
+      "code": "ST-04",
+      "name": "Station D",
+      "section_type": "Station",
+      "start_km": null,
+      "end_km": null,
+      "length_km": null
+    },
+    {
+      "id": "be0f5dda-0cc1-4ecd-91d4-fd1666f107e6",
+      "code": "ST-05",
+      "name": "Station E",
+      "section_type": "Station",
+      "start_km": null,
+      "end_km": null,
+      "length_km": null
+    }
+  ],
+  "complexes": [
+    {
+      "id": "49c55bfa-f66c-42e9-b2e5-04f722cc85e8",
+      "section_id": "2e92c0fa-6983-4dc3-b447-28370604e959",
+      "code": "TR-01-EW",
+      "name": "Earthworks — Track Section KM 0-30"
+    },
+    {
+      "id": "d0e1e652-da83-425f-9a40-ee5410e47ff1",
+      "section_id": "2e92c0fa-6983-4dc3-b447-28370604e959",
+      "code": "TR-01-TW",
+      "name": "Track Works — Track Section KM 0-30"
+    },
+    {
+      "id": "c85ce3af-5f8a-4079-bec6-756a0b13d8ef",
+      "section_id": "2e92c0fa-6983-4dc3-b447-28370604e959",
+      "code": "TR-01-OS",
+      "name": "OCL & Signalling — Track Section KM 0-30"
+    },
+    {
+      "id": "e82b746d-0e56-4d69-a630-8966eb8dc222",
+      "section_id": "2e92c0fa-6983-4dc3-b447-28370604e959",
+      "code": "TR-01-BR",
+      "name": "Bridge Structures — Track Section KM 0-30"
+    },
+    {
+      "id": "7fe72cdc-1b39-4775-b1fb-3ea9b9a23c85",
+      "section_id": "ac825018-1efd-4d37-b9f2-7621bb454904",
+      "code": "TR-02-EW",
+      "name": "Earthworks — Track Section KM 30-60"
+    },
+    {
+      "id": "b03a14fe-00b2-447f-8229-0e5547d840e4",
+      "section_id": "ac825018-1efd-4d37-b9f2-7621bb454904",
+      "code": "TR-02-TW",
+      "name": "Track Works — Track Section KM 30-60"
+    },
+    {
+      "id": "8381813c-054b-4d8f-aff3-1a27ae93ca03",
+      "section_id": "ac825018-1efd-4d37-b9f2-7621bb454904",
+      "code": "TR-02-OS",
+      "name": "OCL & Signalling — Track Section KM 30-60"
+    },
+    {
+      "id": "d28140c9-e943-4845-be35-f8af1f47129b",
+      "section_id": "ac825018-1efd-4d37-b9f2-7621bb454904",
+      "code": "TR-02-BR",
+      "name": "Bridge Structures — Track Section KM 30-60"
+    },
+    {
+      "id": "f2cda3ac-8008-412e-abf7-651fdf4b64ad",
+      "section_id": "1079ad1a-ad80-4221-ac9a-b2fa336d03e8",
+      "code": "TR-03-EW",
+      "name": "Earthworks — Track Section KM 60-90"
+    },
+    {
+      "id": "86780661-6b07-4a0b-b69c-da3791401917",
+      "section_id": "1079ad1a-ad80-4221-ac9a-b2fa336d03e8",
+      "code": "TR-03-TW",
+      "name": "Track Works — Track Section KM 60-90"
+    },
+    {
+      "id": "b7aa1837-93ff-4dd4-a760-95aaff2baab4",
+      "section_id": "1079ad1a-ad80-4221-ac9a-b2fa336d03e8",
+      "code": "TR-03-OS",
+      "name": "OCL & Signalling — Track Section KM 60-90"
+    },
+    {
+      "id": "27ce2cd5-0e00-42a8-a9d1-69bcb60b3fc5",
+      "section_id": "1079ad1a-ad80-4221-ac9a-b2fa336d03e8",
+      "code": "TR-03-BR",
+      "name": "Bridge Structures — Track Section KM 60-90"
+    },
+    {
+      "id": "d422b064-32da-4fa1-abdf-569ae408c268",
+      "section_id": "c021f63b-d18c-4720-8ccf-0ab0cf63eeac",
+      "code": "TR-04-EW",
+      "name": "Earthworks — Track Section KM 90-120"
+    },
+    {
+      "id": "8816dfdb-afd2-46ce-bff4-06d32bba6e42",
+      "section_id": "c021f63b-d18c-4720-8ccf-0ab0cf63eeac",
+      "code": "TR-04-TW",
+      "name": "Track Works — Track Section KM 90-120"
+    },
+    {
+      "id": "be693142-2b85-4a0e-b2cd-e2321a3845f9",
+      "section_id": "c021f63b-d18c-4720-8ccf-0ab0cf63eeac",
+      "code": "TR-04-OS",
+      "name": "OCL & Signalling — Track Section KM 90-120"
+    },
+    {
+      "id": "00b9f9cd-0b1c-4fcd-969a-8091361eda4b",
+      "section_id": "c021f63b-d18c-4720-8ccf-0ab0cf63eeac",
+      "code": "TR-04-BR",
+      "name": "Bridge Structures — Track Section KM 90-120"
+    },
+    {
+      "id": "75b707e1-21c8-4920-959e-1909fdb6b7eb",
+      "section_id": "dfc9f6ec-3429-4ce0-89ec-37a9ad91bb90",
+      "code": "ST-01-BLD",
+      "name": "Buildings — Station A"
+    },
+    {
+      "id": "ee24831c-2aeb-4c1a-9e75-3aee0df2039a",
+      "section_id": "dfc9f6ec-3429-4ce0-89ec-37a9ad91bb90",
+      "code": "ST-01-SYS",
+      "name": "Station Systems — Station A"
+    },
+    {
+      "id": "63df55a6-9762-4f9f-a19e-52d124c27bbf",
+      "section_id": "24060702-264a-4f5e-bc25-d40bb87f7ce3",
+      "code": "ST-02-BLD",
+      "name": "Buildings — Station B"
+    },
+    {
+      "id": "2125b890-581d-4c0d-a0b3-f5690fe19b12",
+      "section_id": "24060702-264a-4f5e-bc25-d40bb87f7ce3",
+      "code": "ST-02-SYS",
+      "name": "Station Systems — Station B"
+    },
+    {
+      "id": "ecfbfa11-7885-46a6-8fef-3205af4889ce",
+      "section_id": "0e0dda49-c543-419b-9b6d-88881825ee4d",
+      "code": "ST-03-BLD",
+      "name": "Buildings — Station C"
+    },
+    {
+      "id": "3726aa61-ecb0-40c5-94e6-aad83ea198d1",
+      "section_id": "0e0dda49-c543-419b-9b6d-88881825ee4d",
+      "code": "ST-03-SYS",
+      "name": "Station Systems — Station C"
+    },
+    {
+      "id": "033da9bd-8fe9-4d11-868b-485ce78e0b14",
+      "section_id": "750c46a7-5049-472c-b4ec-ddeb04d8faef",
+      "code": "ST-04-BLD",
+      "name": "Buildings — Station D"
+    },
+    {
+      "id": "04caeae0-5b7f-42ea-af1a-c5ff9b1fe446",
+      "section_id": "750c46a7-5049-472c-b4ec-ddeb04d8faef",
+      "code": "ST-04-SYS",
+      "name": "Station Systems — Station D"
+    },
+    {
+      "id": "e2dcda55-7359-4ad5-ad4a-0a3f40be69c2",
+      "section_id": "be0f5dda-0cc1-4ecd-91d4-fd1666f107e6",
+      "code": "ST-05-BLD",
+      "name": "Buildings — Station E"
+    },
+    {
+      "id": "4504e510-2362-4403-9e8b-173e3e383b5d",
+      "section_id": "be0f5dda-0cc1-4ecd-91d4-fd1666f107e6",
+      "code": "ST-05-SYS",
+      "name": "Station Systems — Station E"
+    }
+  ],
+  "objects": [
+    {
+      "id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "complex_id": "49c55bfa-f66c-42e9-b2e5-04f722cc85e8",
+      "code": "TR-01-EW-01",
+      "name": "Main Earthworks — Track Section KM 0-30"
+    },
+    {
+      "id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "complex_id": "d0e1e652-da83-425f-9a40-ee5410e47ff1",
+      "code": "TR-01-TW-01",
+      "name": "Main Track — Track Section KM 0-30"
+    },
+    {
+      "id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "complex_id": "c85ce3af-5f8a-4079-bec6-756a0b13d8ef",
+      "code": "TR-01-OS-01",
+      "name": "Overhead Line & Signalling — Track Section KM 0-30"
+    },
+    {
+      "id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "complex_id": "e82b746d-0e56-4d69-a630-8966eb8dc222",
+      "code": "TR-01-BR-01",
+      "name": "Bridge at KM 15.0"
+    },
+    {
+      "id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "complex_id": "7fe72cdc-1b39-4775-b1fb-3ea9b9a23c85",
+      "code": "TR-02-EW-01",
+      "name": "Main Earthworks — Track Section KM 30-60"
+    },
+    {
+      "id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "complex_id": "b03a14fe-00b2-447f-8229-0e5547d840e4",
+      "code": "TR-02-TW-01",
+      "name": "Main Track — Track Section KM 30-60"
+    },
+    {
+      "id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "complex_id": "8381813c-054b-4d8f-aff3-1a27ae93ca03",
+      "code": "TR-02-OS-01",
+      "name": "Overhead Line & Signalling — Track Section KM 30-60"
+    },
+    {
+      "id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "complex_id": "d28140c9-e943-4845-be35-f8af1f47129b",
+      "code": "TR-02-BR-01",
+      "name": "Bridge at KM 45.0"
+    },
+    {
+      "id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "complex_id": "f2cda3ac-8008-412e-abf7-651fdf4b64ad",
+      "code": "TR-03-EW-01",
+      "name": "Main Earthworks — Track Section KM 60-90"
+    },
+    {
+      "id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "complex_id": "86780661-6b07-4a0b-b69c-da3791401917",
+      "code": "TR-03-TW-01",
+      "name": "Main Track — Track Section KM 60-90"
+    },
+    {
+      "id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "complex_id": "b7aa1837-93ff-4dd4-a760-95aaff2baab4",
+      "code": "TR-03-OS-01",
+      "name": "Overhead Line & Signalling — Track Section KM 60-90"
+    },
+    {
+      "id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "complex_id": "27ce2cd5-0e00-42a8-a9d1-69bcb60b3fc5",
+      "code": "TR-03-BR-01",
+      "name": "Bridge at KM 75.0"
+    },
+    {
+      "id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "complex_id": "d422b064-32da-4fa1-abdf-569ae408c268",
+      "code": "TR-04-EW-01",
+      "name": "Main Earthworks — Track Section KM 90-120"
+    },
+    {
+      "id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "complex_id": "8816dfdb-afd2-46ce-bff4-06d32bba6e42",
+      "code": "TR-04-TW-01",
+      "name": "Main Track — Track Section KM 90-120"
+    },
+    {
+      "id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "complex_id": "be693142-2b85-4a0e-b2cd-e2321a3845f9",
+      "code": "TR-04-OS-01",
+      "name": "Overhead Line & Signalling — Track Section KM 90-120"
+    },
+    {
+      "id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "complex_id": "00b9f9cd-0b1c-4fcd-969a-8091361eda4b",
+      "code": "TR-04-BR-01",
+      "name": "Bridge at KM 105.0"
+    },
+    {
+      "id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "complex_id": "75b707e1-21c8-4920-959e-1909fdb6b7eb",
+      "code": "ST-01-BLD-01",
+      "name": "Main Station Building — Station A"
+    },
+    {
+      "id": "873b2938-1034-4329-8363-da44229839cc",
+      "complex_id": "ee24831c-2aeb-4c1a-9e75-3aee0df2039a",
+      "code": "ST-01-SYS-01",
+      "name": "Systems & Equipment — Station A"
+    },
+    {
+      "id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "complex_id": "63df55a6-9762-4f9f-a19e-52d124c27bbf",
+      "code": "ST-02-BLD-01",
+      "name": "Main Station Building — Station B"
+    },
+    {
+      "id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "complex_id": "2125b890-581d-4c0d-a0b3-f5690fe19b12",
+      "code": "ST-02-SYS-01",
+      "name": "Systems & Equipment — Station B"
+    },
+    {
+      "id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "complex_id": "ecfbfa11-7885-46a6-8fef-3205af4889ce",
+      "code": "ST-03-BLD-01",
+      "name": "Main Station Building — Station C"
+    },
+    {
+      "id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "complex_id": "3726aa61-ecb0-40c5-94e6-aad83ea198d1",
+      "code": "ST-03-SYS-01",
+      "name": "Systems & Equipment — Station C"
+    },
+    {
+      "id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "complex_id": "033da9bd-8fe9-4d11-868b-485ce78e0b14",
+      "code": "ST-04-BLD-01",
+      "name": "Main Station Building — Station D"
+    },
+    {
+      "id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "complex_id": "04caeae0-5b7f-42ea-af1a-c5ff9b1fe446",
+      "code": "ST-04-SYS-01",
+      "name": "Systems & Equipment — Station D"
+    },
+    {
+      "id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "complex_id": "e2dcda55-7359-4ad5-ad4a-0a3f40be69c2",
+      "code": "ST-05-BLD-01",
+      "name": "Main Station Building — Station E"
+    },
+    {
+      "id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "complex_id": "4504e510-2362-4403-9e8b-173e3e383b5d",
+      "code": "ST-05-SYS-01",
+      "name": "Systems & Equipment — Station E"
+    }
+  ],
+  "boq_items": [
+    {
+      "id": "e2a46c81-4446-4d9f-a26d-bbf2b3929cc9",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "01.04",
+      "code": "TR-01-0104-170",
+      "name": "Topsoil Stripping & Site Clearance",
+      "unit": "m²",
+      "quantity": 360000,
+      "unit_price": 2.5,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "891aebde-2ac2-4d06-86dd-4b2ea2d63452",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "02.01",
+      "code": "TR-01-0201-924",
+      "name": "Excavation to Formation Level",
+      "unit": "m³",
+      "quantity": 450000,
+      "unit_price": 8.0,
+      "total_cost": 3600000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "e9a79361-cfab-4837-9526-05dfc22abe60",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "02.02",
+      "code": "TR-01-0202-473",
+      "name": "Embankment Fill Material",
+      "unit": "m³",
+      "quantity": 540000,
+      "unit_price": 12.0,
+      "total_cost": 6480000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "b6865522-6174-4c21-80bc-6a3b3918e93a",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "04.01",
+      "code": "TR-01-0401-419",
+      "name": "Sub-ballast Layer (300mm)",
+      "unit": "m³",
+      "quantity": 135000,
+      "unit_price": 18.0,
+      "total_cost": 2430000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "d3529fb7-5fec-4594-8a82-1448cfce567c",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "04.01",
+      "code": "TR-01-0401-375",
+      "name": "Ballast Layer (350mm)",
+      "unit": "m³",
+      "quantity": 157500,
+      "unit_price": 25.0,
+      "total_cost": 3937500.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "909fbb0f-e3d6-4238-bb42-d8cbe44f763a",
+      "object_id": "be364c56-d620-4c97-98ce-2d8aba9b2c6f",
+      "cbs_code": "04.02",
+      "code": "TR-01-0402-328",
+      "name": "Rail Installation (60E1)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 150.0,
+      "total_cost": 9000000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "ef74fb70-ccf7-4eea-99b5-99c735d06857",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "04.02",
+      "code": "TR-01-0402-635",
+      "name": "Concrete Sleepers Installation",
+      "unit": "pc",
+      "quantity": 50010,
+      "unit_price": 45.0,
+      "total_cost": 2250450.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "9038f6d6-a02f-4162-8e1b-07ef1d6d1137",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "04.02",
+      "code": "TR-01-0402-985",
+      "name": "Rail Fastening System",
+      "unit": "set",
+      "quantity": 100020,
+      "unit_price": 12.0,
+      "total_cost": 1200240.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "6048b17b-5880-429d-b5cb-5ab549849005",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "04.04",
+      "code": "TR-01-0404-331",
+      "name": "Continuous Welded Rail (CWR)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 85.0,
+      "total_cost": 5100000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "c4ffdddc-3773-47f0-9562-4b50cdb09070",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "02.03",
+      "code": "TR-01-0203-115",
+      "name": "Drainage System (Side Drains)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "73c21d37-2532-468b-a759-41525558b7fa",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "07.05",
+      "code": "TR-01-0705-408",
+      "name": "Cable Ducts & Trenches",
+      "unit": "m",
+      "quantity": 120000,
+      "unit_price": 20.0,
+      "total_cost": 2400000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "19ed769f-c57b-44bd-a842-8be91c64dbfc",
+      "object_id": "bcc9425a-4506-425a-9199-d69f112c3420",
+      "cbs_code": "05.01",
+      "code": "TR-01-0501-241",
+      "name": "Signalling Cable Laying",
+      "unit": "m",
+      "quantity": 90000,
+      "unit_price": 28.0,
+      "total_cost": 2520000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "0a73cf79-e2e9-4c8a-80ec-983472c542d6",
+      "object_id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "cbs_code": "05.05",
+      "code": "TR-01-0505-130",
+      "name": "Fibre Optic Cable Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "d3a64f2c-1477-458f-9097-d45cec7b14b5",
+      "object_id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "cbs_code": "07.03",
+      "code": "TR-01-0703-475",
+      "name": "Overhead Contact Line (OCL) Mast",
+      "unit": "pc",
+      "quantity": 990,
+      "unit_price": 2500.0,
+      "total_cost": 2475000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "21a29914-5ea6-45cb-b1d7-1c1c94826f94",
+      "object_id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "cbs_code": "07.03",
+      "code": "TR-01-0703-467",
+      "name": "OCL Catenary Wire Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 95.0,
+      "total_cost": 5700000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "de9fb810-a4c9-4d06-9e8d-cc62049a7b60",
+      "object_id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "cbs_code": "01.04",
+      "code": "TR-01-0104-202",
+      "name": "Fencing (Both Sides)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 18.0,
+      "total_cost": 1080000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "b375acd1-b987-41be-ba16-9ece53927f72",
+      "object_id": "e01394bb-97cb-4827-b795-5f9e37fd999d",
+      "cbs_code": "02.04",
+      "code": "TR-01-0204-924",
+      "name": "Slope Protection & Erosion Control",
+      "unit": "m²",
+      "quantity": 240000,
+      "unit_price": 6.0,
+      "total_cost": 1440000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "f03919d6-262b-4182-ac04-b5732b720041",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-772",
+      "name": "Pile Foundation (Bored Piles)",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 450.0,
+      "total_cost": 90000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "54fdb265-c08c-4ba6-83d4-4f5cc9668a28",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-698",
+      "name": "Pier Construction (Reinforced Concrete)",
+      "unit": "m³",
+      "quantity": 500,
+      "unit_price": 350.0,
+      "total_cost": 175000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "538b91a4-5527-404f-9159-70cd95c5b586",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-442",
+      "name": "Pier Cap Construction",
+      "unit": "pc",
+      "quantity": 10,
+      "unit_price": 25000.0,
+      "total_cost": 250000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "a5ad3686-c445-46cc-a999-511efa3b901a",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-450",
+      "name": "Girder Fabrication & Erection (Steel)",
+      "unit": "ton",
+      "quantity": 300,
+      "unit_price": 3200.0,
+      "total_cost": 960000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "df38bf25-ef8d-400a-9177-9d0de11613ee",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-792",
+      "name": "Deck Slab Construction",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 280.0,
+      "total_cost": 336000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "882064b0-539e-4fd5-ab0f-3b9fc6b029eb",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-982",
+      "name": "Bridge Bearings",
+      "unit": "pc",
+      "quantity": 20,
+      "unit_price": 8500.0,
+      "total_cost": 170000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "7cebb3df-ce87-4324-8787-1057a924a21a",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-227",
+      "name": "Expansion Joints",
+      "unit": "m",
+      "quantity": 40,
+      "unit_price": 1200.0,
+      "total_cost": 48000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "9234d756-0c6e-431d-b5ad-849ee1a9e566",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-533",
+      "name": "Waterproofing Membrane",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 45.0,
+      "total_cost": 54000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "af3043ae-487d-4d26-86a8-4709d7aebe43",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "04.02",
+      "code": "TR-01-0402-597",
+      "name": "Rail Fastening on Bridge",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 180.0,
+      "total_cost": 36000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "f46309c4-e8c7-45f2-bc54-30fb4b495959",
+      "object_id": "7edc8f94-dc5a-4ab4-8318-f75769470c8f",
+      "cbs_code": "03.01",
+      "code": "TR-01-0301-166",
+      "name": "Bridge Parapet & Safety Barriers",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 250.0,
+      "total_cost": 50000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "37a9e9d7-f54d-43b4-b5ec-80c7169516db",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "01.04",
+      "code": "TR-02-0104-351",
+      "name": "Topsoil Stripping & Site Clearance",
+      "unit": "m²",
+      "quantity": 360000,
+      "unit_price": 2.5,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "d82236ad-ec77-44c0-9181-0ef93bbcdeb7",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "02.01",
+      "code": "TR-02-0201-969",
+      "name": "Excavation to Formation Level",
+      "unit": "m³",
+      "quantity": 450000,
+      "unit_price": 8.0,
+      "total_cost": 3600000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "97ae73e8-b857-4009-881f-a75e405062b2",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "02.02",
+      "code": "TR-02-0202-870",
+      "name": "Embankment Fill Material",
+      "unit": "m³",
+      "quantity": 540000,
+      "unit_price": 12.0,
+      "total_cost": 6480000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "d694ff43-fe93-44a6-9bda-93ce9f374162",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "04.01",
+      "code": "TR-02-0401-211",
+      "name": "Sub-ballast Layer (300mm)",
+      "unit": "m³",
+      "quantity": 135000,
+      "unit_price": 18.0,
+      "total_cost": 2430000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "64975512-13e6-47cf-b982-834b83368168",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "04.01",
+      "code": "TR-02-0401-474",
+      "name": "Ballast Layer (350mm)",
+      "unit": "m³",
+      "quantity": 157500,
+      "unit_price": 25.0,
+      "total_cost": 3937500.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "f8124838-2e46-4497-8f7e-3b025c1e3904",
+      "object_id": "8fd6328f-6ffa-49a4-adcf-0c4089dcea6d",
+      "cbs_code": "04.02",
+      "code": "TR-02-0402-800",
+      "name": "Rail Installation (60E1)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 150.0,
+      "total_cost": 9000000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "72c4cf07-c903-4ae4-9d1f-09e0d28db7fb",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "04.02",
+      "code": "TR-02-0402-757",
+      "name": "Concrete Sleepers Installation",
+      "unit": "pc",
+      "quantity": 50010,
+      "unit_price": 45.0,
+      "total_cost": 2250450.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "1a329d5b-b51a-4297-8b75-ca85493e5c55",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "04.02",
+      "code": "TR-02-0402-174",
+      "name": "Rail Fastening System",
+      "unit": "set",
+      "quantity": 100020,
+      "unit_price": 12.0,
+      "total_cost": 1200240.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "4d6c2020-4645-49db-9466-5c3415baeb5d",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "04.04",
+      "code": "TR-02-0404-836",
+      "name": "Continuous Welded Rail (CWR)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 85.0,
+      "total_cost": 5100000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "e2604c1f-4484-471a-beca-dd47ffabe755",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "02.03",
+      "code": "TR-02-0203-374",
+      "name": "Drainage System (Side Drains)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "edda8650-8d69-43df-941f-8dc65e6be483",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "07.05",
+      "code": "TR-02-0705-861",
+      "name": "Cable Ducts & Trenches",
+      "unit": "m",
+      "quantity": 120000,
+      "unit_price": 20.0,
+      "total_cost": 2400000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "836d59e5-c97d-4c9d-88d3-e9ef5753d44d",
+      "object_id": "2997ef0b-7b65-45d1-b949-ff74c3f30d89",
+      "cbs_code": "05.01",
+      "code": "TR-02-0501-264",
+      "name": "Signalling Cable Laying",
+      "unit": "m",
+      "quantity": 90000,
+      "unit_price": 28.0,
+      "total_cost": 2520000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "c1f16569-9e80-4f9e-9a56-b31700ebbe8d",
+      "object_id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "cbs_code": "05.05",
+      "code": "TR-02-0505-685",
+      "name": "Fibre Optic Cable Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "c26671eb-0d72-4a3a-8607-a6599490a39a",
+      "object_id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "cbs_code": "07.03",
+      "code": "TR-02-0703-401",
+      "name": "Overhead Contact Line (OCL) Mast",
+      "unit": "pc",
+      "quantity": 990,
+      "unit_price": 2500.0,
+      "total_cost": 2475000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "c421e671-af66-46c4-9e30-43a2e1e21204",
+      "object_id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "cbs_code": "07.03",
+      "code": "TR-02-0703-135",
+      "name": "OCL Catenary Wire Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 95.0,
+      "total_cost": 5700000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "e0a33510-77bd-4c66-84f9-aa8b0366f31a",
+      "object_id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "cbs_code": "01.04",
+      "code": "TR-02-0104-501",
+      "name": "Fencing (Both Sides)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 18.0,
+      "total_cost": 1080000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "a1f6dd35-b797-4e8d-a0a3-363877a343b1",
+      "object_id": "6a5d1c4f-f0a5-41a4-8dc7-4f172907dce0",
+      "cbs_code": "02.04",
+      "code": "TR-02-0204-119",
+      "name": "Slope Protection & Erosion Control",
+      "unit": "m²",
+      "quantity": 240000,
+      "unit_price": 6.0,
+      "total_cost": 1440000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "2f774432-a3cf-436a-95e3-e11c7a752a8a",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-512",
+      "name": "Pile Foundation (Bored Piles)",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 450.0,
+      "total_cost": 90000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "f2f0f02e-9320-4f7d-b669-a4459393f9fd",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-857",
+      "name": "Pier Construction (Reinforced Concrete)",
+      "unit": "m³",
+      "quantity": 500,
+      "unit_price": 350.0,
+      "total_cost": 175000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "fa57f78e-646a-4bbf-bd9d-46e19b88a79d",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-286",
+      "name": "Pier Cap Construction",
+      "unit": "pc",
+      "quantity": 10,
+      "unit_price": 25000.0,
+      "total_cost": 250000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "680065ca-4962-494a-83bb-7ca5c09b7584",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-886",
+      "name": "Girder Fabrication & Erection (Steel)",
+      "unit": "ton",
+      "quantity": 300,
+      "unit_price": 3200.0,
+      "total_cost": 960000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "48d72f4e-baa9-4f56-b499-2ed4530f7409",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-779",
+      "name": "Deck Slab Construction",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 280.0,
+      "total_cost": 336000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "cbd093a2-b2b6-4af7-b231-54168735d82e",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-306",
+      "name": "Bridge Bearings",
+      "unit": "pc",
+      "quantity": 20,
+      "unit_price": 8500.0,
+      "total_cost": 170000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "0b18b8c2-f00b-4bcc-ab58-b5853b874797",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-389",
+      "name": "Expansion Joints",
+      "unit": "m",
+      "quantity": 40,
+      "unit_price": 1200.0,
+      "total_cost": 48000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "44a5b685-9210-4723-be66-831ef0a19ac9",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-143",
+      "name": "Waterproofing Membrane",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 45.0,
+      "total_cost": 54000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "5025bee5-67dd-400a-b3a4-ef6fbeb11473",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "04.02",
+      "code": "TR-02-0402-263",
+      "name": "Rail Fastening on Bridge",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 180.0,
+      "total_cost": 36000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "56addaef-0029-4957-b792-6c339759653c",
+      "object_id": "468e5209-cdbb-4924-b321-2536a653707f",
+      "cbs_code": "03.01",
+      "code": "TR-02-0301-569",
+      "name": "Bridge Parapet & Safety Barriers",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 250.0,
+      "total_cost": 50000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "59ec73b9-0240-48b8-b3f3-557b8c4f376d",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "01.04",
+      "code": "TR-03-0104-643",
+      "name": "Topsoil Stripping & Site Clearance",
+      "unit": "m²",
+      "quantity": 360000,
+      "unit_price": 2.5,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "d555a575-8619-4c7c-a4f4-fad9ae0fe788",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "02.01",
+      "code": "TR-03-0201-860",
+      "name": "Excavation to Formation Level",
+      "unit": "m³",
+      "quantity": 450000,
+      "unit_price": 8.0,
+      "total_cost": 3600000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "58dc7563-3d08-4c06-bbb8-e3f29680afcc",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "02.02",
+      "code": "TR-03-0202-132",
+      "name": "Embankment Fill Material",
+      "unit": "m³",
+      "quantity": 540000,
+      "unit_price": 12.0,
+      "total_cost": 6480000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "fb514ecd-b302-40ac-b927-024d7310a0b8",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "04.01",
+      "code": "TR-03-0401-457",
+      "name": "Sub-ballast Layer (300mm)",
+      "unit": "m³",
+      "quantity": 135000,
+      "unit_price": 18.0,
+      "total_cost": 2430000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "176811ef-b3f2-4ff3-bcb7-68cd916f1161",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "04.01",
+      "code": "TR-03-0401-187",
+      "name": "Ballast Layer (350mm)",
+      "unit": "m³",
+      "quantity": 157500,
+      "unit_price": 25.0,
+      "total_cost": 3937500.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "2a1d3f93-e5f7-438e-ab80-4d58f58d62a9",
+      "object_id": "fa1d3fb4-3661-4744-8117-7997f95e665e",
+      "cbs_code": "04.02",
+      "code": "TR-03-0402-113",
+      "name": "Rail Installation (60E1)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 150.0,
+      "total_cost": 9000000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "0b1e489f-05bd-4b8d-86ed-5f81d5da2ace",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "04.02",
+      "code": "TR-03-0402-935",
+      "name": "Concrete Sleepers Installation",
+      "unit": "pc",
+      "quantity": 50010,
+      "unit_price": 45.0,
+      "total_cost": 2250450.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "29030797-3fb8-4342-a9fe-c234eea0e8e4",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "04.02",
+      "code": "TR-03-0402-999",
+      "name": "Rail Fastening System",
+      "unit": "set",
+      "quantity": 100020,
+      "unit_price": 12.0,
+      "total_cost": 1200240.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "b28d6bcd-24b1-4315-83af-a2f7ac2aea70",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "04.04",
+      "code": "TR-03-0404-610",
+      "name": "Continuous Welded Rail (CWR)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 85.0,
+      "total_cost": 5100000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "a43fe31f-7b33-461d-a2e1-d8ae182100e6",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "02.03",
+      "code": "TR-03-0203-678",
+      "name": "Drainage System (Side Drains)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "32882d51-f18d-4703-a1c3-62fa64c750e4",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "07.05",
+      "code": "TR-03-0705-960",
+      "name": "Cable Ducts & Trenches",
+      "unit": "m",
+      "quantity": 120000,
+      "unit_price": 20.0,
+      "total_cost": 2400000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "e777b4fd-404c-464a-a74e-5e0eb9db07b7",
+      "object_id": "847b1b41-177a-462a-bdb7-327f43a34aa9",
+      "cbs_code": "05.01",
+      "code": "TR-03-0501-898",
+      "name": "Signalling Cable Laying",
+      "unit": "m",
+      "quantity": 90000,
+      "unit_price": 28.0,
+      "total_cost": 2520000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "bdb987fe-818a-474e-96e3-568562155c6a",
+      "object_id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "cbs_code": "05.05",
+      "code": "TR-03-0505-168",
+      "name": "Fibre Optic Cable Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "5202ba45-854e-4f90-98b5-8e7ca033f5ae",
+      "object_id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "cbs_code": "07.03",
+      "code": "TR-03-0703-246",
+      "name": "Overhead Contact Line (OCL) Mast",
+      "unit": "pc",
+      "quantity": 990,
+      "unit_price": 2500.0,
+      "total_cost": 2475000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "38563737-c57a-43de-9718-8d78210c9eaa",
+      "object_id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "cbs_code": "07.03",
+      "code": "TR-03-0703-284",
+      "name": "OCL Catenary Wire Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 95.0,
+      "total_cost": 5700000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "70d2009e-cd7a-411d-83df-3fd71b3a339c",
+      "object_id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "cbs_code": "01.04",
+      "code": "TR-03-0104-148",
+      "name": "Fencing (Both Sides)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 18.0,
+      "total_cost": 1080000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "53196e29-2124-47d9-935b-9eee53d26caf",
+      "object_id": "0e0aa417-a614-469a-9e27-bf7bd681aed7",
+      "cbs_code": "02.04",
+      "code": "TR-03-0204-460",
+      "name": "Slope Protection & Erosion Control",
+      "unit": "m²",
+      "quantity": 240000,
+      "unit_price": 6.0,
+      "total_cost": 1440000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "ea9746cf-bd33-4168-9552-997273683ff0",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-107",
+      "name": "Pile Foundation (Bored Piles)",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 450.0,
+      "total_cost": 90000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "ef194ffe-22c0-4a2d-aa48-27d80b6a321c",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-303",
+      "name": "Pier Construction (Reinforced Concrete)",
+      "unit": "m³",
+      "quantity": 500,
+      "unit_price": 350.0,
+      "total_cost": 175000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "1a0599f0-6def-4eae-abbf-6a6e6db370d1",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-356",
+      "name": "Pier Cap Construction",
+      "unit": "pc",
+      "quantity": 10,
+      "unit_price": 25000.0,
+      "total_cost": 250000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "d2a9327b-612a-42c2-a104-aa1c61c5ec10",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-235",
+      "name": "Girder Fabrication & Erection (Steel)",
+      "unit": "ton",
+      "quantity": 300,
+      "unit_price": 3200.0,
+      "total_cost": 960000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "24db54a0-d6a4-491d-b327-66d0da0fa168",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-647",
+      "name": "Deck Slab Construction",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 280.0,
+      "total_cost": 336000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "b942609c-6d95-4130-9091-154b7d3ad8ab",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-635",
+      "name": "Bridge Bearings",
+      "unit": "pc",
+      "quantity": 20,
+      "unit_price": 8500.0,
+      "total_cost": 170000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "b826228b-465b-4e9b-ab4d-421a86f70c07",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-501",
+      "name": "Expansion Joints",
+      "unit": "m",
+      "quantity": 40,
+      "unit_price": 1200.0,
+      "total_cost": 48000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "818a90f0-29fd-4407-85d0-446a5f056d0c",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-735",
+      "name": "Waterproofing Membrane",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 45.0,
+      "total_cost": 54000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "ed0a2589-1c29-4c12-b805-0aa6258a4b68",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "04.02",
+      "code": "TR-03-0402-564",
+      "name": "Rail Fastening on Bridge",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 180.0,
+      "total_cost": 36000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "8e63d95e-7ef1-4c45-83b9-90a0cae15bdc",
+      "object_id": "92ff03b5-7041-43ee-a976-5e747c7c1f23",
+      "cbs_code": "03.01",
+      "code": "TR-03-0301-605",
+      "name": "Bridge Parapet & Safety Barriers",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 250.0,
+      "total_cost": 50000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "b7cf2538-a664-4402-b3f6-8f33b0675d79",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "01.04",
+      "code": "TR-04-0104-664",
+      "name": "Topsoil Stripping & Site Clearance",
+      "unit": "m²",
+      "quantity": 360000,
+      "unit_price": 2.5,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "7cd95e88-a96a-4c13-a2de-d2e50223dd06",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "02.01",
+      "code": "TR-04-0201-665",
+      "name": "Excavation to Formation Level",
+      "unit": "m³",
+      "quantity": 450000,
+      "unit_price": 8.0,
+      "total_cost": 3600000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "76bd8ea4-e387-4e98-a5d2-de9268430c61",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "02.02",
+      "code": "TR-04-0202-311",
+      "name": "Embankment Fill Material",
+      "unit": "m³",
+      "quantity": 540000,
+      "unit_price": 12.0,
+      "total_cost": 6480000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "b4657819-a2fb-4a88-ae28-6abb2b7f4178",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "04.01",
+      "code": "TR-04-0401-202",
+      "name": "Sub-ballast Layer (300mm)",
+      "unit": "m³",
+      "quantity": 135000,
+      "unit_price": 18.0,
+      "total_cost": 2430000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "67de1559-846a-44b2-bff2-dda9843dc2ca",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "04.01",
+      "code": "TR-04-0401-632",
+      "name": "Ballast Layer (350mm)",
+      "unit": "m³",
+      "quantity": 157500,
+      "unit_price": 25.0,
+      "total_cost": 3937500.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "f4a688d9-a9f2-4b42-be31-abc1f530574d",
+      "object_id": "ec192b7e-c76d-4329-9871-d503179bb427",
+      "cbs_code": "04.02",
+      "code": "TR-04-0402-346",
+      "name": "Rail Installation (60E1)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 150.0,
+      "total_cost": 9000000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "8975c237-15e7-4c6c-8380-4ac27fa18c2a",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "04.02",
+      "code": "TR-04-0402-193",
+      "name": "Concrete Sleepers Installation",
+      "unit": "pc",
+      "quantity": 50010,
+      "unit_price": 45.0,
+      "total_cost": 2250450.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "2aea1048-6ae0-4b83-81ca-c39edfbbc513",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "04.02",
+      "code": "TR-04-0402-805",
+      "name": "Rail Fastening System",
+      "unit": "set",
+      "quantity": 100020,
+      "unit_price": 12.0,
+      "total_cost": 1200240.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "8079cdde-a1ea-4c83-8331-5d5e3577a758",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "04.04",
+      "code": "TR-04-0404-743",
+      "name": "Continuous Welded Rail (CWR)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 85.0,
+      "total_cost": 5100000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "ef188b54-3a2b-4dc3-838a-fe4892b87f84",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "02.03",
+      "code": "TR-04-0203-894",
+      "name": "Drainage System (Side Drains)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "7f42c61f-333d-4a0e-b0a7-f60d1e877d9b",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "07.05",
+      "code": "TR-04-0705-147",
+      "name": "Cable Ducts & Trenches",
+      "unit": "m",
+      "quantity": 120000,
+      "unit_price": 20.0,
+      "total_cost": 2400000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "0dda06f8-7d55-4ce7-a6bf-978a96412bae",
+      "object_id": "d52ce208-dfd9-492f-b150-f0d2255bfe01",
+      "cbs_code": "05.01",
+      "code": "TR-04-0501-612",
+      "name": "Signalling Cable Laying",
+      "unit": "m",
+      "quantity": 90000,
+      "unit_price": 28.0,
+      "total_cost": 2520000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "bf633503-b3a6-4b78-a405-cfd30d949395",
+      "object_id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "cbs_code": "05.05",
+      "code": "TR-04-0505-424",
+      "name": "Fibre Optic Cable Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 35.0,
+      "total_cost": 2100000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "e12b3b83-e95d-4e5f-92ec-041b4f89e541",
+      "object_id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "cbs_code": "07.03",
+      "code": "TR-04-0703-559",
+      "name": "Overhead Contact Line (OCL) Mast",
+      "unit": "pc",
+      "quantity": 990,
+      "unit_price": 2500.0,
+      "total_cost": 2475000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "57cc55c1-21ba-4a0c-ab6c-25e5cf34516a",
+      "object_id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "cbs_code": "07.03",
+      "code": "TR-04-0703-251",
+      "name": "OCL Catenary Wire Installation",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 95.0,
+      "total_cost": 5700000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "ee5e431a-a447-492e-8175-2fd913404df1",
+      "object_id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "cbs_code": "01.04",
+      "code": "TR-04-0104-683",
+      "name": "Fencing (Both Sides)",
+      "unit": "m",
+      "quantity": 60000,
+      "unit_price": 18.0,
+      "total_cost": 1080000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "9c11eb4d-c235-4e22-a38d-2c2cdef764c0",
+      "object_id": "00385139-1464-47b5-8bd5-ccef58f2e01f",
+      "cbs_code": "02.04",
+      "code": "TR-04-0204-960",
+      "name": "Slope Protection & Erosion Control",
+      "unit": "m²",
+      "quantity": 240000,
+      "unit_price": 6.0,
+      "total_cost": 1440000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "11356ef7-b8c9-429f-ae61-22742fc28cde",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-380",
+      "name": "Pile Foundation (Bored Piles)",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 450.0,
+      "total_cost": 90000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "2ee277c5-25ee-4828-b21f-c176085a8e85",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-757",
+      "name": "Pier Construction (Reinforced Concrete)",
+      "unit": "m³",
+      "quantity": 500,
+      "unit_price": 350.0,
+      "total_cost": 175000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "b1e11c65-62a4-4024-a4a7-61885d826ffd",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-958",
+      "name": "Pier Cap Construction",
+      "unit": "pc",
+      "quantity": 10,
+      "unit_price": 25000.0,
+      "total_cost": 250000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "c87eae9a-c1f0-4a26-ae66-c71847c77d96",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-947",
+      "name": "Girder Fabrication & Erection (Steel)",
+      "unit": "ton",
+      "quantity": 300,
+      "unit_price": 3200.0,
+      "total_cost": 960000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "e4f991ca-4cc2-4dc6-8d11-a012f6ac5a75",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-764",
+      "name": "Deck Slab Construction",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 280.0,
+      "total_cost": 336000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "45f624ff-804b-464a-9df8-d6a32d3ed030",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-916",
+      "name": "Bridge Bearings",
+      "unit": "pc",
+      "quantity": 20,
+      "unit_price": 8500.0,
+      "total_cost": 170000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "5d45203e-193d-43b6-ae2a-0615d53f4ab0",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-399",
+      "name": "Expansion Joints",
+      "unit": "m",
+      "quantity": 40,
+      "unit_price": 1200.0,
+      "total_cost": 48000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "5184d26c-4e1e-4df0-9365-110f4d662317",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-342",
+      "name": "Waterproofing Membrane",
+      "unit": "m²",
+      "quantity": 1200,
+      "unit_price": 45.0,
+      "total_cost": 54000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "17886dae-c0fd-4f92-a165-959a7f992f44",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "04.02",
+      "code": "TR-04-0402-243",
+      "name": "Rail Fastening on Bridge",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 180.0,
+      "total_cost": 36000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "0b0a183b-2f05-4de4-9855-cb328676a802",
+      "object_id": "734ae8e6-25f2-4313-ace5-fed23a62ca2b",
+      "cbs_code": "03.01",
+      "code": "TR-04-0301-726",
+      "name": "Bridge Parapet & Safety Barriers",
+      "unit": "m",
+      "quantity": 200,
+      "unit_price": 250.0,
+      "total_cost": 50000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "0bc9da02-540b-49bf-8ee2-ebb20cdd2be8",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "06.02",
+      "code": "ST-01-0602-896",
+      "name": "Station Building Construction",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 1200.0,
+      "total_cost": 6000000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "d1acf481-d158-4aa1-a8eb-9bf99c703ea8",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "06.01",
+      "code": "ST-01-0601-914",
+      "name": "Platform Construction",
+      "unit": "m",
+      "quantity": 400,
+      "unit_price": 3500.0,
+      "total_cost": 1400000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "3188df27-79cd-4494-bfea-2d510c80c6cf",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "06.01",
+      "code": "ST-01-0601-435",
+      "name": "Canopy Roof Structure",
+      "unit": "m²",
+      "quantity": 2000,
+      "unit_price": 450.0,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "8d3ce8d6-af8f-4e0e-a0d9-d365e38ce892",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "05.04",
+      "code": "ST-01-0504-768",
+      "name": "Passenger Information System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 500000.0,
+      "total_cost": 500000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "31ce31be-15a0-46ca-9f69-e3209df6f599",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "05.04",
+      "code": "ST-01-0504-195",
+      "name": "Ticketing & Fare Collection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 800000.0,
+      "total_cost": 800000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "02cda4ce-2142-42ab-9a1b-1c572546ef36",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "06.01",
+      "code": "ST-01-0601-630",
+      "name": "Elevators & Escalators",
+      "unit": "pc",
+      "quantity": 6,
+      "unit_price": 250000.0,
+      "total_cost": 1500000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "a83d8f50-afcc-47be-886c-66ce60ab52f3",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "08.03",
+      "code": "ST-01-0803-356",
+      "name": "HVAC System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "total_cost": 1200000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "fc6c0620-fc0b-4d58-9d89-57c28f10633d",
+      "object_id": "573e5910-2be1-46b8-942d-949f483025aa",
+      "cbs_code": "08.02",
+      "code": "ST-01-0802-347",
+      "name": "Fire Protection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 600000.0,
+      "total_cost": 600000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "e65f36e7-f83e-45fb-ba28-0a9dbd2de07c",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "07.06",
+      "code": "ST-01-0706-429",
+      "name": "Lighting System (Station)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 400000.0,
+      "total_cost": 400000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "1e597b73-b649-46fa-8f16-bdc4b4314a24",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "08.01",
+      "code": "ST-01-0801-605",
+      "name": "Water Supply & Sanitary",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 350000.0,
+      "total_cost": 350000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "0ada91d8-034a-4154-b42e-0526f56fe42b",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "06.01",
+      "code": "ST-01-0601-988",
+      "name": "Signage & Wayfinding",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 200000.0,
+      "total_cost": 200000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "64f2c7df-0ac0-4514-8189-11a3948637c4",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "01.04",
+      "code": "ST-01-0104-918",
+      "name": "Landscaping & External Works",
+      "unit": "m²",
+      "quantity": 3000,
+      "unit_price": 85.0,
+      "total_cost": 255000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "82e83b51-4e27-4101-938b-cb404ca188b6",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "06.01",
+      "code": "ST-01-0601-510",
+      "name": "Parking Facilities",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 150.0,
+      "total_cost": 750000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "8a298eb4-2f2e-47db-b914-70ae42de1f2b",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "05.04",
+      "code": "ST-01-0504-146",
+      "name": "Security Systems (CCTV, Access)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 300000.0,
+      "total_cost": 300000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "72fb1227-dced-4e07-8de8-e0b9a03fba2c",
+      "object_id": "873b2938-1034-4329-8363-da44229839cc",
+      "cbs_code": "05.09",
+      "code": "ST-01-0509-423",
+      "name": "Interlocking Equipment Room",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 450000.0,
+      "total_cost": 450000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "b1a16878-e1de-4b9e-96ff-39e48e6e0bd7",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "06.02",
+      "code": "ST-02-0602-252",
+      "name": "Station Building Construction",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 1200.0,
+      "total_cost": 6000000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "dd5cffb2-b2e3-4a6b-be35-3f7acd99cb3a",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "06.01",
+      "code": "ST-02-0601-448",
+      "name": "Platform Construction",
+      "unit": "m",
+      "quantity": 400,
+      "unit_price": 3500.0,
+      "total_cost": 1400000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "14c489ca-a8b0-4167-9b50-f6c7369bea5c",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "06.01",
+      "code": "ST-02-0601-225",
+      "name": "Canopy Roof Structure",
+      "unit": "m²",
+      "quantity": 2000,
+      "unit_price": 450.0,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "9dc0aa49-3a88-4e52-ac23-623ff8215893",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "05.04",
+      "code": "ST-02-0504-250",
+      "name": "Passenger Information System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 500000.0,
+      "total_cost": 500000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "1f84044c-4f90-4b8c-9d3f-8d7779ec4258",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "05.04",
+      "code": "ST-02-0504-432",
+      "name": "Ticketing & Fare Collection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 800000.0,
+      "total_cost": 800000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "810daac4-ff3c-4471-88ff-094b6b078634",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "06.01",
+      "code": "ST-02-0601-724",
+      "name": "Elevators & Escalators",
+      "unit": "pc",
+      "quantity": 6,
+      "unit_price": 250000.0,
+      "total_cost": 1500000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "534c52f6-4468-40b1-9a29-8108c847a3c1",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "08.03",
+      "code": "ST-02-0803-775",
+      "name": "HVAC System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "total_cost": 1200000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "b778db7c-6cf5-4b0d-8158-c9fcb7277d9d",
+      "object_id": "4b70aba7-19df-4d61-a521-41518fd253d7",
+      "cbs_code": "08.02",
+      "code": "ST-02-0802-578",
+      "name": "Fire Protection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 600000.0,
+      "total_cost": 600000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "7f791e3e-ef5e-4089-a9a6-60a474568025",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "07.06",
+      "code": "ST-02-0706-453",
+      "name": "Lighting System (Station)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 400000.0,
+      "total_cost": 400000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "742dcc4f-0f47-4e3f-835e-dd6a61c1e7a1",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "08.01",
+      "code": "ST-02-0801-646",
+      "name": "Water Supply & Sanitary",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 350000.0,
+      "total_cost": 350000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "98edab6d-14f5-453b-9fa4-9ad6ed97cfa6",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "06.01",
+      "code": "ST-02-0601-916",
+      "name": "Signage & Wayfinding",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 200000.0,
+      "total_cost": 200000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "408cddb9-ab67-496c-8760-ab22c5c95dd8",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "01.04",
+      "code": "ST-02-0104-924",
+      "name": "Landscaping & External Works",
+      "unit": "m²",
+      "quantity": 3000,
+      "unit_price": 85.0,
+      "total_cost": 255000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "1978d071-8b83-4735-a5db-35d93538f3ad",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "06.01",
+      "code": "ST-02-0601-106",
+      "name": "Parking Facilities",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 150.0,
+      "total_cost": 750000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "89e60d92-b144-4e2f-97d0-9b49473cf0d3",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "05.04",
+      "code": "ST-02-0504-844",
+      "name": "Security Systems (CCTV, Access)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 300000.0,
+      "total_cost": 300000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "131337f2-b717-40a9-bdf5-0a5ca247f215",
+      "object_id": "0b7beefb-8667-44ff-944d-36b065f23730",
+      "cbs_code": "05.09",
+      "code": "ST-02-0509-480",
+      "name": "Interlocking Equipment Room",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 450000.0,
+      "total_cost": 450000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "2df77417-2b53-4583-8743-08b0ac82a093",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "06.02",
+      "code": "ST-03-0602-307",
+      "name": "Station Building Construction",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 1200.0,
+      "total_cost": 6000000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "68386990-5314-4d81-a393-82c29b0c65b4",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "06.01",
+      "code": "ST-03-0601-633",
+      "name": "Platform Construction",
+      "unit": "m",
+      "quantity": 400,
+      "unit_price": 3500.0,
+      "total_cost": 1400000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "7dd27d79-2baa-4dfc-8dc7-6bc2bf714eed",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "06.01",
+      "code": "ST-03-0601-893",
+      "name": "Canopy Roof Structure",
+      "unit": "m²",
+      "quantity": 2000,
+      "unit_price": 450.0,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "c23767f8-b62d-4d56-9bb7-21da1b19a79f",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "05.04",
+      "code": "ST-03-0504-213",
+      "name": "Passenger Information System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 500000.0,
+      "total_cost": 500000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "dcfa4583-f1dd-42b7-bedc-c80528c531c5",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "05.04",
+      "code": "ST-03-0504-170",
+      "name": "Ticketing & Fare Collection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 800000.0,
+      "total_cost": 800000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "e7b3dafe-d6d0-4a9b-b6a1-09f4ba07b7a0",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "06.01",
+      "code": "ST-03-0601-559",
+      "name": "Elevators & Escalators",
+      "unit": "pc",
+      "quantity": 6,
+      "unit_price": 250000.0,
+      "total_cost": 1500000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "ddcd5cee-f3c2-4a28-803d-0456b8855d2c",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "08.03",
+      "code": "ST-03-0803-901",
+      "name": "HVAC System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "total_cost": 1200000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "f8148cbc-6db2-471d-94ef-0f3ac6149aab",
+      "object_id": "aa19a39c-3c80-445d-a8e8-e6cb93eaacf9",
+      "cbs_code": "08.02",
+      "code": "ST-03-0802-923",
+      "name": "Fire Protection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 600000.0,
+      "total_cost": 600000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "3d84dd83-4f0a-4334-8236-965d38b467f3",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "07.06",
+      "code": "ST-03-0706-488",
+      "name": "Lighting System (Station)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 400000.0,
+      "total_cost": 400000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "50429ad7-5912-4a2f-a9e7-7a5edc992975",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "08.01",
+      "code": "ST-03-0801-894",
+      "name": "Water Supply & Sanitary",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 350000.0,
+      "total_cost": 350000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "d40b91a4-1a54-446b-9dd3-364607c73c0f",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "06.01",
+      "code": "ST-03-0601-705",
+      "name": "Signage & Wayfinding",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 200000.0,
+      "total_cost": 200000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "51079673-9c32-4214-849f-5fa6e78f4593",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "01.04",
+      "code": "ST-03-0104-194",
+      "name": "Landscaping & External Works",
+      "unit": "m²",
+      "quantity": 3000,
+      "unit_price": 85.0,
+      "total_cost": 255000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "46f53eff-6dba-4109-acdd-df3cefc58759",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "06.01",
+      "code": "ST-03-0601-449",
+      "name": "Parking Facilities",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 150.0,
+      "total_cost": 750000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "bc66326b-3715-4dff-8b0b-de0e9001c669",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "05.04",
+      "code": "ST-03-0504-746",
+      "name": "Security Systems (CCTV, Access)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 300000.0,
+      "total_cost": 300000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "c3ba6600-cae4-4014-8f9f-d9c52fbd8062",
+      "object_id": "057c105e-26bf-49ac-9057-0c20828e022d",
+      "cbs_code": "05.09",
+      "code": "ST-03-0509-488",
+      "name": "Interlocking Equipment Room",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 450000.0,
+      "total_cost": 450000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "3c209206-8ace-4ee5-918c-b5d6577d9a9e",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "06.02",
+      "code": "ST-04-0602-909",
+      "name": "Station Building Construction",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 1200.0,
+      "total_cost": 6000000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "8835d539-05b1-4491-a170-35e52c3afac6",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "06.01",
+      "code": "ST-04-0601-975",
+      "name": "Platform Construction",
+      "unit": "m",
+      "quantity": 400,
+      "unit_price": 3500.0,
+      "total_cost": 1400000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "3bb8fafc-ef3d-4dba-a11c-225ad2aba012",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "06.01",
+      "code": "ST-04-0601-999",
+      "name": "Canopy Roof Structure",
+      "unit": "m²",
+      "quantity": 2000,
+      "unit_price": 450.0,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "20e8c51f-2dba-4b17-b9c3-7eb0298bb029",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "05.04",
+      "code": "ST-04-0504-428",
+      "name": "Passenger Information System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 500000.0,
+      "total_cost": 500000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "d5b3b250-6132-46c1-90b6-eaf1bee9a17e",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "05.04",
+      "code": "ST-04-0504-633",
+      "name": "Ticketing & Fare Collection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 800000.0,
+      "total_cost": 800000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "7c426dd3-528b-4bc2-b6c2-8752fa0ce907",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "06.01",
+      "code": "ST-04-0601-176",
+      "name": "Elevators & Escalators",
+      "unit": "pc",
+      "quantity": 6,
+      "unit_price": 250000.0,
+      "total_cost": 1500000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "7f251b78-a95e-4f1b-9abd-a4ca6938e463",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "08.03",
+      "code": "ST-04-0803-625",
+      "name": "HVAC System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "total_cost": 1200000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "b3dcfe84-eb61-4ee6-8280-9a2f71904dbe",
+      "object_id": "0a8ac065-6bd4-47cd-9a92-ecf85834bd8a",
+      "cbs_code": "08.02",
+      "code": "ST-04-0802-194",
+      "name": "Fire Protection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 600000.0,
+      "total_cost": 600000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "f86c6fd7-0772-4ce5-8ce4-65789a6858da",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "07.06",
+      "code": "ST-04-0706-496",
+      "name": "Lighting System (Station)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 400000.0,
+      "total_cost": 400000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "1d9c9000-1a73-4c92-88cf-cd885e52c063",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "08.01",
+      "code": "ST-04-0801-697",
+      "name": "Water Supply & Sanitary",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 350000.0,
+      "total_cost": 350000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "11e36593-c113-4a4e-b6db-42a9f130bc5a",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "06.01",
+      "code": "ST-04-0601-252",
+      "name": "Signage & Wayfinding",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 200000.0,
+      "total_cost": 200000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "16dd73e6-1a8f-447a-95f2-38f207807da9",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "01.04",
+      "code": "ST-04-0104-395",
+      "name": "Landscaping & External Works",
+      "unit": "m²",
+      "quantity": 3000,
+      "unit_price": 85.0,
+      "total_cost": 255000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "a3b1076f-55bd-4b4f-a2cc-3482357cbf3d",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "06.01",
+      "code": "ST-04-0601-637",
+      "name": "Parking Facilities",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 150.0,
+      "total_cost": 750000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "9b40833c-4b0e-4d36-af1f-4240a3e94b85",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "05.04",
+      "code": "ST-04-0504-324",
+      "name": "Security Systems (CCTV, Access)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 300000.0,
+      "total_cost": 300000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "95ac8b7e-936b-44e0-88c8-164bac1fa0b3",
+      "object_id": "8d3029db-3b4f-4999-9f74-e93ec640022f",
+      "cbs_code": "05.09",
+      "code": "ST-04-0509-254",
+      "name": "Interlocking Equipment Room",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 450000.0,
+      "total_cost": 450000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "b15fdc41-48c7-49e0-b534-bdc813b5103e",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "06.02",
+      "code": "ST-05-0602-454",
+      "name": "Station Building Construction",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 1200.0,
+      "total_cost": 6000000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "9387797f-5345-42c1-9803-40269aa65741",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "06.01",
+      "code": "ST-05-0601-236",
+      "name": "Platform Construction",
+      "unit": "m",
+      "quantity": 400,
+      "unit_price": 3500.0,
+      "total_cost": 1400000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "975a22e4-5a0b-4de7-aa5d-48076789d949",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "06.01",
+      "code": "ST-05-0601-320",
+      "name": "Canopy Roof Structure",
+      "unit": "m²",
+      "quantity": 2000,
+      "unit_price": 450.0,
+      "total_cost": 900000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "a7f620d6-6223-4c36-87ff-9bce531f1af3",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "05.04",
+      "code": "ST-05-0504-880",
+      "name": "Passenger Information System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 500000.0,
+      "total_cost": 500000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "cec6a824-7158-43d0-9ed0-e14fa3ca62fb",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "05.04",
+      "code": "ST-05-0504-797",
+      "name": "Ticketing & Fare Collection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 800000.0,
+      "total_cost": 800000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "e6b0e364-f1d5-424e-b66e-6626f2857636",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "06.01",
+      "code": "ST-05-0601-401",
+      "name": "Elevators & Escalators",
+      "unit": "pc",
+      "quantity": 6,
+      "unit_price": 250000.0,
+      "total_cost": 1500000.0,
+      "contractor": {
+        "id": "8818ed00-f0a1-4fd6-90c4-40f72aef7000",
+        "name": "China Railway Construction Corp (CRCC)"
+      }
+    },
+    {
+      "id": "ad8654fb-bac7-44fc-9b18-13c9a0aef56a",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "08.03",
+      "code": "ST-05-0803-974",
+      "name": "HVAC System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 1200000.0,
+      "total_cost": 1200000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "804ffba6-3771-4d25-b887-18300dbe9f4f",
+      "object_id": "483fe28d-4892-4e22-b454-a517cf81f339",
+      "cbs_code": "08.02",
+      "code": "ST-05-0802-151",
+      "name": "Fire Protection System",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 600000.0,
+      "total_cost": 600000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "5890ff80-ba9a-44f7-a3cd-bb35ae55566f",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "07.06",
+      "code": "ST-05-0706-553",
+      "name": "Lighting System (Station)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 400000.0,
+      "total_cost": 400000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "826ce8db-3ce7-46e1-ad72-80fce6a0b7cd",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "08.01",
+      "code": "ST-05-0801-908",
+      "name": "Water Supply & Sanitary",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 350000.0,
+      "total_cost": 350000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    },
+    {
+      "id": "4b51d749-0e1e-4a84-8886-74560ea966b5",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "06.01",
+      "code": "ST-05-0601-272",
+      "name": "Signage & Wayfinding",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 200000.0,
+      "total_cost": 200000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "5bfe265e-f327-42ba-a9cf-e2654f6ab3e8",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "01.04",
+      "code": "ST-05-0104-712",
+      "name": "Landscaping & External Works",
+      "unit": "m²",
+      "quantity": 3000,
+      "unit_price": 85.0,
+      "total_cost": 255000.0,
+      "contractor": {
+        "id": "397bf671-5289-4283-bda3-5ea1d7796d26",
+        "name": "Local Subcontractor JV"
+      }
+    },
+    {
+      "id": "87644538-66fb-4f35-828f-93eae6336b9c",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "06.01",
+      "code": "ST-05-0601-263",
+      "name": "Parking Facilities",
+      "unit": "m²",
+      "quantity": 5000,
+      "unit_price": 150.0,
+      "total_cost": 750000.0,
+      "contractor": {
+        "id": "4bf2f140-a56f-4393-8f7f-d6e63fb23cc0",
+        "name": "Bechtel Infrastructure"
+      }
+    },
+    {
+      "id": "e121e3b9-68b3-49ef-9430-e30fcf7b5e4e",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "05.04",
+      "code": "ST-05-0504-436",
+      "name": "Security Systems (CCTV, Access)",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 300000.0,
+      "total_cost": 300000.0,
+      "contractor": {
+        "id": "2ea9e3d2-3849-4ada-b2bd-67a44b2c43d6",
+        "name": "Strabag SE"
+      }
+    },
+    {
+      "id": "84744a0b-3dd8-4194-8143-7ab817a1f212",
+      "object_id": "03011067-b363-410c-bb75-0d6bc47aab28",
+      "cbs_code": "05.09",
+      "code": "ST-05-0509-384",
+      "name": "Interlocking Equipment Room",
+      "unit": "lump",
+      "quantity": 1,
+      "unit_price": 450000.0,
+      "total_cost": 450000.0,
+      "contractor": {
+        "id": "695c2140-05d5-4c89-9f18-86d267ba27c1",
+        "name": "Vinci Construction"
+      }
+    }
+  ],
+  "summary": {
+    "total_boq_cost": 305553760.0,
+    "total_sections": 9,
+    "total_complexes": 26,
+    "total_objects": 26,
+    "total_boq_items": 183,
+    "currency": "USD",
+    "generated_at": "2026-07-02T02:05:30.837858"
+  }
+}
