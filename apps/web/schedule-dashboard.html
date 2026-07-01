@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Schedule Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.filters-bar select, .filters-bar input { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.filters-bar label { color: #94a3b8; font-size: 12px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-active { background: #1e3a5f; color: #60a5fa; }
+.badge-baselined { background: #1e3a2f; color: #34d399; }
+.badge-closed { background: #1e2f3b; color: #38bdf8; }
+.badge-completed { background: #1e3a2f; color: #22c55e; }
+.badge-in_progress { background: #1e3a5f; color: #60a5fa; }
+.badge-not_started { background: #3b2f1e; color: #fbbf24; }
+.badge-critical { background: #3b1e1e; color: #f87171; }
+.gantt-bar { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.gantt-label { min-width: 180px; font-size: 12px; color: #94a3b8; }
+.gantt-track { flex: 1; height: 20px; background: #334155; border-radius: 4px; position: relative; }
+.gantt-fill { height: 100%; border-radius: 4px; position: absolute; top: 0; }
+.gantt-fill.completed { background: #22c55e; }
+.gantt-fill.in_progress { background: #3b82f6; }
+.gantt-fill.critical { background: #ef4444; }
+.gantt-fill.not_started { background: #64748b; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📅 Schedule Management</h1>
+  <div class="subtitle">Construction Project Schedules — Activities, Critical Path, Resource Loading, Baselines</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading Schedule data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid-3">
+      <div class="chart-card"><h3>📊 Schedule Status</h3><canvas id="statusPie"></canvas></div>
+      <div class="chart-card"><h3>📈 Activity Status Distribution</h3><canvas id="actStatusBar"></canvas></div>
+      <div class="chart-card"><h3>⏱️ Total Float % by Schedule</h3><canvas id="floatBar"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>🔴 Critical Path Gantt</h3><canvas id="ganttChart"></canvas></div>
+      <div class="chart-card"><h3>📦 Resource Loading</h3><canvas id="resourceChart"></canvas></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <h3>📋 Activities</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body open" id="activitiesBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📦 Resources</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="resourcesBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📐 Baselines</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="baselinesBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let selectedProject = '';
+let charts = {};
+
+function loadData() {
+  fetch('schedule_data.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => { DATA = d; initApp(); })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = `
+        <div class="value red" style="font-size:18px;">⚠️ Failed to load: ${err.message}</div>
+        <p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_schedule.py</code></p>`;
+    });
+}
+
+function initApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  buildProjectFilter();
+  renderAll();
+}
+
+function buildProjectFilter() {
+  const sel = document.getElementById('projectFilter');
+  const projects = [...new Set(DATA.schedules.map(s => s.project_name))];
+  sel.innerHTML = '<option value="">All Projects</option>' +
+    projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.addEventListener('change', () => { selectedProject = sel.value; renderAll(); });
+}
+
+function getFilteredSchedules() {
+  return selectedProject ? DATA.schedules.filter(s => s.project_name === selectedProject) : DATA.schedules;
+}
+
+function getFilteredActivities() {
+  const schedIds = new Set(getFilteredSchedules().map(s => s.id));
+  return DATA.activities.filter(a => schedIds.has(a.schedule_id));
+}
+
+function getFilteredResources() {
+  const schedIds = new Set(getFilteredSchedules().map(s => s.id));
+  return DATA.resources.filter(r => schedIds.has(r.schedule_id));
+}
+
+function getFilteredBaselines() {
+  return getFilteredSchedules().filter(s => s.schedule_type === 'baseline');
+}
+
+function formatDate(d) { return d ? d.substring(0, 10) : '—'; }
+
+function toggleAccordion(header) {
+  header.classList.toggle('active');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+function renderAll() {
+  const schedules = getFilteredSchedules();
+  const activities = getFilteredActivities();
+  const resources = getFilteredResources();
+  const baselines = getFilteredBaselines();
+
+  // Stats
+  const totalActs = activities.length;
+  const criticalActs = activities.filter(a => a.is_critical).length;
+  const completedActs = activities.filter(a => a.status === 'completed').length;
+  const avgFloat = activities.length > 0 ? (activities.reduce((s, a) => s + (a.float_total || 0), 0) / activities.length).toFixed(1) : 0;
+  const totalResources = resources.length;
+  const inProgActs = activities.filter(a => a.status === 'in_progress').length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Schedules</div><div class="value blue">${schedules.length}</div></div>
+    <div class="stat-card"><div class="label">Activities</div><div class="value green">${totalActs}</div></div>
+    <div class="stat-card"><div class="label">Critical Path</div><div class="value red">${criticalActs}</div></div>
+    <div class="stat-card"><div class="label">Completed</div><div class="value purple">${completedActs}</div></div>
+    <div class="stat-card"><div class="label">In Progress</div><div class="value yellow">${inProgActs}</div></div>
+    <div class="stat-card"><div class="label">Avg Float (d)</div><div class="value orange">${avgFloat}</div></div>
+  `;
+
+  destroyCharts();
+  renderStatusPie(schedules);
+  renderActStatusBar(activities);
+  renderFloatBar(schedules);
+  renderGantt(activities);
+  renderResourceChart(resources);
+  renderActivitiesTable(activities);
+  renderResourcesTable(resources);
+  renderBaselinesTable(baselines);
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+  charts = {};
+}
+
+function renderStatusPie(schedules) {
+  const counts = { active: 0, baselined: 0, closed: 0 };
+  schedules.forEach(s => { if (counts[s.status] !== undefined) counts[s.status]++; else counts.other = (counts.other || 0) + 1; });
+  const colors = { active: '#3b82f6', baselined: '#22c55e', closed: '#64748b', other: '#a855f7' };
+  charts.statusPie = new Chart(document.getElementById('statusPie'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => colors[k] || '#64748b'), borderColor: '#0f172a', borderWidth: 2 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+
+function renderActStatusBar(activities) {
+  const counts = { completed: 0, in_progress: 0, not_started: 0 };
+  activities.forEach(a => { const s = a.status || 'not_started'; if (counts[s] !== undefined) counts[s]++; else counts.other = (counts.other || 0) + 1; });
+  const colors = { completed: '#22c55e', in_progress: '#3b82f6', not_started: '#64748b', critical: '#ef4444', other: '#a855f7' };
+  charts.actStatusBar = new Chart(document.getElementById('actStatusBar'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => colors[k] || '#64748b'), borderRadius: 4 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' } } } }
+  });
+}
+
+function renderFloatBar(schedules) {
+  const labels = schedules.map(s => s.schedule_code.substring(0, 12));
+  const values = schedules.map(s => s.total_float_pct || 0);
+  const colors = values.map(v => v < 3 ? '#ef4444' : v < 6 ? '#f97316' : '#22c55e');
+  charts.floatBar = new Chart(document.getElementById('floatBar'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8', callback: v => v + '%' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function renderGantt(activities) {
+  // Show top 20 critical + non-critical activities as a horizontal bar
+  const critical = activities.filter(a => a.is_critical).slice(0, 10);
+  const nonCritical = activities.filter(a => !a.is_critical).sort((a, b) => (b.percent_complete || 0) - (a.percent_complete || 0)).slice(0, 10);
+  const combined = [...critical, ...nonCritical];
+  const labels = combined.map(a => a.activity_id + ' ' + a.activity_name.substring(0, 20));
+  const values = combined.map(a => a.original_duration || 1);
+  const colors = combined.map(a => a.is_critical ? '#ef4444' : a.status === 'completed' ? '#22c55e' : a.status === 'in_progress' ? '#3b82f6' : '#64748b');
+
+  charts.ganttChart = new Chart(document.getElementById('ganttChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors, borderRadius: 4 }] },
+    options: {
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `Duration: ${ctx.raw}d | ${combined[ctx.dataIndex].activity_name}` } } },
+      scales: { x: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8', font: { size: 10 } } } }
+    }
+  });
+}
+
+function renderResourceChart(resources) {
+  const byType = {};
+  resources.forEach(r => {
+    const t = r.resource_type || 'other';
+    byType[t] = (byType[t] || 0) + r.quantity || 1;
+  });
+  const labels = Object.keys(byType);
+  const values = Object.values(byType);
+  const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899'];
+  charts.resourceChart = new Chart(document.getElementById('resourceChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderColor: '#0f172a', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+
+function renderActivitiesTable(activities) {
+  const container = document.getElementById('activitiesBody');
+  const critical = activities.filter(a => a.is_critical);
+  const nonCritical = activities.filter(a => !a.is_critical).slice(0, 50);
+  const display = [...critical, ...nonCritical];
+
+  container.innerHTML = `<table>
+    <thead><tr><th>Activity ID</th><th>Name</th><th>WBS</th><th>Type</th><th>Duration</th><th>%</th><th>Start</th><th>Finish</th><th>Float</th><th>Critical</th><th>Status</th></tr></thead>
+    <tbody>${display.map(a => {
+      const statusClass = 'badge-' + (a.status || 'not_started');
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;color:#64748b">${a.activity_id}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.activity_name}</td>
+        <td>${a.wbs_code || '—'}</td>
+        <td><span style="font-size:11px;color:#94a3b8">${a.activity_type}</span></td>
+        <td>${a.original_duration}d</td>
+        <td>${a.percent_complete}%</td>
+        <td>${formatDate(a.actual_start || a.early_start)}</td>
+        <td>${formatDate(a.actual_finish || a.early_finish)}</td>
+        <td>${a.float_total}</td>
+        <td>${a.is_critical ? '<span class="badge badge-critical">CRITICAL</span>' : '—'}</td>
+        <td><span class="badge ${statusClass}">${a.status}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderResourcesTable(resources) {
+  const container = document.getElementById('resourcesBody');
+  if (resources.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No resources</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Resource ID</th><th>Name</th><th>Type</th><th>Qty</th><th>Unit</th><th>Rate</th><th>Schedule</th></tr></thead>
+    <tbody>${resources.slice(0, 100).map(r => `<tr>
+      <td style="font-family:monospace;font-size:12px;color:#64748b">${r.resource_id}</td>
+      <td>${r.resource_name}</td>
+      <td><span style="font-size:11px;color:#94a3b8">${r.resource_type}</span></td>
+      <td>${r.quantity || 0}</td>
+      <td>${r.unit || '—'}</td>
+      <td>$${(r.unit_rate || 0).toFixed(2)}</td>
+      <td style="font-family:monospace;font-size:11px;color:#64748b">${r.schedule_id?.substring(0, 12)}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderBaselinesTable(baselines) {
+  const container = document.getElementById('baselinesBody');
+  if (baselines.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No baselines</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Schedule Code</th><th>Name</th><th>Project</th><th>Calendar</th><th>Data Date</th><th>Float %</th><th>Status</th></tr></thead>
+    <tbody>${baselines.map(s => `<tr>
+      <td style="font-family:monospace;font-size:12px;color:#64748b">${s.schedule_code}</td>
+      <td>${s.schedule_name}</td>
+      <td>${s.project_name}</td>
+      <td>${s.calendar}</td>
+      <td>${s.data_date}</td>
+      <td>${s.total_float_pct}%</td>
+      <td><span class="badge badge-${s.status}">${s.status}</span></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+loadData();
+</script>
+</body>
+</html>

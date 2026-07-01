@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — HSE Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.filters-bar select, .filters-bar input { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.filters-bar label { color: #94a3b8; font-size: 12px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-critical { background: #7f1d1d; color: #fca5a5; }
+.badge-major { background: #9a3412; color: #fdba74; }
+.badge-moderate { background: #854d0e; color: #fde047; }
+.badge-minor { background: #1e3a2f; color: #86efac; }
+.badge-open { background: #3b1e1e; color: #f87171; }
+.badge-closed { background: #1e2f3b; color: #38bdf8; }
+.badge-investigating { background: #3b2f1e; color: #fbbf24; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🛡️ HSE Dashboard</h1>
+  <div class="subtitle">Health, Safety & Environment — Incidents, Permits, Audits, Training</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading HSE data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid-3">
+      <div class="chart-card"><h3>📊 Incidents by Type</h3><canvas id="incTypeChart"></canvas></div>
+      <div class="chart-card"><h3>⚠️ Incidents by Severity</h3><canvas id="incSevChart"></canvas></div>
+      <div class="chart-card"><h3>📈 Monthly Incidents</h3><canvas id="incTrendChart"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>📋 Permits by Status</h3><canvas id="permitChart"></canvas></div>
+      <div class="chart-card"><h3>🎓 Training Sessions</h3><canvas id="trainingChart"></canvas></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <h3>⚠️ Incidents</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body open" id="incidentsBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📋 Permits</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="permitsBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>🔍 Audits</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="auditsBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>🎓 Training Records</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="trainingBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let charts = {};
+let selectedProject = '';
+
+function loadData() {
+  fetch('hse_data.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => { DATA = d; initApp(); })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = `
+        <div class="value red" style="font-size:18px;">⚠️ Failed to load: ${err.message}</div>
+        <p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_hse.py</code></p>`;
+    });
+}
+
+function initApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  buildProjectFilter();
+  renderAll();
+}
+
+function buildProjectFilter() {
+  const sel = document.getElementById('projectFilter');
+  const projects = [...new Set(DATA.incidents.map(i => i.project_name))];
+  sel.innerHTML = '<option value="">All Projects</option>' +
+    projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.addEventListener('change', () => { selectedProject = sel.value; renderAll(); });
+}
+
+function getFilteredIncidents() {
+  return selectedProject ? DATA.incidents.filter(i => i.project_name === selectedProject) : DATA.incidents;
+}
+
+function getFilteredPermits() {
+  return selectedProject ? DATA.permits.filter(p => p.project_name === selectedProject) : DATA.permits;
+}
+
+function getFilteredAudits() {
+  return selectedProject ? DATA.audits.filter(a => a.project_name === selectedProject) : DATA.audits;
+}
+
+function getFilteredTraining() {
+  return selectedProject ? DATA.training.filter(t => t.project_name === selectedProject) : DATA.training;
+}
+
+function toggleAccordion(header) {
+  header.classList.toggle('active');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+  charts = {};
+}
+
+function renderAll() {
+  const incidents = getFilteredIncidents();
+  const permits = getFilteredPermits();
+  const audits = getFilteredAudits();
+  const training = getFilteredTraining();
+
+  const totalInc = incidents.length;
+  const openInc = incidents.filter(i => i.status === 'open').length;
+  const criticalInc = incidents.filter(i => i.severity === 'critical').length;
+  const reportable = incidents.filter(i => i.is_reportable).length;
+  const totalPermits = permits.length;
+  const activePermits = permits.filter(p => p.status === 'active' || p.status === 'issued').length;
+  const totalTraining = training.length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Total Incidents</div><div class="value blue">${totalInc}</div></div>
+    <div class="stat-card"><div class="label">Open Incidents</div><div class="value red">${openInc}</div></div>
+    <div class="stat-card"><div class="label">Critical</div><div class="value red">${criticalInc}</div></div>
+    <div class="stat-card"><div class="label">Reportable</div><div class="value orange">${reportable}</div></div>
+    <div class="stat-card"><div class="label">Permits</div><div class="value green">${totalPermits}</div></div>
+    <div class="stat-card"><div class="label">Active Permits</div><div class="value purple">${activePermits}</div></div>
+    <div class="stat-card"><div class="label">Audits</div><div class="value yellow">${audits.length}</div></div>
+    <div class="stat-card"><div class="label">Training</div><div class="value blue">${totalTraining}</div></div>
+  `;
+
+  destroyCharts();
+  renderIncTypeChart(incidents);
+  renderIncSevChart(incidents);
+  renderIncTrendChart(incidents);
+  renderPermitChart(permits);
+  renderTrainingChart(training);
+  renderIncidentsTable(incidents);
+  renderPermitsTable(permits);
+  renderAuditsTable(audits);
+  renderTrainingTable(training);
+}
+
+function renderIncTypeChart(incidents) {
+  const counts = {};
+  incidents.forEach(i => { const t = i.incident_type || 'other'; counts[t] = (counts[t] || 0) + 1; });
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+  const palette = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899'];
+  charts.incTypeChart = new Chart(document.getElementById('incTypeChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderColor: '#0f172a', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+
+function renderIncSevChart(incidents) {
+  const counts = { critical: 0, major: 0, moderate: 0, minor: 0 };
+  incidents.forEach(i => { const s = i.severity || 'minor'; if (counts[s] !== undefined) counts[s]++; else counts.other = (counts.other || 0) + 1; });
+  const colors = { critical: '#ef4444', major: '#f97316', moderate: '#eab308', minor: '#22c55e', other: '#a855f7' };
+  charts.incSevChart = new Chart(document.getElementById('incSevChart'), {
+    type: 'bar',
+    data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => colors[k] || '#64748b'), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' } } } }
+  });
+}
+
+function renderIncTrendChart(incidents) {
+  const monthly = {};
+  incidents.forEach(i => { const d = i.incident_date || ''; if (d) { const m = d.substring(0, 7); monthly[m] = (monthly[m] || 0) + 1; } });
+  const labels = Object.keys(monthly).sort();
+  const values = labels.map(m => monthly[m]);
+  charts.incTrendChart = new Chart(document.getElementById('incTrendChart'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: values, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', fill: true, tension: 0.3, pointBackgroundColor: '#ef4444' }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8' } } } }
+  });
+}
+
+function renderPermitChart(permits) {
+  const counts = {};
+  permits.forEach(p => { const s = p.status || 'unknown'; counts[s] = (counts[s] || 0) + 1; });
+  const labels = Object.keys(counts);
+  const values = Object.values(counts);
+  const palette = ['#22c55e','#3b82f6','#eab308','#f97316','#ef4444','#a855f7'];
+  charts.permitChart = new Chart(document.getElementById('permitChart'), {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderColor: '#0f172a', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+
+function renderTrainingChart(training) {
+  const byType = {};
+  training.forEach(t => { const tp = t.training_type || 'other'; byType[tp] = (byType[tp] || 0) + 1; });
+  const labels = Object.keys(byType);
+  const values = Object.values(byType);
+  const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b'];
+  charts.trainingChart = new Chart(document.getElementById('trainingChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function formatDate(d) { return d || '—'; }
+
+function renderIncidentsTable(incidents) {
+  const container = document.getElementById('incidentsBody');
+  container.innerHTML = `<table>
+    <thead><tr><th>Code</th><th>Title</th><th>Type</th><th>Severity</th><th>Date</th><th>Location</th><th>Cost</th><th>Status</th></tr></thead>
+    <tbody>${incidents.slice(0, 100).map(i => {
+      const sevClass = 'badge-' + (i.severity || 'minor');
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;color:#64748b">${i.incident_code}</td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.title}</td>
+        <td><span style="font-size:11px;color:#94a3b8">${i.incident_type}</span></td>
+        <td><span class="badge ${sevClass}">${i.severity}</span></td>
+        <td>${formatDate(i.incident_date)}</td>
+        <td>${i.location || '—'}</td>
+        <td>$${(i.total_cost || 0).toLocaleString()}</td>
+        <td><span class="badge badge-${i.status}">${i.status}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderPermitsTable(permits) {
+  const container = document.getElementById('permitsBody');
+  if (permits.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No permits</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Permit #</th><th>Type</th><th>Description</th><th>Status</th><th>Issued</th><th>Expires</th><th>Area</th></tr></thead>
+    <tbody>${permits.slice(0, 100).map(p => `<tr>
+      <td style="font-family:monospace;font-size:12px;color:#64748b">${p.permit_number}</td>
+      <td><span style="font-size:11px;color:#94a3b8">${p.permit_type}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.description || '—'}</td>
+      <td><span class="badge badge-${p.status}">${p.status}</span></td>
+      <td>${formatDate(p.issue_date)}</td>
+      <td>${formatDate(p.expiry_date)}</td>
+      <td>${p.work_area || '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderAuditsTable(audits) {
+  const container = document.getElementById('auditsBody');
+  if (audits.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No audits</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Audit #</th><th>Type</th><th>Title</th><th>Status</th><th>Date</th><th>Auditor</th><th>Score</th></tr></thead>
+    <tbody>${audits.slice(0, 100).map(a => `<tr>
+      <td style="font-family:monospace;font-size:12px;color:#64748b">${a.audit_code || a.id}</td>
+      <td><span style="font-size:11px;color:#94a3b8">${a.audit_type}</span></td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.title || a.audit_title || '—'}</td>
+      <td><span class="badge badge-${a.status}">${a.status}</span></td>
+      <td>${formatDate(a.audit_date)}</td>
+      <td>${a.lead_auditor || a.auditor || '—'}</td>
+      <td>${a.score || a.audit_score || '—'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function renderTrainingTable(training) {
+  const container = document.getElementById('trainingBody');
+  if (training.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No training records</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Title</th><th>Type</th><th>Date</th><th>Instructor</th><th>Attendees</th><th>Status</th></tr></thead>
+    <tbody>${training.slice(0, 100).map(t => `<tr>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title || t.training_title || '—'}</td>
+      <td><span style="font-size:11px;color:#94a3b8">${t.training_type || '—'}</span></td>
+      <td>${formatDate(t.training_date || t.date)}</td>
+      <td>${t.instructor || t.trainer || '—'}</td>
+      <td>${t.attendee_count || t.participants || 0}</td>
+      <td><span class="badge badge-${t.status}">${t.status}</span></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+loadData();
+</script>
+</body>
+</html>

@@ -147,3 +147,104 @@ export const pmApi = {
   },
   getDashboard: () => fetchApi<any>('/pm/dashboard'),
 };
+
+// --- Schedule Management ---
+export const scheduleApi = {
+  listSchedules: (params?: { schedule_type?: string }) => {
+    const qs = params?.schedule_type ? `?schedule_type=${params.schedule_type}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/schedules${qs}`);
+  },
+  getSchedule: (id: string) => fetchApi<any>(`/api/v1/schedule/schedules/${id}`),
+  listActivities: (scheduleId?: string) => {
+    const qs = scheduleId ? `?schedule_id=${scheduleId}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/activities${qs}`);
+  },
+  listRelationships: (scheduleId?: string) => {
+    const qs = scheduleId ? `?schedule_id=${scheduleId}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/relationships${qs}`);
+  },
+  listResources: (scheduleId?: string) => {
+    const qs = scheduleId ? `?schedule_id=${scheduleId}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/resources${qs}`);
+  },
+  listBaselines: (scheduleId?: string) => {
+    const qs = scheduleId ? `?schedule_id=${scheduleId}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/baselines${qs}`);
+  },
+  listChanges: (scheduleId?: string) => {
+    const qs = scheduleId ? `?schedule_id=${scheduleId}` : '';
+    return fetchApi<any[]>(`/api/v1/schedule/changes${qs}`);
+  },
+  getSummary: () => fetchApi<any>('/api/v1/schedule/summary'),
+};
+
+// --- Equipment Management ---
+export const equipmentApi = {
+  listCategories: () => fetchApi<any[]>('/api/v1/equipment/categories'),
+  listItems: (params?: { status?: string; category_id?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.category_id) qs.set('category_id', params.category_id);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/equipment/items${q ? '?' + q : ''}`);
+  },
+  getItem: (id: string) => fetchApi<any>(`/api/v1/equipment/items/${id}`),
+  listMaintenance: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/maintenance${qs}`);
+  },
+  listMaintenanceSchedules: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/maintenance-schedules${qs}`);
+  },
+  listTelemetry: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/telemetry${qs}`);
+  },
+  listFuel: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/fuel${qs}`);
+  },
+  listDowntime: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/downtime${qs}`);
+  },
+  listSpareParts: (equipmentId?: string) => {
+    const qs = equipmentId ? `?equipment_id=${equipmentId}` : '';
+    return fetchApi<any[]>(`/api/v1/equipment/spare-parts${qs}`);
+  },
+  getSummary: () => fetchApi<any>('/api/v1/equipment/summary'),
+};
+
+// --- HSE ---
+export const hseApi = {
+  listIncidents: (params?: { status?: string; severity?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.severity) qs.set('severity', params.severity);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/hse/incidents${q ? '?' + q : ''}`);
+  },
+  getIncident: (id: string) => fetchApi<any>(`/api/v1/hse/incidents/${id}`),
+  listPermits: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/hse/permits${qs}`);
+  },
+  listAudits: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/hse/audits${qs}`);
+  },
+  listInspections: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/hse/inspections${qs}`);
+  },
+  listTraining: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/hse/training${qs}`);
+  },
+  listPPE: () => fetchApi<any[]>('/api/v1/hse/ppe'),
+  listDrills: () => fetchApi<any[]>('/api/v1/hse/drills'),
+  listStatistics: () => fetchApi<any[]>('/api/v1/hse/statistics'),
+  listEmergencyPlans: () => fetchApi<any[]>('/api/v1/hse/emergency-plans'),
+  listChemicals: () => fetchApi<any[]>('/api/v1/hse/chemicals'),
+};

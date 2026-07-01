@@ -269,3 +269,354 @@ export interface PMPortfolio {
   budget_total: number;
   status: string;
 }
+
+// ============================================================
+// Schedule Management
+// ============================================================
+export interface Schedule {
+  id: string;
+  project_id: number;
+  project_name: string;
+  schedule_code: string;
+  schedule_name: string;
+  schedule_type: string;
+  calendar: string;
+  data_date: string;
+  status: string;
+  total_float_pct: number;
+  created_by: string;
+  created_at: string;
+}
+
+export interface ScheduleActivity {
+  id: string;
+  schedule_id: string;
+  project_id: number;
+  activity_id: string;
+  wbs_code: string;
+  activity_name: string;
+  activity_type: string;
+  status: string;
+  original_duration: number;
+  remaining_duration: number;
+  actual_duration: number;
+  percent_complete: number;
+  early_start: string;
+  early_finish: string;
+  late_start: string;
+  late_finish: string;
+  actual_start: string | null;
+  actual_finish: string | null;
+  start_date: string;
+  finish_date: string;
+  float_free: number;
+  float_total: number;
+  is_critical: boolean;
+  is_driving: boolean;
+  constraint_type: string;
+  constraint_date: string | null;
+}
+
+export interface ScheduleRelationship {
+  id: string;
+  schedule_id: string;
+  predecessor_activity_id: string;
+  successor_activity_id: string;
+  relationship_type: string;
+  lag_days: number;
+}
+
+export interface ScheduleResource {
+  id: string;
+  schedule_id: string;
+  resource_id: string;
+  resource_name: string;
+  resource_type: string;
+  quantity: number;
+  unit: string;
+  unit_rate: number;
+}
+
+export interface ScheduleBaseline {
+  id: string;
+  schedule_id: string;
+  baseline_code: string;
+  baseline_name: string;
+  baseline_date: string;
+  is_current: boolean;
+}
+
+export interface ScheduleChange {
+  id: string;
+  schedule_id: string;
+  change_number: string;
+  change_type: string;
+  description: string;
+  old_duration: number;
+  new_duration: number;
+  old_start: string;
+  new_start: string;
+  old_finish: string;
+  new_finish: string;
+  reason: string;
+  approved_by: string;
+  approved_at: string;
+  status: string;
+}
+
+// ============================================================
+// Equipment Management
+// ============================================================
+export interface EquipmentCategory {
+  id: string;
+  category_code: string;
+  category_name: string;
+  description: string;
+  parent_id: string | null;
+  equipment_type: string;
+  icon: string;
+  sort_order: number;
+}
+
+export interface EquipmentItem {
+  id: string;
+  project_id: number;
+  project_name: string;
+  equipment_code: string;
+  equipment_name: string;
+  category_id: string;
+  equipment_type: string;
+  manufacturer: string;
+  model: string;
+  serial_number: string;
+  year_manufactured: number;
+  capacity: string;
+  capacity_unit: string;
+  status: string;
+  location: string;
+  purchase_date: string;
+  purchase_cost: number;
+  current_value: number;
+  fuel_type: string;
+  fuel_capacity: number;
+  hourly_rate: number;
+  meter_type: string;
+  meter_reading: number;
+  operator_required: boolean;
+  next_service_date: string;
+  is_active: boolean;
+}
+
+export interface EquipmentMaintenance {
+  id: string;
+  equipment_id: string;
+  maintenance_type: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  cost: number;
+  status: string;
+  technician: string;
+  notes: string;
+}
+
+export interface EquipmentMaintenanceSchedule {
+  id: string;
+  equipment_id: string;
+  schedule_code: string;
+  maintenance_type: string;
+  frequency_days: number;
+  frequency_meter: number;
+  description: string;
+  is_active: boolean;
+  next_due_date: string;
+}
+
+export interface EquipmentTelemetry {
+  id: string;
+  equipment_id: string;
+  recorded_at: string;
+  meter_value: number;
+  fuel_level: number;
+  engine_temp: number;
+  oil_pressure: number;
+  gps_lat: number;
+  gps_lng: number;
+  is_running: boolean;
+}
+
+export interface EquipmentFuel {
+  id: string;
+  equipment_id: string;
+  refuel_date: string;
+  quantity: number;
+  unit: string;
+  cost: number;
+  fuel_type: string;
+  operator: string;
+}
+
+export interface EquipmentDowntime {
+  id: string;
+  equipment_id: string;
+  downtime_type: string;
+  description: string;
+  start_date: string;
+  end_date: string;
+  duration_hours: number;
+  cost: number;
+}
+
+export interface EquipmentSparePart {
+  id: string;
+  equipment_id: string;
+  part_code: string;
+  part_name: string;
+  quantity: number;
+  unit: string;
+  unit_price: number;
+  reorder_level: number;
+}
+
+// ============================================================
+// HSE Module
+// ============================================================
+export interface HSEIncident {
+  id: string;
+  project_id: number;
+  project_name: string;
+  incident_number: number;
+  incident_code: string;
+  title: string;
+  description: string;
+  incident_type: string;
+  severity: string;
+  incident_date: string;
+  incident_time: string;
+  location: string;
+  area: string;
+  reported_by: string;
+  reported_at: string;
+  affected_person: string | null;
+  lost_days: number;
+  medical_cost: number;
+  property_cost: number;
+  total_cost: number;
+  root_cause: string | null;
+  investigation_status: string;
+  investigation_lead: string;
+  is_reportable: boolean;
+  status: string;
+}
+
+export interface HSEPermit {
+  id: string;
+  project_id: number;
+  project_name: string;
+  permit_number: string;
+  permit_type: string;
+  description: string;
+  status: string;
+  issue_date: string;
+  expiry_date: string;
+  work_area: string;
+  issued_by: string;
+  holder: string;
+}
+
+export interface HSEAudit {
+  id: string;
+  project_id: number;
+  project_name: string;
+  audit_code: string;
+  audit_type: string;
+  title: string;
+  status: string;
+  audit_date: string;
+  lead_auditor: string;
+  score: number;
+  findings_count: number;
+}
+
+export interface HSEInspection {
+  id: string;
+  project_id: number;
+  project_name: string;
+  inspection_code: string;
+  inspection_type: string;
+  title: string;
+  status: string;
+  inspection_date: string;
+  inspector: string;
+  findings_count: number;
+  severity: string;
+}
+
+export interface HSETraining {
+  id: string;
+  project_id: number;
+  project_name: string;
+  training_type: string;
+  title: string;
+  training_date: string;
+  instructor: string;
+  attendee_count: number;
+  status: string;
+}
+
+export interface HSEPPE {
+  id: string;
+  project_id: number;
+  ppe_type: string;
+  description: string;
+  quantity: number;
+  status: string;
+  expiry_date: string;
+}
+
+export interface HSEDrill {
+  id: string;
+  project_id: number;
+  drill_type: string;
+  title: string;
+  drill_date: string;
+  duration_minutes: number;
+  participants: number;
+  status: string;
+}
+
+export interface HSEStatistics {
+  id: string;
+  project_id: number;
+  period: string;
+  total_incidents: number;
+  lost_time_injuries: number;
+  near_misses: number;
+  first_aid_cases: number;
+  manhours_worked: number;
+  lti_frequency_rate: number;
+  lti_severity_rate: number;
+}
+
+export interface HSEEmergencyPlan {
+  id: string;
+  project_id: number;
+  plan_code: string;
+  plan_name: string;
+  emergency_type: string;
+  status: string;
+  last_review_date: string;
+  next_review_date: string;
+}
+
+export interface HSEChemical {
+  id: string;
+  project_id: number;
+  chemical_name: string;
+  cas_number: string;
+  hazard_class: string;
+  quantity: number;
+  unit: string;
+  storage_location: string;
+  safety_data_sheet: string;
+}

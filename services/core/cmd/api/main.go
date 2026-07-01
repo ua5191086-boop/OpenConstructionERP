@@ -94,6 +94,18 @@ func main() {
 		// Document Control Module
 		docControlHandler := handlers.NewDocControlHandler(database.DB)
 		docControlHandler.RegisterRoutes(r)
+
+		// Schedule Management Module
+		scheduleHandler := handlers.NewScheduleHandler(database.DB)
+		scheduleHandler.RegisterRoutes(r)
+
+		// Equipment Management Module
+		equipmentHandler := handlers.NewEquipmentHandler(database.DB)
+		equipmentHandler.RegisterRoutes(r)
+
+		// HSE Module
+		hseHandler := handlers.NewHSEHandler(database.DB)
+		hseHandler.RegisterRoutes(r)
 	})
 
 	// Start server

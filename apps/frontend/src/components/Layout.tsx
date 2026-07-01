@@ -12,6 +12,9 @@ const navItems = [
   { path: '/ai', label: 'AI', icon: '🤖' },
   { path: '/pm', label: 'PM', icon: '📁' },
   { path: '/doc-control', label: 'Doc Control', icon: '📄' },
+  { path: '/schedule', label: 'Schedule', icon: '📅' },
+  { path: '/equipment', label: 'Equipment', icon: '🏗️' },
+  { path: '/hse', label: 'HSE', icon: '🛡️' },
 ]
 
 export default function Layout() {

@@ -11,6 +11,9 @@ import BIMPage from './pages/BIMPage'
 import AIPage from './pages/AIPage'
 import PMProjectPage from './pages/PMProjectPage'
 import DocControlPage from './pages/DocControlPage'
+import SchedulePage from './pages/SchedulePage'
+import EquipmentPage from './pages/EquipmentPage'
+import HSEPage from './pages/HSEPage'
 
 function App() {
   return (
@@ -28,6 +31,9 @@ function App() {
           <Route path="/ai" element={<AIPage />} />
           <Route path="/pm" element={<PMProjectPage />} />
           <Route path="/doc-control" element={<DocControlPage />} />
+          <Route path="/schedule" element={<SchedulePage />} />
+          <Route path="/equipment" element={<EquipmentPage />} />
+          <Route path="/hse" element={<HSEPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

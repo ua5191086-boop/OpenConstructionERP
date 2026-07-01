@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Equipment Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.filters-bar select, .filters-bar input { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.filters-bar label { color: #94a3b8; font-size: 12px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-available { background: #1e3a2f; color: #34d399; }
+.badge-in_use { background: #1e3a5f; color: #60a5fa; }
+.badge-under_maintenance { background: #3b2f1e; color: #fbbf24; }
+.badge-out_of_service { background: #3b1e1e; color: #f87171; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🏗️ Equipment Management</h1>
+  <div class="subtitle">Fleet & Equipment Dashboard — Status, Maintenance, Downtime, Telemetry</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading Equipment data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid-3">
+      <div class="chart-card"><h3>📊 Equipment Status</h3><canvas id="eqStatusPie"></canvas></div>
+      <div class="chart-card"><h3>📁 Equipment by Category</h3><canvas id="catBar"></canvas></div>
+      <div class="chart-card"><h3>⛽ Fuel Consumption</h3><canvas id="fuelChart"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>🔧 Downtime by Equipment</h3><canvas id="downtimeChart"></canvas></div>
+      <div class="chart-card"><h3>📈 Telemetry — Meter Readings</h3><canvas id="telemetryChart"></canvas></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <h3>🔧 Equipment List</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body open" id="equipmentBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📅 Maintenance Schedule</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="maintenanceBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>⏱️ Downtime Events</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="downtimeBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = null;
+let charts = {};
+let selectedProject = '';
+
+function loadData() {
+  fetch('equipment_data.json')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(d => { DATA = d; initApp(); })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = `
+        <div class="value red" style="font-size:18px;">⚠️ Failed to load: ${err.message}</div>
+        <p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_equipment.py</code></p>`;
+    });
+}
+
+function initApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  buildProjectFilter();
+  renderAll();
+}
+
+function buildProjectFilter() {
+  const sel = document.getElementById('projectFilter');
+  const projects = [...new Set(DATA.equipment.map(e => e.project_name))];
+  sel.innerHTML = '<option value="">All Projects</option>' +
+    projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.addEventListener('change', () => { selectedProject = sel.value; renderAll(); });
+}
+
+function getFilteredEquipment() {
+  return selectedProject ? DATA.equipment.filter(e => e.project_name === selectedProject) : DATA.equipment;
+}
+
+function getFilteredMaintenance() {
+  const eqIds = new Set(getFilteredEquipment().map(e => e.id));
+  return DATA.maintenance.filter(m => eqIds.has(m.equipment_id));
+}
+
+function getFilteredDowntime() {
+  const eqIds = new Set(getFilteredEquipment().map(e => e.id));
+  return DATA.downtime.filter(d => eqIds.has(d.equipment_id));
+}
+
+function toggleAccordion(header) {
+  header.classList.toggle('active');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+function destroyCharts() {
+  Object.values(charts).forEach(c => { if (c) c.destroy(); });
+  charts = {};
+}
+
+function renderAll() {
+  const equipment = getFilteredEquipment();
+  const maintenance = getFilteredMaintenance();
+  const downtime = getFilteredDowntime();
+
+  const totalEq = equipment.length;
+  const available = equipment.filter(e => e.status === 'available').length;
+  const inUse = equipment.filter(e => e.status === 'in_use').length;
+  const underMaint = equipment.filter(e => e.status === 'under_maintenance').length;
+  const outOfService = equipment.filter(e => e.status === 'out_of_service').length;
+  const overdueMaint = equipment.filter(e => e.next_service_date && e.next_service_date < '2025-07-02').length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Total Equipment</div><div class="value blue">${totalEq}</div></div>
+    <div class="stat-card"><div class="label">Available</div><div class="value green">${available}</div></div>
+    <div class="stat-card"><div class="label">In Use</div><div class="value purple">${inUse}</div></div>
+    <div class="stat-card"><div class="label">Under Maintenance</div><div class="value yellow">${underMaint}</div></div>
+    <div class="stat-card"><div class="label">Out of Service</div><div class="value red">${outOfService}</div></div>
+    <div class="stat-card"><div class="label">Overdue Service</div><div class="value orange">${overdueMaint}</div></div>
+  `;
+
+  destroyCharts();
+  renderEqStatusPie(equipment);
+  renderCatBar(equipment);
+  renderFuelChart(equipment);
+  renderDowntimeChart(downtime);
+  renderTelemetryChart(equipment);
+  renderEquipmentTable(equipment);
+  renderMaintenanceTable(maintenance);
+  renderDowntimeTable(downtime);
+}
+
+function renderEqStatusPie(equipment) {
+  const counts = { available: 0, in_use: 0, under_maintenance: 0, out_of_service: 0 };
+  equipment.forEach(e => { if (counts[e.status] !== undefined) counts[e.status]++; else counts.other = (counts.other || 0) + 1; });
+  const colors = { available: '#22c55e', in_use: '#3b82f6', under_maintenance: '#eab308', out_of_service: '#ef4444', other: '#a855f7' };
+  charts.eqStatusPie = new Chart(document.getElementById('eqStatusPie'), {
+    type: 'doughnut',
+    data: { labels: Object.keys(counts), datasets: [{ data: Object.values(counts), backgroundColor: Object.keys(counts).map(k => colors[k] || '#64748b'), borderColor: '#0f172a', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+
+function renderCatBar(equipment) {
+  const byCat = {};
+  equipment.forEach(e => { const c = e.category_id || 'other'; byCat[c] = (byCat[c] || 0) + 1; });
+  const labels = Object.keys(byCat).map(k => { const cat = DATA.categories.find(c => c.id === k); return cat ? cat.category_code : k; });
+  const values = Object.values(byCat);
+  const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899','#6366f1','#84cc16'];
+  charts.catBar = new Chart(document.getElementById('catBar'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0, labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function renderFuelChart(equipment) {
+  const withFuel = equipment.filter(e => (e.fuel_capacity || 0) > 0).slice(0, 15);
+  const labels = withFuel.map(e => e.equipment_code);
+  const values = withFuel.map(e => e.fuel_capacity || 0);
+  const colors = ['#f97316','#eab308','#22c55e','#3b82f6','#a855f7'].concat(new Array(Math.max(0, labels.length - 5)).fill('#64748b'));
+  charts.fuelChart = new Chart(document.getElementById('fuelChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function renderDowntimeChart(downtime) {
+  const byEq = {};
+  downtime.forEach(d => { byEq[d.equipment_id] = (byEq[d.equipment_id] || 0) + (d.duration_hours || 0); });
+  const top = Object.entries(byEq).sort((a, b) => b[1] - a[1]).slice(0, 10);
+  const labels = top.map(([id]) => { const eq = DATA.equipment.find(e => e.id === id); return eq ? eq.equipment_code : id; });
+  const values = top.map(([, v]) => v);
+  charts.downtimeChart = new Chart(document.getElementById('downtimeChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: '#ef4444', borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => `${ctx.raw.toFixed(1)} hrs` } } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function renderTelemetryChart(equipment) {
+  const withMeter = equipment.filter(e => (e.meter_reading || 0) > 0).slice(0, 15);
+  const labels = withMeter.map(e => e.equipment_code);
+  const values = withMeter.map(e => e.meter_reading || 0);
+  const colors = ['#22c55e','#3b82f6','#a855f7','#f97316','#ef4444'].concat(new Array(Math.max(0, labels.length - 5)).fill('#64748b'));
+  charts.telemetryChart = new Chart(document.getElementById('telemetryChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, backgroundColor: colors.slice(0, labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+
+function formatDate(d) { return d || '—'; }
+
+function renderEquipmentTable(equipment) {
+  const container = document.getElementById('equipmentBody');
+  container.innerHTML = `<table>
+    <thead><tr><th>Code</th><th>Name</th><th>Manufacturer</th><th>Model</th><th>Status</th><th>Location</th><th>Meter</th><th>Next Service</th><th>Rate</th></tr></thead>
+    <tbody>${equipment.slice(0, 100).map(e => {
+      const statusClass = 'badge-' + (e.status || '');
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;color:#64748b">${e.equipment_code}</td>
+        <td>${e.equipment_name}</td>
+        <td>${e.manufacturer || '—'}</td>
+        <td>${e.model || '—'}</td>
+        <td><span class="badge ${statusClass}">${e.status}</span></td>
+        <td>${e.location || '—'}</td>
+        <td>${(e.meter_reading || 0).toFixed(1)} ${e.meter_type || ''}</td>
+        <td>${formatDate(e.next_service_date)}</td>
+        <td>$${(e.hourly_rate || 0).toFixed(2)}/hr</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderMaintenanceTable(maintenance) {
+  const container = document.getElementById('maintenanceBody');
+  if (maintenance.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No maintenance records</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Equipment</th><th>Type</th><th>Description</th><th>Start</th><th>End</th><th>Cost</th><th>Status</th></tr></thead>
+    <tbody>${maintenance.slice(0, 100).map(m => {
+      const eq = DATA.equipment.find(e => e.id === m.equipment_id);
+      const statusClass = 'badge-' + (m.status || '');
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;color:#64748b">${eq ? eq.equipment_code : m.equipment_id}</td>
+        <td><span style="font-size:11px;color:#94a3b8">${m.maintenance_type || '—'}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.description || '—'}</td>
+        <td>${formatDate(m.start_date)}</td>
+        <td>${formatDate(m.end_date)}</td>
+        <td>$${(m.cost || 0).toLocaleString()}</td>
+        <td><span class="badge ${statusClass}">${m.status}</span></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function renderDowntimeTable(downtime) {
+  const container = document.getElementById('downtimeBody');
+  if (downtime.length === 0) { container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No downtime events</p>'; return; }
+  container.innerHTML = `<table>
+    <thead><tr><th>Equipment</th><th>Type</th><th>Description</th><th>Start</th><th>End</th><th>Duration (h)</th><th>Cost</th></tr></thead>
+    <tbody>${downtime.slice(0, 100).map(d => {
+      const eq = DATA.equipment.find(e => e.id === d.equipment_id);
+      return `<tr>
+        <td style="font-family:monospace;font-size:12px;color:#64748b">${eq ? eq.equipment_code : d.equipment_id}</td>
+        <td><span style="font-size:11px;color:#94a3b8">${d.downtime_type || '—'}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${d.description || '—'}</td>
+        <td>${formatDate(d.start_date)}</td>
+        <td>${formatDate(d.end_date)}</td>
+        <td>${(d.duration_hours || 0).toFixed(1)}</td>
+        <td>$${(d.cost || 0).toLocaleString()}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+loadData();
+</script>
+</body>
+</html>
