@@ -1,5 +1,5 @@
 -- ============================================================================
--- V002__Tender_Module.sql
+-- V003__Tender_Module.sql
 -- Модуль управления тендерами (Tender Management)
 -- Часть OpenConstructionERP — Project Operating System
 -- ============================================================================
@@ -10,14 +10,14 @@
 -- 1. Тендеры
 -- ============================================================================
 CREATE TABLE tenders (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code            VARCHAR(50) NOT NULL UNIQUE,          -- T-2026-001
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
     tender_type     VARCHAR(50) NOT NULL DEFAULT 'open',   -- open, limited, single_source, request_quote
     status          VARCHAR(50) NOT NULL DEFAULT 'draft', -- draft, published, in_progress, evaluation, awarded, cancelled, completed
-    client_id       BIGINT REFERENCES contractors(id),
-    project_id      BIGINT REFERENCES projects(id),
+    client_id       UUID REFERENCES organizations(id),
+    project_id      UUID REFERENCES projects(id),
     budget_amount   NUMERIC(18,2),                        -- сметная стоимость
     currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
     published_at    TIMESTAMPTZ,
@@ -48,14 +48,14 @@ CREATE INDEX idx_tenders_deadline ON tenders(submission_deadline);
 -- 2. Лоты тендера
 -- ============================================================================
 CREATE TABLE tender_lots (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     lot_number      INTEGER NOT NULL,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
     estimated_amount NUMERIC(18,2),
     currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
-    section_id      BIGINT REFERENCES sections(id),       -- участок строительства
+    section_id      UUID REFERENCES boq_sections(id),       -- участок строительства
     status          VARCHAR(50) NOT NULL DEFAULT 'active', -- active, awarded, cancelled
     award_decision  TEXT,                                  -- обоснование выбора победителя
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -68,9 +68,9 @@ CREATE INDEX idx_tender_lots_tender ON tender_lots(tender_id);
 -- 3. Позиции лота (привязка к BOQ)
 -- ============================================================================
 CREATE TABLE tender_lot_items (
-    id              BIGSERIAL PRIMARY KEY,
-    lot_id          BIGINT NOT NULL REFERENCES tender_lots(id) ON DELETE CASCADE,
-    boq_item_id     BIGINT REFERENCES boq_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    lot_id          UUID NOT NULL REFERENCES tender_lots(id) ON DELETE CASCADE,
+    boq_item_id     UUID REFERENCES boq_items(id),
     item_code       VARCHAR(100),
     description     TEXT,
     unit            VARCHAR(20),
@@ -87,10 +87,10 @@ CREATE INDEX idx_tender_lot_items_lot ON tender_lot_items(lot_id);
 -- 4. Участники тендера
 -- ============================================================================
 CREATE TABLE tender_bidders (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
-    lot_id          BIGINT REFERENCES tender_lots(id) ON DELETE CASCADE,
-    contractor_id   BIGINT NOT NULL REFERENCES contractors(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    lot_id          UUID REFERENCES tender_lots(id) ON DELETE CASCADE,
+    contractor_id   UUID NOT NULL REFERENCES organizations(id),
     bid_number      VARCHAR(50),                          -- номер заявки
     status          VARCHAR(50) NOT NULL DEFAULT 'submitted', -- submitted, qualified, disqualified, withdrawn, winner, reserve
     bid_amount      NUMERIC(18,2),                        -- общая сумма заявки
@@ -115,10 +115,10 @@ CREATE INDEX idx_tender_bidders_winner ON tender_bidders(tender_id, is_winner) W
 -- 5. Ценовые предложения участников (по позициям)
 -- ============================================================================
 CREATE TABLE tender_bid_items (
-    id              BIGSERIAL PRIMARY KEY,
-    bidder_id       BIGINT NOT NULL REFERENCES tender_bidders(id) ON DELETE CASCADE,
-    lot_item_id     BIGINT REFERENCES tender_lot_items(id) ON DELETE CASCADE,
-    boq_item_id     BIGINT REFERENCES boq_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    bidder_id       UUID NOT NULL REFERENCES tender_bidders(id) ON DELETE CASCADE,
+    lot_item_id     UUID REFERENCES tender_lot_items(id) ON DELETE CASCADE,
+    boq_item_id     UUID REFERENCES boq_items(id),
     item_code       VARCHAR(100),
     description     TEXT,
     unit            VARCHAR(20),
@@ -137,10 +137,10 @@ CREATE INDEX idx_tender_bid_items_bidder ON tender_bid_items(bidder_id);
 -- 6. Оценка заявок
 -- ============================================================================
 CREATE TABLE tender_evaluations (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
-    lot_id          BIGINT REFERENCES tender_lots(id) ON DELETE CASCADE,
-    bidder_id       BIGINT NOT NULL REFERENCES tender_bidders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    lot_id          UUID REFERENCES tender_lots(id) ON DELETE CASCADE,
+    bidder_id       UUID NOT NULL REFERENCES tender_bidders(id) ON DELETE CASCADE,
     evaluator       VARCHAR(200),
     evaluation_type VARCHAR(50) NOT NULL DEFAULT 'technical', -- technical, financial, combined
     score           NUMERIC(5,2),                          -- оценка в баллах
@@ -158,8 +158,8 @@ CREATE INDEX idx_tender_evaluations_bidder ON tender_evaluations(bidder_id);
 -- 7. Критерии оценки
 -- ============================================================================
 CREATE TABLE tender_evaluation_criteria (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     name            VARCHAR(200) NOT NULL,
     description     TEXT,
     weight_pct      NUMERIC(5,2) NOT NULL,                -- вес критерия, %
@@ -174,12 +174,12 @@ CREATE INDEX idx_tender_criteria_tender ON tender_evaluation_criteria(tender_id)
 -- 8. Документы тендера
 -- ============================================================================
 CREATE TABLE tender_documents (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     document_type   VARCHAR(100) NOT NULL,                 -- rfp, addendum, bid, clarification, contract
     title           VARCHAR(500) NOT NULL,
     file_path       VARCHAR(1000),
-    file_size       BIGINT,
+    file_size       UUID,
     mime_type       VARCHAR(100),
     version         INTEGER DEFAULT 1,
     uploaded_by     VARCHAR(100),
@@ -192,10 +192,10 @@ CREATE INDEX idx_tender_documents_tender ON tender_documents(tender_id);
 -- 9. Вопросы и разъяснения
 -- ============================================================================
 CREATE TABLE tender_clarifications (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
-    lot_id          BIGINT REFERENCES tender_lots(id) ON DELETE CASCADE,
-    bidder_id       BIGINT REFERENCES tender_bidders(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    lot_id          UUID REFERENCES tender_lots(id) ON DELETE CASCADE,
+    bidder_id       UUID REFERENCES tender_bidders(id),
     question        TEXT NOT NULL,
     answer          TEXT,
     is_public       BOOLEAN DEFAULT TRUE,                  -- публичный ответ (всем участникам)
@@ -211,8 +211,8 @@ CREATE INDEX idx_tender_clarifications_tender ON tender_clarifications(tender_id
 -- 10. История статусов
 -- ============================================================================
 CREATE TABLE tender_status_history (
-    id              BIGSERIAL PRIMARY KEY,
-    tender_id       BIGINT NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tender_id       UUID NOT NULL REFERENCES tenders(id) ON DELETE CASCADE,
     from_status     VARCHAR(50),
     to_status       VARCHAR(50) NOT NULL,
     changed_by      VARCHAR(100),

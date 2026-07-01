@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Tunnel</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<style>
+  :root{--bg:#0f1419;--panel:#1a2129;--line:#2a3441;--txt:#e6edf3;--mut:#8b98a5;--acc:#4a9eff;--ok:#3fb950}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;padding:20px}
+  h1{font-size:18px;margin-bottom:4px} .sub{color:var(--mut);font-size:12px;margin-bottom:16px}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  select,input,button{background:var(--panel);color:var(--txt);border:1px solid var(--line);border-radius:6px;padding:8px 12px;font-size:13px}
+  input[type=number]{width:90px}
+  button{cursor:pointer} button:hover{border-color:var(--acc)} button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+  .card .v{font-size:22px;font-weight:700;margin-top:4px} .card .l{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  .grid{display:grid;grid-template-columns:1.5fr 1fr;gap:12px}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)}
+  th{color:var(--mut);font-weight:600} td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  .tbl{max-height:380px;overflow:auto}
+  .msg{font-size:12px;color:var(--ok);min-height:16px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<h1>Tunnel — Drive Progress <span style="color:var(--mut);font-weight:400">| <a href="/">BOQ dashboard</a></span></h1>
+<div class="sub">L-01 TBM Operations · L-03 Ring Register</div>
+
+<div class="bar">
+  <select id="project"></select>
+  <select id="drive"></select>
+  <button id="newDrive">+ New drive</button>
+  <span class="msg" id="msg"></span>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="l">Rings built</div><div class="v" id="kBuilt">—</div></div>
+  <div class="card"><div class="l">Design rings</div><div class="v" id="kDesign">—</div></div>
+  <div class="card"><div class="l">Progress</div><div class="v" id="kPct">—</div></div>
+  <div class="card"><div class="l">Avg rings/day</div><div class="v" id="kRate">—</div></div>
+  <div class="card"><div class="l">ETA (work days)</div><div class="v" id="kEta">—</div></div>
+</div>
+
+<div class="grid">
+  <div class="panel"><canvas id="chart" height="230"></canvas></div>
+  <div class="panel">
+    <b>Shift entry</b>
+    <div class="bar" style="margin:10px 0">
+      <label>From ring <input type="number" id="rFrom" min="1" value="1"></label>
+      <label>to <input type="number" id="rTo" min="1" value="1"></label>
+      <select id="shift"><option>day</option><option>night</option></select>
+      <button id="addRings" class="primary">Register rings</button>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th class="num">Ring</th><th class="num">Chainage</th><th>Built</th><th>Shift</th><th class="num">Grout m³</th></tr></thead>
+      <tbody id="rows"><tr><td colspan="5" style="color:var(--mut)">Select a drive</td></tr></tbody>
+    </table></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>n==null?"—":Number(n).toLocaleString("en-US",{maximumFractionDigits:1});
+let chart, projectId=null, driveId=null;
+async function api(path,opts){const r=await fetch("/api/v1"+path,opts);
+  if(!r.ok){throw new Error((await r.json()).detail||r.statusText)} return r.json();}
+
+async function loadProjects(){
+  const ps=await api("/projects");
+  $("project").innerHTML=ps.map(p=>`<option value="${p.id}">${p.code} — ${p.name}</option>`).join("")||"<option value=''>—</option>";
+  projectId=$("project").value||null; loadDrives();
+}
+async function loadDrives(sel){
+  projectId=$("project").value;
+  const ds=await api(`/projects/${projectId}/tunnel/drives`);
+  $("drive").innerHTML=ds.length?ds.map(d=>
+    `<option value="${d.id}">${d.code} — ${d.name} (${d.rings_built}/${d.design_rings})</option>`).join("")
+    :"<option value=''>— no drives —</option>";
+  if(sel)$("drive").value=sel;
+  driveId=$("drive").value||null; refresh();
+}
+async function refresh(){
+  driveId=$("drive").value||null;
+  if(!driveId){return}
+  try{
+    const p=await api(`/projects/${projectId}/tunnel/drives/${driveId}/progress`);
+    $("kBuilt").textContent=fmt(p.rings_built); $("kDesign").textContent=fmt(p.design_rings);
+    $("kPct").textContent=(p.percent??"—")+"%"; $("kRate").textContent=fmt(p.avg_rings_per_day);
+    $("kEta").textContent=fmt(p.eta_working_days);
+    $("rFrom").value=p.rings_built+1; $("rTo").value=p.rings_built+8;
+    drawChart(p.daily, p.design_rings);
+    const rings=await api(`/projects/${projectId}/tunnel/drives/${driveId}/rings?limit=100`);
+    $("rows").innerHTML=rings.length?rings.map(r=>
+      `<tr><td class="num">${r.ring_no}</td><td class="num">${fmt(r.chainage)}</td>
+       <td>${(r.built_at||"").slice(0,16).replace("T"," ")}</td><td>${r.shift||""}</td>
+       <td class="num">${fmt(r.grout_volume_m3)}</td></tr>`).join("")
+      :`<tr><td colspan="5" style="color:var(--mut)">No rings yet</td></tr>`;
+  }catch(e){$("msg").textContent=e.message}
+}
+function drawChart(daily,design){
+  if(chart)chart.destroy();
+  chart=new Chart($("chart"),{data:{labels:daily.map(d=>d.day),
+    datasets:[
+     {type:"bar",label:"Rings/day",data:daily.map(d=>d.rings),backgroundColor:"#4a9eff",yAxisID:"y"},
+     {type:"line",label:"Cumulative",data:daily.map(d=>d.cumulative),borderColor:"#3fb950",tension:.2,yAxisID:"y1"}]},
+    options:{plugins:{legend:{labels:{color:"#e6edf3"}}},
+     scales:{y:{position:"left",ticks:{color:"#8b98a5"},grid:{color:"#2a3441"}},
+             y1:{position:"right",ticks:{color:"#8b98a5"},grid:{display:false},suggestedMax:design||undefined},
+             x:{ticks:{color:"#8b98a5"},grid:{display:false}}}}});
+}
+$("project").onchange=()=>loadDrives(); $("drive").onchange=refresh;
+$("addRings").onclick=async()=>{
+  const from=+$("rFrom").value,to=+$("rTo").value,shift=$("shift").value;
+  if(!driveId||to<from)return;
+  const rings=[]; for(let n=from;n<=to;n++)rings.push({ring_no:n,shift,advance_mm:1400});
+  try{const r=await api(`/projects/${projectId}/tunnel/drives/${driveId}/rings`,
+    {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rings})});
+    $("msg").textContent=`Added ${r.added}`+(r.errors.length?`, errors: ${r.errors.length}`:"");
+    loadDrives(driveId);
+  }catch(e){$("msg").textContent="Error: "+e.message}
+};
+$("newDrive").onclick=async()=>{
+  const code=prompt("Drive code (e.g. DR-L):"); if(!code)return;
+  const name=prompt("Drive name:")||code;
+  const len=+prompt("Length, m:","5500")||0;
+  try{await api(`/projects/${projectId}/tunnel/drives`,{method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({code,name,chainage_from:0,chainage_to:len,tbm_code:"TBM-01"})});
+    loadDrives();
+  }catch(e){alert(e.message)}
+};
+loadProjects();
+</script>
+</body>
+</html>

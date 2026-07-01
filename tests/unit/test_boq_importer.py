@@ -17,3 +17,8 @@ def test_english_headers_map():
 def test_noise_normalisation():
     assert norm_header("  Кол-во  ") == "колво"
     assert norm_header("Unit_Price") == "unitprice"
+
+def test_chainage_derivation():
+    # ring N chainage = from + N * width/1000 (direction-aware)
+    width = 1400; frm = 0.0
+    assert frm + 42 * width / 1000.0 == 58.8

@@ -52,6 +52,7 @@ Deploy:      Kubernetes/Helm/ArgoCD + single-node Compose profile — ADR-015
 - **`services/core-py/`** — Python reference implementation of the platform core (FastAPI):
   - Minimal **ontology API** (ADR-001): object types, objects, links, graph neighbourhood — every project and BOQ item lives in the semantic graph
   - **Projects API** + **BOQ vertical**: Excel import with RU/EN header auto-mapping, summary by CBS chapter with **regional coefficients**, styled Excel export
+  - **Tunnel vertical** (L-01/L-03): drives, bulk shift ring registration, chainage derivation, progress analytics (rings/day, S-curve, ETA to breakthrough) + tunnel dashboard at `/tunnel.html`
   - **Live dashboard** at `http://localhost:8000` (KPI cards, chapter chart, searchable items, import/export from the browser); OpenAPI docs at `/docs`
 - `database/migrations/` — V000 foundation, V001 BOQ module, V002 ontology core + regional coefficients (full chain installed by CI on every PR)
 - `scripts/generate_boq.py` — test-data generator
