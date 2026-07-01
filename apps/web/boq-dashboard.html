@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — BOQ Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+.table-header .filters { display: flex; gap: 8px; }
+.table-header select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 6px 12px; font-size: 13px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.cbs-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.cbs-01 { background: #1e3a5f; color: #60a5fa; }
+.cbs-02 { background: #3b2f1e; color: #fbbf24; }
+.cbs-03 { background: #1e3a2f; color: #34d399; }
+.cbs-04 { background: #3b1e2f; color: #f472b6; }
+.cbs-05 { background: #2f1e3b; color: #a78bfa; }
+.cbs-06 { background: #1e2f3b; color: #38bdf8; }
+.cbs-07 { background: #3b2f1e; color: #fb923c; }
+.cbs-08 { background: #1e3b2f; color: #4ade80; }
+.cbs-09 { background: #2f3b1e; color: #facc15; }
+.cbs-10 { background: #3b1e1e; color: #f87171; }
+.cbs-11 { background: #1e1e3b; color: #818cf8; }
+.cbs-12 { background: #2f1e1e; color: #fca5a5; }
+.amount { text-align: right; font-variant-numeric: tabular-nums; }
+.amount.positive { color: #22c55e; }
+.amount.negative { color: #ef4444; }
+@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>🏗️ OpenConstructionERP</h1>
+    <div class="subtitle">BOQ Dashboard — Railway Infrastructure Project</div>
+</div>
+<div class="container">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Cost by CBS Chapter</h3>
+            <canvas id="cbsChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Cost by Section</h3>
+            <canvas id="sectionChart"></canvas>
+        </div>
+    </div>
+    <div class="table-container">
+        <div class="table-header">
+            <h3>BOQ Items</h3>
+            <div class="filters">
+                <select id="sectionFilter" onchange="applyFilters()">
+                    <option value="">All Sections</option>
+                </select>
+                <select id="cbsFilter" onchange="applyFilters()">
+                    <option value="">All CBS Chapters</option>
+                </select>
+                <select id="contractorFilter" onchange="applyFilters()">
+                    <option value="">All Contractors</option>
+                </select>
+            </div>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Item</th>
+                    <th>CBS</th>
+                    <th>Unit</th>
+                    <th class="amount">Qty</th>
+                    <th class="amount">Unit Price</th>
+                    <th class="amount">Total</th>
+                    <th>Contractor</th>
+                </tr>
+            </thead>
+            <tbody id="boqTableBody"></tbody>
+        </table>
+    </div>
+</div>
+<script>
+let boqData = null;
+
+async function loadBOQ() {
+    try {
+        const resp = await fetch('boq_rl-ab-001.json');
+        boqData = await resp.json();
+        renderDashboard();
+    } catch(e) {
+        document.querySelector('.container').innerHTML = `
+            <div style="text-align:center;padding:80px;color:#94a3b8">
+                <h2>📄 BOQ data not found</h2>
+                <p style="margin-top:12px">Run <code>python3 scripts/generate_boq.py</code> first</p>
+            </div>`;
+    }
+}
+
+function getCBSName(code) {
+    const names = {
+        '01':'Site Prep','01.01':'Land Acquisition','01.02':'Utility Relocation',
+        '01.03':'Demolition','01.04':'Preliminary Works','02':'Earthworks',
+        '02.01':'Excavation','02.02':'Embankment','02.03':'Drainage',
+        '02.04':'Slope Stabilization','02.05':'Geotechnical','03':'Civil Structures',
+        '03.01':'Bridges','03.02':'Elevated','03.03':'Viaducts','03.04':'Tunnels',
+        '03.05':'Culverts','03.06':'Retaining Walls','04':'Track Works',
+        '04.01':'Ballast','04.02':'Track Structure','04.03':'Turnouts',
+        '04.04':'CWR','04.05':'Level Crossings','05':'Signalling',
+        '05.01':'Signalling Systems','05.02':'Interlocking','05.03':'Block Systems',
+        '05.04':'Telecoms','05.05':'Fibre Optic','05.06':'Radio',
+        '05.07':'Data Transmission','05.08':'Control Centres','05.09':'Equipment Rooms',
+        '05.10':'Dispatch Centres','06':'Buildings','06.01':'Stations',
+        '06.02':'Station Buildings','06.03':'Locomotive Depots','06.04':'Rolling Stock Depots',
+        '06.05':'Service Facilities','06.06':'Admin Buildings','06.07':'Warehouses',
+        '06.08':'Industrial Buildings','07':'Power Supply','07.01':'Traction Substations',
+        '07.02':'Transformer Substations','07.03':'OCL','07.04':'External Power',
+        '07.05':'Cable Networks','07.06':'Lighting','07.07':'Power Distribution',
+        '07.08':'Distribution Substations','07.09':'Energy Dispatch','08':'Utilities',
+        '08.01':'Water Supply','08.02':'Sewerage','08.03':'Heating','08.04':'Gas Supply',
+        '08.05':'Drainage','08.06':'Stormwater','08.07':'External Utilities',
+        '09':'Rolling Stock','09.01':'Locomotives','09.02':'EMU','09.03':'Passenger Cars',
+        '09.04':'Freight Cars','09.05':'Process Equipment','09.06':'Furniture',
+        '09.07':'Inventory','09.08':'Operational Equipment','10':'Temporary Facilities',
+        '10.01':'Construction Camps','10.02':'Temp Warehouses','10.03':'Temp Utilities',
+        '10.04':'Temp Roads','10.05':'Temp Power','11':'Training & Employer',
+        '11.01':'Personnel Training','11.02':'Staff Development','11.03':'Employer Costs',
+        '11.04':'Construction Supervision','11.05':'Design Supervision','11.06':'Consultancy',
+        '12':'Other Costs','12.01':'Design & Engineering','12.02':'Expertise',
+        '12.03':'Studies','12.04':'Permits','12.05':'Insurance',
+        '12.06':'Regulatory','12.07':'Other'
+    };
+    return names[code] || code;
+}
+
+function getCBSClass(code) {
+    const chapter = code.split('.')[0];
+    return `cbs-badge cbs-${chapter}`;
+}
+
+function formatCurrency(n) {
+    return '$' + Number(n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function renderDashboard() {
+    const { project, sections, complexes, objects, boq_items, summary } = boqData;
+
+    // Stats
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Total BOQ Cost</div><div class="value green">${formatCurrency(summary.total_boq_cost)}</div></div>
+        <div class="stat-card"><div class="label">Sections</div><div class="value blue">${summary.total_sections}</div></div>
+        <div class="stat-card"><div class="label">Complexes</div><div class="value purple">${summary.total_complexes}</div></div>
+        <div class="stat-card"><div class="label">BOQ Items</div><div class="value orange">${summary.total_boq_items}</div></div>
+    `;
+
+    // CBS Chart
+    const cbsTotals = {};
+    boq_items.forEach(item => {
+        const cbs = item.cbs_code.split('.')[0];
+        cbsTotals[cbs] = (cbsTotals[cbs] || 0) + item.total_cost;
+    });
+    const cbsLabels = Object.keys(cbsTotals).sort().map(c => getCBSName(c));
+    const cbsValues = Object.keys(cbsTotals).sort().map(c => cbsTotals[c]);
+    const cbsColors = ['#60a5fa','#fbbf24','#34d399','#f472b6','#a78bfa','#38bdf8','#fb923c','#4ade80','#facc15','#f87171','#818cf8','#fca5a5'];
+
+    new Chart(document.getElementById('cbsChart'), {
+        type: 'bar',
+        data: {
+            labels: cbsLabels,
+            datasets: [{
+                data: cbsValues,
+                backgroundColor: cbsColors,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: v => '$' + (v/1e6).toFixed(1) + 'M', color: '#94a3b8' }, grid: { color: '#334155' } },
+                x: { ticks: { color: '#94a3b8', maxRotation: 45 } }
+            }
+        }
+    });
+
+    // Section Chart
+    const sectionTotals = {};
+    const sectionMap = {};
+    sections.forEach(s => sectionMap[s.id] = s.name);
+    complexes.forEach(c => {
+        const secName = sectionMap[c.section_id] || 'Unknown';
+        sectionTotals[secName] = 0;
+    });
+    boq_items.forEach(item => {
+        const obj = objects.find(o => o.id === item.object_id);
+        if (obj) {
+            const comp = complexes.find(c => c.id === obj.complex_id);
+            if (comp) {
+                const secName = sectionMap[comp.section_id] || 'Unknown';
+                sectionTotals[secName] = (sectionTotals[secName] || 0) + item.total_cost;
+            }
+        }
+    });
+
+    new Chart(document.getElementById('sectionChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(sectionTotals),
+            datasets: [{
+                data: Object.values(sectionTotals),
+                backgroundColor: ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#6366f1','#ec4899'],
+                borderColor: '#1e293b',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Populate filters
+    const sectionFilter = document.getElementById('sectionFilter');
+    sections.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = s.name;
+        sectionFilter.appendChild(opt);
+    });
+
+    const cbsFilter = document.getElementById('cbsFilter');
+    const uniqueCBS = [...new Set(boq_items.map(i => i.cbs_code.split('.')[0]))].sort();
+    uniqueCBS.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = getCBSName(c);
+        cbsFilter.appendChild(opt);
+    });
+
+    const contractorFilter = document.getElementById('contractorFilter');
+    const uniqueContractors = [...new Set(boq_items.map(i => i.contractor?.name || 'Unknown'))].sort();
+    uniqueContractors.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        contractorFilter.appendChild(opt);
+    });
+
+    renderTable(boq_items);
+}
+
+function applyFilters() {
+    const sectionId = document.getElementById('sectionFilter').value;
+    const cbsCode = document.getElementById('cbsFilter').value;
+    const contractor = document.getElementById('contractorFilter').value;
+
+    let filtered = [...boqData.boq_items];
+
+    if (sectionId) {
+        const complexIds = new Set(boqData.complexes.filter(c => c.section_id === sectionId).map(c => c.id));
+        const objectIds = new Set(boqData.objects.filter(o => complexIds.has(o.complex_id)).map(o => o.id));
+        filtered = filtered.filter(i => objectIds.has(i.object_id));
+    }
+    if (cbsCode) {
+        filtered = filtered.filter(i => i.cbs_code.startsWith(cbsCode));
+    }
+    if (contractor) {
+        filtered = filtered.filter(i => (i.contractor?.name || 'Unknown') === contractor);
+    }
+
+    renderTable(filtered);
+}
+
+function renderTable(items) {
+    const tbody = document.getElementById('boqTableBody');
+    tbody.innerHTML = items.map(item => `
+        <tr>
+            <td style="font-family:monospace;font-size:12px;color:#64748b">${item.code}</td>
+            <td>${item.name}</td>
+            <td><span class="${getCBSClass(item.cbs_code)}">${item.cbs_code}</span></td>
+            <td>${item.unit}</td>
+            <td class="amount">${Number(item.quantity).toLocaleString()}</td>
+            <td class="amount">${formatCurrency(item.unit_price)}</td>
+            <td class="amount positive">${formatCurrency(item.total_cost)}</td>
+            <td style="font-size:12px;color:#94a3b8">${item.contractor?.name || '—'}</td>
+        </tr>
+    `).join('');
+}
+
+loadBOQ();
+</script>
+</body>
+</html>
