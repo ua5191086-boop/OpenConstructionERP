@@ -1,6 +1,7 @@
 # OpenConstructionERP — developer stack (single node)
 # Usage: docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
-# Migrations in database/migrations/ are applied automatically on first start (V000 -> V001 ...).
+# Migrations in database/migrations/ are applied automatically on first start (V000 -> V001 -> V002).
+# BOQ dashboard: http://localhost:8000  |  API docs: http://localhost:8000/docs
 name: oce-dev
 
 services:
@@ -21,6 +22,17 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+
+  core:
+    build: ../../services/core-py
+    container_name: oce-core
+    environment:
+      DATABASE_URL: postgresql://oce:oce_dev_only@postgres:5432/oce
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
   minio:
     image: minio/minio:latest

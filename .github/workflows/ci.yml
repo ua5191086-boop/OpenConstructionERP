@@ -25,6 +25,10 @@ jobs:
           python-version: "3.12"
       - name: Python syntax check
         run: python -m compileall scripts/
+      - name: Install core-py dependencies
+        run: pip install -r services/core-py/requirements.txt pytest
+      - name: Unit tests
+        run: python -m pytest tests/unit -q
       - name: Apply migrations in order (schema must always be installable)
         env:
           PGPASSWORD: ci
@@ -33,3 +37,15 @@ jobs:
             echo ">>> $f"
             psql -h localhost -U oce -d oce -v ON_ERROR_STOP=1 -f "$f"
           done
+      - name: API smoke test (health + project + ontology)
+        env:
+          DATABASE_URL: postgresql://oce:ci@localhost:5432/oce
+        run: |
+          cd services/core-py
+          python -m uvicorn app.main:app --port 8000 &
+          sleep 5
+          curl -sf localhost:8000/health
+          curl -sf -X POST localhost:8000/api/v1/projects \
+            -H "Content-Type: application/json" \
+            -d '{"code":"CI-TEST","name":"CI smoke project"}'
+          curl -sf "localhost:8000/api/v1/core/objects?type_code=project" | grep -q CI-TEST

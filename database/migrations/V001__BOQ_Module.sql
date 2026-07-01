@@ -7,7 +7,8 @@
 -- ============================================================
 CREATE TABLE cbs_chapters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    -- NULL project_id = global catalog chapter (template shared across projects)
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     code VARCHAR(10) NOT NULL,
     name VARCHAR(255) NOT NULL,
     name_ru VARCHAR(255),
@@ -22,6 +23,7 @@ CREATE TABLE cbs_chapters (
 
 CREATE INDEX idx_cbs_project ON cbs_chapters(project_id);
 CREATE INDEX idx_cbs_path ON cbs_chapters USING GIST(path);
+CREATE UNIQUE INDEX uq_cbs_global_code ON cbs_chapters(code) WHERE project_id IS NULL;
 
 -- ============================================================
 -- 2. BOQ Hierarchy

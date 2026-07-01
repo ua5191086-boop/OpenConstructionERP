@@ -47,18 +47,25 @@ Auth:        Keycloak + OPA (RBAC x ABAC)                        — ADR-009
 Deploy:      Kubernetes/Helm/ArgoCD + single-node Compose profile — ADR-015
 ```
 
-## What works today
+## What works today (Prototype 0.1)
 
-- `database/migrations/` — V000 core foundation + V001 BOQ module (CBS, sections, BOQ items, LTREE hierarchies)
-- `scripts/generate_boq.py` — test-data generator for a linear railway project
-- `apps/web/boq-dashboard.html` — BOQ dashboard prototype
+- **`services/core-py/`** — Python reference implementation of the platform core (FastAPI):
+  - Minimal **ontology API** (ADR-001): object types, objects, links, graph neighbourhood — every project and BOQ item lives in the semantic graph
+  - **Projects API** + **BOQ vertical**: Excel import with RU/EN header auto-mapping, summary by CBS chapter with **regional coefficients**, styled Excel export
+  - **Live dashboard** at `http://localhost:8000` (KPI cards, chapter chart, searchable items, import/export from the browser); OpenAPI docs at `/docs`
+- `database/migrations/` — V000 foundation, V001 BOQ module, V002 ontology core + regional coefficients (full chain installed by CI on every PR)
+- `scripts/generate_boq.py` — test-data generator
+
+> Per ADR-003 the production core is Go; `core-py` is the executable specification
+> and the tool the team uses today. Business logic stays within the BOQ vertical.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/ua5191086-boop/OpenConstructionERP.git
 cd OpenConstructionERP
-docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
+docker compose -f infrastructure/docker/docker-compose.dev.yml up -d --build
+# BOQ dashboard:  http://localhost:8000      API docs: http://localhost:8000/docs
 # PostgreSQL :5432 (oce/oce_dev_only), MinIO console :9001, Adminer :8080
 # Migrations from database/migrations/ are applied automatically on first start.
 ```
