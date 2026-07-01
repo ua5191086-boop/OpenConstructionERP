@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Document Control Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.yellow { color: #eab308; }
+.stat-card .value.teal { color: #14b8a6; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 280px; }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.filters-bar select, .filters-bar input { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.filters-bar label { color: #94a3b8; font-size: 12px; }
+.tab-bar { display: flex; gap: 4px; margin-bottom: 16px; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 4px; overflow-x: auto; }
+.tab-btn { padding: 8px 16px; border: none; background: transparent; color: #94a3b8; font-size: 13px; cursor: pointer; border-radius: 8px; white-space: nowrap; font-weight: 500; transition: all 0.2s; }
+.tab-btn:hover { color: #e2e8f0; background: #334155; }
+.tab-btn.active { background: #3b82f6; color: #fff; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+.table-header .badge-count { background: #334155; color: #94a3b8; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 13px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-open { background: #1e3a3a; color: #34d399; }
+.badge-answered { background: #1e3a5f; color: #60a5fa; }
+.badge-closed { background: #1e2f3b; color: #38bdf8; }
+.badge-overdue { background: #3b1e1e; color: #f87171; }
+.badge-void { background: #1e1e2f; color: #a78bfa; }
+.badge-draft { background: #2f2f1e; color: #fbbf24; }
+.badge-submitted { background: #1e3a5f; color: #60a5fa; }
+.badge-approved { background: #1e3a2f; color: #34d399; }
+.badge-rejected { background: #3b1e1e; color: #f87171; }
+.badge-critical { background: #7f1d1d; color: #fca5a5; }
+.badge-major { background: #9a3412; color: #fdba74; }
+.badge-minor { background: #1e3a2f; color: #86efac; }
+.badge-investigating { background: #3b2f1e; color: #fbbf24; }
+.badge-sent { background: #1e3a5f; color: #60a5fa; }
+.badge-received { background: #1e3a2f; color: #34d399; }
+.amount { text-align: right; font-variant-numeric: tabular-nums; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.tab-content { animation: fadeIn 0.3s ease; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>📄 Document Control</h1>
+  <div class="subtitle">Document Management Dashboard — RFI, NCR, Submittals, Method Statements, Shop Drawings, Correspondence, MOM, Daily Reports, Transmittals</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading Document Control data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="filters-bar">
+      <label>Status:</label>
+      <select id="statusFilter"><option value="">All</option></select>
+      <label>Type:</label>
+      <select id="typeFilter"><option value="">All</option></select>
+      <input type="text" id="searchInput" placeholder="Search..." style="flex:1;min-width:200px;">
+    </div>
+    <div class="tab-bar" id="tabBar"></div>
+    <div class="tab-content" id="tabContent">
+      <div class="charts-grid" id="chartsRow"></div>
+      <div class="charts-grid-3" id="chartsRow2"></div>
+      <div class="table-container" id="dataTable"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let DATA = null
+let activeTab = 'rfi'
+const STATUS_COLORS = {
+  'open': '#34d399', 'answered': '#60a5fa', 'closed': '#38bdf8', 'void': '#a78bfa', 'overdue': '#f87171',
+  'draft': '#fbbf24', 'submitted': '#60a5fa', 'under_review': '#f97316', 'reviewed': '#a855f7',
+  'approved': '#34d399', 'approved_with_comments': '#fde047', 'rejected': '#f87171', 'resubmit': '#fb923c',
+  'investigating': '#fbbf24', 'action_planned': '#f97316', 'action_taken': '#60a5fa', 'verified': '#a78bfa',
+  'sent': '#60a5fa', 'received': '#34d399', 'acknowledged': '#a78bfa', 'prepared': '#fbbf24',
+  'distributed': '#60a5fa', 'archived': '#64748b'
+}
+
+const TABS = [
+  { id: 'rfi', label: '📝 RFI', key: 'rfis', statusField: 'status', typeField: 'discipline' },
+  { id: 'ncr', label: '⚠️ NCR', key: 'ncrs', statusField: 'status', typeField: 'ncr_type' },
+  { id: 'submittal', label: '📋 Submittals', key: 'submittals', statusField: 'status', typeField: 'submittal_type' },
+  { id: 'ms', label: '📄 Method Stmts', key: 'method_statements', statusField: 'status', typeField: null },
+  { id: 'sd', label: '📐 Shop Drawings', key: 'shop_drawings', statusField: 'status', typeField: 'discipline' },
+  { id: 'corr', label: '✉️ Correspondence', key: 'correspondence', statusField: 'status', typeField: 'corr_type' },
+  { id: 'mom', label: '📅 Minutes', key: 'minutes_of_meeting', statusField: 'status', typeField: 'meeting_type' },
+  { id: 'dr', label: '📊 Daily Reports', key: 'daily_reports', statusField: 'status', typeField: null },
+  { id: 'dt', label: '📎 Transmittals', key: 'transmittals', statusField: 'status', typeField: 'purpose' },
+]
+
+function getField(item, field) {
+  if (!field) return null
+  const v = item[field]
+  return (v && v !== '') ? v : null
+}
+
+function badgeHTML(value, prefix = 'badge-') {
+  if (!value) return '<span class="badge" style="background:#1e293b;color:#64748b;">—</span>'
+  const cls = value.toLowerCase().replace(/\s+/g, '_')
+  return `<span class="badge ${prefix}${cls}">${value}</span>`
+}
+
+function loadData() {
+  const params = new URLSearchParams(window.location.search)
+  const dataUrl = params.get('data') || 'doc_control_data.json'
+  fetch(dataUrl)
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json() })
+    .then(d => { DATA = d; initApp() })
+    .catch(err => {
+      document.getElementById('loading').innerHTML = `
+        <div class="value red" style="font-size:18px;">⚠️ Failed to load: ${err.message}</div>
+        <p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_doc_control.py</code></p>
+      `
+    })
+}
+
+function initApp() {
+  document.getElementById('loading').style.display = 'none'
+  document.getElementById('content').style.display = 'block'
+  buildProjectFilter()
+  buildStats()
+  buildTabBar()
+  buildFilters()
+  switchTab('rfi')
+}
+
+function buildProjectFilter() {
+  const sel = document.getElementById('projectFilter')
+  const projects = [...new Set(DATA.rfis.map(r => r.project_name))]
+  sel.innerHTML = '<option value="">All Projects</option>' +
+    projects.map(p => `<option value="${p}">${p}</option>`).join('')
+  sel.addEventListener('change', refresh)
+}
+
+function buildStats() {
+  const grid = document.getElementById('statsGrid')
+  const s = DATA.summary
+  const totalDocs = s.rfis + s.ncrs + s.submittals + s.method_statements + s.shop_drawings +
+    s.correspondence + s.minutes_of_meeting + s.daily_reports + s.transmittals
+  const openRfi = DATA.rfis.filter(r => r.status === 'open' || r.status === 'overdue').length
+  const openNcr = DATA.ncrs.filter(n => !['closed','void','verified'].includes(n.status)).length
+  const openSub = DATA.submittals.filter(s => !['closed','approved','rejected'].includes(s.status)).length
+  const criticalNcr = DATA.ncrs.filter(n => n.severity === 'critical').length
+
+  grid.innerHTML = `
+    <div class="stat-card"><div class="label">Total Documents</div><div class="value blue">${totalDocs}</div></div>
+    <div class="stat-card"><div class="label">Open RFIs</div><div class="value orange">${openRfi}</div></div>
+    <div class="stat-card"><div class="label">Open NCRs</div><div class="value red">${openNcr}</div></div>
+    <div class="stat-card"><div class="label">Critical NCRs</div><div class="value red">${criticalNcr}</div></div>
+    <div class="stat-card"><div class="label">Pending Submittals</div><div class="value yellow">${openSub}</div></div>
+    <div class="stat-card"><div class="label">Unresolved Doc Issues</div><div class="value purple">${openRfi + openNcr}</div></div>
+  `
+}
+
+function buildTabBar() {
+  const bar = document.getElementById('tabBar')
+  bar.innerHTML = TABS.map(t =>
+    `<button class="tab-btn ${t.id === activeTab ? 'active' : ''}" onclick="switchTab('${t.id}')">${t.label} (${DATA.summary[t.key]})</button>`
+  ).join('')
+}
+
+function buildFilters() {
+  const statusSel = document.getElementById('statusFilter')
+  const typeSel = document.getElementById('typeFilter')
+  const searchInput = document.getElementById('searchInput')
+
+  statusSel.innerHTML = '<option value="">All Statuses</option>'
+  typeSel.innerHTML = '<option value="">All Types</option>'
+
+  statusSel.addEventListener('change', refresh)
+  typeSel.addEventListener('change', refresh)
+  searchInput.addEventListener('input', refresh)
+}
+
+function getTabConfig(tabId) {
+  return TABS.find(t => t.id === tabId)
+}
+
+function switchTab(tabId) {
+  activeTab = tabId
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.textContent.includes(tabId) || b.getAttribute('onclick')?.includes(tabId)))
+  refresh()
+}
+
+function getFilteredData() {
+  const cfg = getTabConfig(activeTab)
+  if (!cfg || !DATA) return []
+  let items = DATA[cfg.key] || []
+  const statusVal = document.getElementById('statusFilter').value
+  const typeVal = document.getElementById('typeFilter').value
+  const searchVal = document.getElementById('searchInput').value.toLowerCase()
+  const projectVal = document.getElementById('projectFilter').value
+
+  if (projectVal) items = items.filter(i => i.project_name === projectVal)
+  if (statusVal) {
+    if (statusVal === 'open_only') items = items.filter(i => ['open','overdue'].includes(i.status))
+    else items = items.filter(i => i.status === statusVal)
+  }
+  if (typeVal) {
+    const f = cfg.typeField
+    if (f) items = items.filter(i => i[f] === typeVal)
+  }
+  if (searchVal) {
+    items = items.filter(i =>
+      (i.subject || i.title || '').toLowerCase().includes(searchVal) ||
+      (i.rfi_code || i.ncr_code || i.submittal_code || i.ms_code || i.drawing_code || i.corr_code || i.mom_code || i.transmittal_code || '').toLowerCase().includes(searchVal)
+    )
+  }
+  return items
+}
+
+function refresh() {
+  const cfg = getTabConfig(activeTab)
+  if (!cfg) return
+  const items = getFilteredData()
+  renderCharts(cfg, items)
+  renderTable(cfg, items)
+  updateFilterOptions(cfg, items)
+}
+
+function updateFilterOptions(cfg, items) {
+  const statusSel = document.getElementById('statusFilter')
+  const typeSel = document.getElementById('typeFilter')
+  const currentStatus = statusSel.value
+  const currentType = typeSel.value
+
+  const statuses = [...new Set(items.map(i => i.status).filter(Boolean))]
+  statusSel.innerHTML = '<option value="">All Statuses</option><option value="open_only">Open/Overdue Only</option>' +
+    statuses.map(s => `<option value="${s}" ${s === currentStatus ? 'selected' : ''}>${s}</option>`).join('')
+
+  if (cfg.typeField) {
+    const types = [...new Set(items.map(i => i[cfg.typeField]).filter(Boolean))]
+    typeSel.innerHTML = '<option value="">All Types</option>' +
+      types.map(t => `<option value="${t}" ${t === currentType ? 'selected' : ''}>${t}</option>`).join('')
+  } else {
+    typeSel.innerHTML = '<option value="">—</option>'
+  }
+}
+
+function renderCharts(cfg, items) {
+  const chartRow = document.getElementById('chartsRow')
+  const chartRow2 = document.getElementById('chartsRow2')
+
+  // Status Distribution (Pie)
+  const statusCounts = {}
+  items.forEach(i => {
+    const s = i.status || 'unknown'
+    statusCounts[s] = (statusCounts[s] || 0) + 1
+  })
+  const statusLabels = Object.keys(statusCounts)
+  const statusValues = Object.values(statusCounts)
+  const statusColors = statusLabels.map(s => STATUS_COLORS[s] || '#64748b')
+
+  // Type distribution (Bar)
+  let typeLabels = []
+  let typeValues = []
+  let typeColors = []
+  if (cfg.typeField) {
+    const typeCounts = {}
+    items.forEach(i => {
+      const t = i[cfg.typeField] || 'other'
+      typeCounts[t] = (typeCounts[t] || 0) + 1
+    })
+    typeLabels = Object.keys(typeCounts)
+    typeValues = Object.values(typeCounts)
+    const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899','#6366f1','#84cc16']
+    typeColors = typeLabels.map((_, i) => palette[i % palette.length])
+  }
+
+  // Monthly trend (Bar)
+  const monthly = {}
+  items.forEach(i => {
+    const d = i.raised_at || i.submitted_at || i.reported_at || i.sent_at || i.meeting_date || i.report_date || ''
+    if (d) {
+      const m = d.substring(0, 7)
+      monthly[m] = (monthly[m] || 0) + 1
+    }
+  })
+  const monthLabels = Object.keys(monthly).sort()
+  const monthValues = monthLabels.map(m => monthly[m])
+
+  chartRow.innerHTML = `
+    <div class="chart-card"><h3>📊 ${cfg.label} — Status Distribution</h3><canvas id="pieChart"></canvas></div>
+    <div class="chart-card"><h3>📈 ${cfg.label} — Monthly Trend</h3><canvas id="trendChart"></canvas></div>
+  `
+
+  if (cfg.typeField) {
+    chartRow2.innerHTML = `<div class="chart-card"><h3>📁 ${cfg.label} — by Type</h3><canvas id="typeChart"></canvas></div>`
+  } else {
+    chartRow2.innerHTML = ''
+  }
+
+  // Pie chart
+  new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+      labels: statusLabels,
+      datasets: [{ data: statusValues, backgroundColor: statusColors, borderColor: '#0f172a', borderWidth: 2 }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  })
+
+  // Trend chart
+  new Chart(document.getElementById('trendChart'), {
+    type: 'bar',
+    data: {
+      labels: monthLabels,
+      datasets: [{ label: 'Documents', data: monthValues, backgroundColor: '#3b82f6', borderRadius: 4 }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true } } }
+  })
+
+  // Type chart
+  if (cfg.typeField && typeLabels.length > 0) {
+    new Chart(document.getElementById('typeChart'), {
+      type: 'bar',
+      data: {
+        labels: typeLabels,
+        datasets: [{ label: 'Count', data: typeValues, backgroundColor: typeColors, borderRadius: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' }, beginAtZero: true }, y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } } } }
+    })
+  }
+}
+
+function renderTable(cfg, items) {
+  const container = document.getElementById('dataTable')
+  if (items.length === 0) {
+    container.innerHTML = `<div class="table-container"><div class="table-header"><h3>${cfg.label}</h3><span class="badge-count">0</span></div><div style="padding:40px;text-align:center;color:#64748b;">No documents found</div></div>`
+    return
+  }
+
+  let headers = []
+  let rows = []
+
+  switch (activeTab) {
+    case 'rfi':
+      headers = ['Code', 'Subject', 'Discipline', 'Priority', 'Status', 'Due Date', 'Raised By']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.rfi_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.subject}</td>
+        <td>${badgeHTML(i.discipline)}</td>
+        <td>${badgeHTML(i.priority)}</td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${i.due_date || '—'}</td>
+        <td>${i.raised_by || '—'}</td>
+      </tr>`)
+      break
+    case 'ncr':
+      headers = ['Code', 'Title', 'Type', 'Severity', 'Status', 'Location', 'Due Date']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.ncr_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.title}</td>
+        <td>${badgeHTML(i.ncr_type)}</td>
+        <td>${badgeHTML(i.severity)}</td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${i.location || '—'}</td>
+        <td>${i.due_date || '—'}</td>
+      </tr>`)
+      break
+    case 'submittal':
+      headers = ['Code', 'Title', 'Type', 'Status', 'Submitted By', 'Submitted To', 'Resubmits']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.submittal_code}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.title}</td>
+        <td>${badgeHTML(i.submittal_type)}</td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${i.submitted_by || '—'}</td>
+        <td>${i.submitted_to || '—'}</td>
+        <td>${i.resubmit_count || 0}</td>
+      </tr>`)
+      break
+    case 'ms':
+      headers = ['Code', 'Title', 'Activity', 'Status', 'Submitted By', 'Work Area']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.ms_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.title}</td>
+        <td>${i.activity || '—'}</td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${i.submitted_by || '—'}</td>
+        <td>${i.work_area || '—'}</td>
+      </tr>`)
+      break
+    case 'sd':
+      headers = ['Code', 'Title', 'Discipline', 'Revision', 'Status', 'Format']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.drawing_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.title}</td>
+        <td>${badgeHTML(i.discipline)}</td>
+        <td><span style="font-family:monospace;color:#fbbf24;">Rev ${i.revision}</span></td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${(i.drawing_format || '').toUpperCase()}</td>
+      </tr>`)
+      break
+    case 'corr':
+      headers = ['Code', 'Subject', 'Type', 'Direction', 'From', 'To', 'Status']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.corr_code}</span></td>
+        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.subject}</td>
+        <td>${badgeHTML(i.corr_type)}</td>
+        <td>${badgeHTML(i.direction)}</td>
+        <td>${i.from_entity}</td>
+        <td>${i.to_entity}</td>
+        <td>${badgeHTML(i.status)}</td>
+      </tr>`)
+      break
+    case 'mom':
+      headers = ['Code', 'Meeting Title', 'Type', 'Date', 'Chairperson', 'Status']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.mom_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.meeting_title}</td>
+        <td>${badgeHTML(i.meeting_type)}</td>
+        <td>${i.meeting_date}</td>
+        <td>${i.chairperson || '—'}</td>
+        <td>${badgeHTML(i.status)}</td>
+      </tr>`)
+      break
+    case 'dr':
+      headers = ['Date', 'Shift', 'Weather', 'Manpower', 'Equipment', 'Status', 'Author']
+      rows = items.map(i => `<tr>
+        <td>${i.report_date}</td>
+        <td>${badgeHTML(i.shift)}</td>
+        <td>${i.weather || '—'}</td>
+        <td>${i.manpower_total || 0}</td>
+        <td>${i.equipment_total || 0}</td>
+        <td>${badgeHTML(i.status)}</td>
+        <td>${i.author || '—'}</td>
+      </tr>`)
+      break
+    case 'dt':
+      headers = ['Code', 'Title', 'Purpose', 'From', 'To', 'Status']
+      rows = items.map(i => `<tr>
+        <td><span style="font-family:monospace;font-size:11px;color:#64748b;">${i.transmittal_code}</span></td>
+        <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${i.title}</td>
+        <td>${badgeHTML(i.purpose)}</td>
+        <td>${i.from_entity}</td>
+        <td>${i.to_entity}</td>
+        <td>${badgeHTML(i.status)}</td>
+      </tr>`)
+      break
+  }
+
+  container.innerHTML = `
+    <div class="table-container">
+      <div class="table-header"><h3>${cfg.label} (${items.length})</h3><span class="badge-count">${items.length} records</span></div>
+      <table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>
+    </div>
+  `
+}
+
+loadData()
+</script>
+</body>
+</html>

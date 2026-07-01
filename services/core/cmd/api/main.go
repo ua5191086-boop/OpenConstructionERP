@@ -90,6 +90,10 @@ func main() {
 		// Project Management Module
 		pmHandler := handlers.NewPMHandler(database.DB)
 		pmHandler.RegisterRoutes(r)
+
+		// Document Control Module
+		docControlHandler := handlers.NewDocControlHandler(database.DB)
+		docControlHandler.RegisterRoutes(r)
 	})
 
 	// Start server

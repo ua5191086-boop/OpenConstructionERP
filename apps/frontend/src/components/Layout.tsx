@@ -11,6 +11,7 @@ const navItems = [
   { path: '/bim', label: 'BIM', icon: '🏗️' },
   { path: '/ai', label: 'AI', icon: '🤖' },
   { path: '/pm', label: 'PM', icon: '📁' },
+  { path: '/doc-control', label: 'Doc Control', icon: '📄' },
 ]
 
 export default function Layout() {

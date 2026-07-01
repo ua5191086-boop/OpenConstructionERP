@@ -10,6 +10,7 @@ import ProcurementPage from './pages/ProcurementPage'
 import BIMPage from './pages/BIMPage'
 import AIPage from './pages/AIPage'
 import PMProjectPage from './pages/PMProjectPage'
+import DocControlPage from './pages/DocControlPage'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
           <Route path="/bim" element={<BIMPage />} />
           <Route path="/ai" element={<AIPage />} />
           <Route path="/pm" element={<PMProjectPage />} />
+          <Route path="/doc-control" element={<DocControlPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
