@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Тендеры</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header h1 span { color: #3b82f6; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px 30px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-card .value { font-size: 28px; font-weight: 700; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.yellow { color: #eab308; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; padding: 0 30px 20px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.tenders { padding: 0 30px 30px; }
+.tenders h2 { font-size: 20px; margin-bottom: 16px; color: #f8fafc; }
+.tender-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.tender-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #334155; }
+.tender-header:hover { background: #1e293b; }
+.tender-header .code { font-weight: 700; color: #3b82f6; font-size: 14px; }
+.tender-header .name { color: #f8fafc; font-size: 16px; margin-top: 2px; }
+.tender-header .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.status-draft { background: #334155; color: #94a3b8; }
+.status-published { background: #1e3a5f; color: #60a5fa; }
+.status-in_progress { background: #1a3a2a; color: #4ade80; }
+.status-evaluation { background: #3a2a1a; color: #fbbf24; }
+.status-awarded { background: #1a2a3a; color: #818cf8; }
+.status-cancelled { background: #3a1a1a; color: #f87171; }
+.tender-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.tender-body.open { max-height: 2000px; }
+.tender-details { padding: 20px; }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+.detail-row .label { color: #94a3b8; }
+.detail-row .value { color: #e2e8f0; font-weight: 500; }
+.lot-card { background: #0f172a; border: 1px solid #334155; border-radius: 8px; margin-top: 12px; padding: 16px; }
+.lot-card h4 { color: #3b82f6; font-size: 14px; margin-bottom: 8px; }
+.bidder-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; border-bottom: 1px solid #1e293b; }
+.bidder-row:last-child { border-bottom: none; }
+.bidder-row .name { color: #e2e8f0; }
+.bidder-row .amount { color: #22c55e; font-weight: 600; }
+.bidder-row .winner { color: #eab308; font-weight: 700; }
+.bidder-row .score { color: #94a3b8; }
+.filter-bar { display: flex; gap: 12px; padding: 0 30px 20px; flex-wrap: wrap; }
+.filter-bar select, .filter-bar input { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 16px; color: #e2e8f0; font-size: 14px; }
+.filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #3b82f6; }
+.filter-bar select { min-width: 150px; }
+.filter-bar input { flex: 1; min-width: 200px; }
+@media (max-width: 768px) {
+  .charts { grid-template-columns: 1fr; }
+  .header { flex-direction: column; text-align: center; gap: 8px; }
+  .stats { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🏗️ <span>OpenConstructionERP</span> — Тендеры</h1>
+    <div class="subtitle">Модуль управления тендерными процедурами</div>
+  </div>
+  <div style="text-align:right;font-size:12px;color:#64748b;" id="updateTime"></div>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filter-bar">
+  <select id="filterStatus" onchange="applyFilters()">
+    <option value="all">Все статусы</option>
+    <option value="draft">Черновик</option>
+    <option value="published">Опубликован</option>
+    <option value="in_progress">В работе</option>
+    <option value="evaluation">Оценка</option>
+    <option value="awarded">Присуждён</option>
+    <option value="cancelled">Отменён</option>
+  </select>
+  <select id="filterType" onchange="applyFilters()">
+    <option value="all">Все типы</option>
+    <option value="open">Открытый</option>
+    <option value="limited">Ограниченный</option>
+    <option value="single_source">Единственный источник</option>
+    <option value="request_quote">Запрос котировок</option>
+  </select>
+  <input type="text" id="filterSearch" placeholder="🔍 Поиск по названию..." oninput="applyFilters()">
+</div>
+
+<div class="charts">
+  <div class="chart-card">
+    <h3>📊 Тендеры по статусам</h3>
+    <canvas id="statusChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>💰 Бюджет по тендерам</h3>
+    <canvas id="budgetChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>🏢 Участники по тендерам</h3>
+    <canvas id="biddersChart"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>📈 Средняя цена vs Смета</h3>
+    <canvas id="priceChart"></canvas>
+  </div>
+</div>
+
+<div class="tenders" id="tendersList">
+  <h2>📋 Список тендеров</h2>
+</div>
+
+<script>
+// ============================================================================
+// Данные (генерируются на лету)
+// ============================================================================
+const CONTRACTORS = [
+  'CAI Interbudmontazh GmbH', 'ТОО "Алматыметрострой"', 'АО "НК "КТЖ"',
+  'ТОО "СтройИнвест Групп"', 'China Railway Construction Corp.', 'Vinci Construction',
+  'Strabag SE', 'Porr AG', 'Astaldi S.p.A.', 'Gülermak A.Ş.',
+  'ТОО "Базис-А"', 'ТОО "Курылыс-Монтаж"', 'ТОО "Астана-Инжиниринг"',
+  'ТОО "BI-Group"', 'ТОО "СтройТехСервис"',
+];
+
+const SECTIONS = [
+  'Участок 1 — ПК 0+000 — ПК 30+000', 'Участок 2 — ПК 30+000 — ПК 60+000',
+  'Участок 3 — ПК 60+000 — ПК 90+000', 'Участок 4 — ПК 90+000 — ПК 120+000',
+  'Станция А — Центральная', 'Станция Б — Восточная', 'Станция В — Западная',
+  'Станция Г — Северная', 'Станция Д — Южная', 'Депо и инфраструктура',
+];
+
+const TENDER_NAMES = [
+  'Строительство участка метро', 'Поставка ТПМК', 'Электроснабжение',
+  'Вентиляция и дымоудаление', 'Отделочные работы', 'Путевые работы',
+  'СЦБ и связь', 'Поставка оборудования', 'Мониторинг деформаций',
+  'Геотехнические изыскания',
+];
+
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function randInt(min, max) { return Math.floor(rand(min, max + 1)); }
+
+function generateTenders(count) {
+  const tenders = [];
+  const statuses = ['draft', 'published', 'in_progress', 'evaluation', 'awarded', 'cancelled'];
+  const types = ['open', 'limited', 'single_source', 'request_quote'];
+  const funding = ['Госбюджет РК', 'Местный бюджет', 'ГЧП', 'Частные инвестиции', 'Грант ЕБРР', 'Грант АБР'];
+  
+  for (let i = 0; i < count; i++) {
+    const section = SECTIONS[randInt(0, SECTIONS.length - 1)];
+    const name = TENDER_NAMES[randInt(0, TENDER_NAMES.length - 1)] + ' — ' + section;
+    const status = statuses[randInt(0, 4)]; // без cancelled для демо
+    const type = types[randInt(0, types.length - 1)];
+    const budget = rand(500000, 50000000);
+    const lotCount = randInt(1, 3);
+    
+    const lots = [];
+    for (let l = 0; l < lotCount; l++) {
+      const lotBudget = budget / lotCount * rand(0.8, 1.2);
+      const bidderCount = randInt(3, 5);
+      const bidders = [];
+      
+      // Выбираем случайных участников
+      const shuffled = [...CONTRACTORS].sort(() => Math.random() - 0.5);
+      for (let b = 0; b < bidderCount; b++) {
+        const bidAmount = lotBudget * rand(0.85, 1.15);
+        const techScore = rand(60, 100);
+        const finScore = 100 * (lotBudget * 0.95) / bidAmount;
+        bidders.push({
+          name: shuffled[b % shuffled.length],
+          amount: Math.round(bidAmount * 100) / 100,
+          techScore: Math.round(techScore * 100) / 100,
+          finScore: Math.round(Math.min(finScore, 100) * 100) / 100,
+        });
+      }
+      
+      // Победитель — минимальная цена
+      bidders.sort((a, b) => a.amount - b.amount);
+      bidders[0].isWinner = true;
+      
+      lots.push({
+        number: l + 1,
+        name: 'Лот ' + (l + 1) + ': ' + ['Основные работы', 'Оборудование', 'Материалы', 'Услуги'][randInt(0, 3)],
+        estimatedAmount: Math.round(lotBudget * 100) / 100,
+        bidders: bidders,
+      });
+    }
+    
+    tenders.push({
+      code: 'T-2026-' + String(i + 1).padStart(3, '0'),
+      name: name,
+      status: status,
+      type: type,
+      budget: Math.round(budget * 100) / 100,
+      funding: funding[randInt(0, funding.length - 1)],
+      client: CONTRACTORS[randInt(0, CONTRACTORS.length - 1)],
+      lots: lots,
+    });
+  }
+  return tenders;
+}
+
+const tenders = generateTenders(8);
+
+// ============================================================================
+// Рендер
+// ============================================================================
+function renderStats() {
+  const total = tenders.length;
+  const totalBudget = tenders.reduce((s, t) => s + t.budget, 0);
+  const totalLots = tenders.reduce((s, t) => s + t.lots.length, 0);
+  const totalBidders = tenders.reduce((s, t) => s + t.lots.reduce((s2, l) => s2 + l.bidders.length, 0), 0);
+  const active = tenders.filter(t => t.status === 'published' || t.status === 'in_progress' || t.status === 'evaluation').length;
+  
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="label">Всего тендеров</div><div class="value blue">${total}</div></div>
+    <div class="stat-card"><div class="label">Общий бюджет</div><div class="value green">$${(totalBudget / 1e6).toFixed(1)}M</div></div>
+    <div class="stat-card"><div class="label">Активных</div><div class="value yellow">${active}</div></div>
+    <div class="stat-card"><div class="label">Лотов</div><div class="value purple">${totalLots}</div></div>
+    <div class="stat-card"><div class="label">Участников</div><div class="value orange">${totalBidders}</div></div>
+  `;
+}
+
+function renderCharts() {
+  // Статусы
+  const statusCounts = {};
+  tenders.forEach(t => { statusCounts[t.status] = (statusCounts[t.status] || 0) + 1; });
+  const statusLabels = { draft: 'Черновик', published: 'Опубликован', in_progress: 'В работе', evaluation: 'Оценка', awarded: 'Присуждён', cancelled: 'Отменён' };
+  const statusColors = { draft: '#64748b', published: '#3b82f6', in_progress: '#22c55e', evaluation: '#eab308', awarded: '#818cf8', cancelled: '#ef4444' };
+  
+  new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(statusCounts).map(k => statusLabels[k] || k),
+      datasets: [{
+        data: Object.values(statusCounts),
+        backgroundColor: Object.keys(statusCounts).map(k => statusColors[k] || '#64748b'),
+        borderWidth: 0,
+      }]
+    },
+    options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+  });
+  
+  // Бюджет
+  const sortedByBudget = [...tenders].sort((a, b) => b.budget - a.budget);
+  new Chart(document.getElementById('budgetChart'), {
+    type: 'bar',
+    data: {
+      labels: sortedByBudget.map(t => t.code),
+      datasets: [{
+        label: 'Бюджет, $',
+        data: sortedByBudget.map(t => t.budget / 1e6),
+        backgroundColor: sortedByBudget.map(t => statusColors[t.status] || '#64748b'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toFixed(0) + 'M', color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8' } } }
+    }
+  });
+  
+  // Участники
+  new Chart(document.getElementById('biddersChart'), {
+    type: 'bar',
+    data: {
+      labels: tenders.map(t => t.code),
+      datasets: [{
+        label: 'Участников',
+        data: tenders.map(t => t.lots.reduce((s, l) => s + l.bidders.length, 0)),
+        backgroundColor: '#3b82f6',
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 1, color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8' } } }
+    }
+  });
+  
+  // Цена vs Смета
+  const priceData = tenders.map(t => {
+    const lots = t.lots;
+    const avgBid = lots.reduce((s, l) => {
+      const avg = l.bidders.reduce((s2, b) => s2 + b.amount, 0) / l.bidders.length;
+      return s + avg;
+    }, 0) / lots.length;
+    return { code: t.code, estimated: t.budget / lots.length, avgBid };
+  });
+  
+  new Chart(document.getElementById('priceChart'), {
+    type: 'bar',
+    data: {
+      labels: priceData.map(d => d.code),
+      datasets: [
+        { label: 'Смета', data: priceData.map(d => d.estimated / 1e6), backgroundColor: '#64748b', borderRadius: 4 },
+        { label: 'Средняя заявка', data: priceData.map(d => d.avgBid / 1e6), backgroundColor: '#22c55e', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => '$' + v.toFixed(0) + 'M', color: '#94a3b8' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8' } } }
+    }
+  });
+}
+
+function renderTenders(filtered) {
+  const container = document.getElementById('tendersList');
+  let html = '<h2>📋 Список тендеров</h2>';
+  
+  filtered.forEach((t, idx) => {
+    const statusClass = 'status-' + t.status;
+    const statusLabel = { draft: 'Черновик', published: 'Опубликован', in_progress: 'В работе', evaluation: 'Оценка', awarded: 'Присуждён', cancelled: 'Отменён' }[t.status] || t.status;
+    const typeLabel = { open: 'Открытый', limited: 'Ограниченный', single_source: 'Единственный источник', request_quote: 'Запрос котировок' }[t.type] || t.type;
+    
+    html += `<div class="tender-card">
+      <div class="tender-header" onclick="toggleTender(${idx})">
+        <div>
+          <div class="code">${t.code}</div>
+          <div class="name">${t.name}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="status ${statusClass}">${statusLabel}</div>
+          <div style="color:#94a3b8;font-size:12px;margin-top:4px">$${(t.budget / 1e6).toFixed(1)}M</div>
+        </div>
+      </div>
+      <div class="tender-body" id="tenderBody${idx}">
+        <div class="tender-details">
+          <div class="detail-row"><span class="label">Тип</span><span class="value">${typeLabel}</span></div>
+          <div class="detail-row"><span class="label">Заказчик</span><span class="value">${t.client}</span></div>
+          <div class="detail-row"><span class="label">Финансирование</span><span class="value">${t.funding}</span></div>
+          <div class="detail-row"><span class="label">Бюджет</span><span class="value">$${t.budget.toLocaleString()}</span></div>
+          <div class="detail-row"><span class="label">Лотов</span><span class="value">${t.lots.length}</span></div>
+          ${t.lots.map(lot => `
+            <div class="lot-card">
+              <h4>📦 Лот ${lot.number}: ${lot.name} — $${lot.estimatedAmount.toLocaleString()}</h4>
+              ${lot.bidders.map(b => `
+                <div class="bidder-row">
+                  <span class="name">${b.isWinner ? '🏆 ' : ''}${b.name}</span>
+                  <span>
+                    <span class="amount">$${b.amount.toLocaleString()}</span>
+                    <span class="score"> | T: ${b.techScore} Ф: ${b.finScore}</span>
+                  </span>
+                </div>
+              `).join('')}
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>`;
+  });
+  
+  container.innerHTML = html;
+}
+
+function toggleTender(idx) {
+  const body = document.getElementById('tenderBody' + idx);
+  body.classList.toggle('open');
+}
+
+function applyFilters() {
+  const status = document.getElementById('filterStatus').value;
+  const type = document.getElementById('filterType').value;
+  const search = document.getElementById('filterSearch').value.toLowerCase();
+  
+  const filtered = tenders.filter(t => {
+    if (status !== 'all' && t.status !== status) return false;
+    if (type !== 'all' && t.type !== type) return false;
+    if (search && !t.name.toLowerCase().includes(search) && !t.code.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  
+  renderTenders(filtered);
+}
+
+// ============================================================================
+// Init
+// ============================================================================
+document.getElementById('updateTime').textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU');
+renderStats();
+renderCharts();
+renderTenders(tenders);
+</script>
+</body>
+</html>
