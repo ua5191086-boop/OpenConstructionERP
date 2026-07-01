@@ -72,6 +72,9 @@ docker compose -f infrastructure/docker/docker-compose.dev.yml up -d --build
 # BOQ dashboard:  http://localhost:8000      API docs: http://localhost:8000/docs
 # PostgreSQL :5432 (oce/oce_dev_only), MinIO console :9001, Adminer :8080
 # Migrations from database/migrations/ are applied automatically on first start.
+python3 scripts/seed_reference_project.py   # optional: seed ALM-L3-REF reference project
+# -> instantly a living system: $101.5M BOQ, twin TBM drives with 60 days of rings,
+#    daily reports, RFIs, CDE documents, cost transactions
 ```
 
 ## Roadmap (summary — full version with exit criteria in SAD Tom 1, §11)

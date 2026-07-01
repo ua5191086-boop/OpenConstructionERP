@@ -23,7 +23,7 @@
 
 ```bash
 docker compose -f infrastructure/docker/docker-compose.dev.yml up -d
-python3 scripts/generate_boq.py   # generates BOQ test data
+python3 scripts/seed_reference_project.py   # seeds ALM-L3-REF: full reference project (BOQ $101.5M, 1000+ rings, reports, docs, costs)
 ```
 
 ## Licensing
