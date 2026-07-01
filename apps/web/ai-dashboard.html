@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — AI</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#a855f7}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.stat-card .label{color:#94a3b8;font-size:13px;text-transform:uppercase}
+.stat-card .value{font-size:28px;font-weight:700;margin-top:8px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.purple{color:#a855f7}
+.stat-card .value.orange{color:#f97316}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:16px;margin-bottom:16px}
+.chart-card canvas{max-height:300px}
+.content{padding:0 30px 30px}
+.content h2{font-size:20px;margin-bottom:16px;color:#f8fafc}
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;margin-bottom:20px}
+.agent-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.agent-card h3{color:#a855f7;font-size:16px;margin-bottom:8px}
+.agent-card .desc{color:#94a3b8;font-size:13px;margin-bottom:12px}
+.agent-card .info{font-size:12px;color:#64748b}
+.agent-card .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600;margin-right:4px}
+.badge-active{background:#1a3a2a;color:#4ade80}
+.badge-model{background:#1e293b;color:#3b82f6;border:1px solid #334155}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🤖 <span>OpenConstructionERP</span> — AI</h1><div style="color:#94a3b8;font-size:14px;margin-top:4px;">Искусственный интеллект / Ruslan OS Dispatcher</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 Запросы по типам</h3><canvas id="typeChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Токены по дням</h3><canvas id="tokenChart"></canvas></div>
+  <div class="chart-card"><h3>🎯 Успешность</h3><canvas id="successChart"></canvas></div>
+  <div class="chart-card"><h3>📊 По модулям</h3><canvas id="moduleChart"></canvas></div>
+</div>
+<div class="content">
+  <h2>🤖 AI-агенты</h2>
+  <div class="agent-grid" id="agentGrid"></div>
+</div>
+<script>
+const AGENTS=[
+  {name:'Ruslan OS Dispatcher',type:'classifier',desc:'Классификация запросов, извлечение сущностей, маршрутизация в n8n',model:'deepseek-v4',provider:'ollama-cloud',tasks:1542,success:97.2},
+  {name:'BOQ Analyzer',type:'extractor',desc:'Извлечение сметных позиций из PDF/Excel, анализ цен',model:'deepseek-v4',provider:'ollama-cloud',tasks:876,success:94.5},
+  {name:'Tender Matcher',type:'recommender',desc:'Подбор тендеров под профиль CAI, анализ конкурентов',model:'deepseek-v4',provider:'ollama-cloud',tasks:432,success:91.8},
+  {name:'Cost Predictor',type:'predictor',desc:'Прогноз стоимости строительства на основе исторических данных',model:'deepseek-v4',provider:'ollama-cloud',tasks:215,success:88.3},
+  {name:'Contract Analyzer',type:'extractor',desc:'Анализ договоров, выявление рисков, извлечение условий',model:'deepseek-v4',provider:'ollama-cloud',tasks:367,success:93.1},
+  {name:'Document OCR',type:'extractor',desc:'OCR сканов, извлечение таблиц из PDF/изображений',model:'deepseek-v4',provider:'ollama-cloud',tasks:1098,success:96.4},
+];
+const TYPES={classifier:'Классификация',extractor:'Извлечение',predictor:'Прогноз',recommender:'Рекомендации'};
+const MODULES={boq:'Сметы',tender:'Тендеры',contract:'Договоры',hr:'Кадры',finance:'Финансы',procurement:'Закупки',bim:'BIM'};
+function renderStats(){
+  const total=AGENTS.reduce((s,a)=>s+a.tasks,0);
+  const avg=AGENTS.reduce((s,a)=>s+a.success,0)/AGENTS.length;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="label">AI-агентов</div><div class="value purple">${AGENTS.length}</div></div>
+    <div class="stat-card"><div class="label">Всего задач</div><div class="value blue">${total.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="label">Средняя успешность</div><div class="value green">${avg.toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="label">Модель</div><div class="value orange">DeepSeek V4</div></div>`;
+}
+function renderCharts(){
+  const tc={};AGENTS.forEach(a=>{tc[TYPES[a.type]]=(tc[TYPES[a.type]]||0)+a.tasks});
+  new Chart(document.getElementById('typeChart'),{type:'doughnut',data:{labels:Object.keys(tc),datasets:[{data:Object.values(tc),backgroundColor:['#a855f7','#3b82f6','#22c55e','#eab308'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+  const days=7;
+  const tokens=Array.from({length:days},()=>Math.round(Math.random()*50000+10000));
+  const labels=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+  new Chart(document.getElementById('tokenChart'),{type:'line',data:{labels,datasets:[{label:'Токенов',data:tokens,borderColor:'#a855f7',backgroundColor:'rgba(168,85,247,0.1)',fill:true,tension:0.4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>v.toLocaleString(),color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+  new Chart(document.getElementById('successChart'),{type:'bar',data:{labels:AGENTS.map(a=>a.name.length>18?a.name.slice(0,18)+'...':a.name),datasets:[{label:'Успешность, %',data:AGENTS.map(a=>a.success),backgroundColor:AGENTS.map(a=>a.success>95?'#22c55e':a.success>90?'#eab308':'#f97316'),borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:80,max:100,ticks:{callback:v=>v+'%',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+  const mc={};Object.values(MODULES).forEach(m=>{mc[m]=Math.round(Math.random()*300+50)});
+  new Chart(document.getElementById('moduleChart'),{type:'bar',data:{labels:Object.keys(mc),datasets:[{label:'Запросов',data:Object.values(mc),backgroundColor:['#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#ef4444','#06b6d4'],borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+}
+function renderAgents(){
+  document.getElementById('agentGrid').innerHTML=AGENTS.map(a=>`
+    <div class="agent-card">
+      <h3>${a.name}</h3>
+      <div class="desc">${a.desc}</div>
+      <div><span class="badge badge-active">${TYPES[a.type]||a.type}</span><span class="badge badge-model">${a.model}</span></div>
+      <div class="info" style="margin-top:8px">📊 ${a.tasks.toLocaleString()} задач · 🎯 ${a.success}% успешность</div>
+    </div>`).join('');
+}
+document.getElementById('updateTime').textContent='Обновлено: '+new Date().toLocaleString('ru-RU');
+renderStats();renderCharts();renderAgents();
+</script>
+</body>
+</html>
