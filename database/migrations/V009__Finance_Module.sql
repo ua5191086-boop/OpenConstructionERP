@@ -8,8 +8,8 @@
 -- 1. Бюджеты проектов
 -- ============================================================================
 CREATE TABLE project_budgets (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     version         VARCHAR(50) NOT NULL,                  -- v1.0, v2.0, approved, actual
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -27,16 +27,16 @@ CREATE TABLE project_budgets (
     UNIQUE(project_id, version)
 );
 
-CREATE INDEX idx_budgets_project ON project_budgets(project_id);
-CREATE INDEX idx_budgets_active ON project_budgets(project_id, is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_budgets_project ON project_budgets(project_id);
+CREATE INDEX IF NOT EXISTS idx_budgets_active ON project_budgets(project_id, is_active) WHERE is_active = TRUE;
 
 -- ============================================================================
 -- 2. Статьи бюджета
 -- ============================================================================
 CREATE TABLE budget_items (
-    id              BIGSERIAL PRIMARY KEY,
-    budget_id       BIGINT NOT NULL REFERENCES project_budgets(id) ON DELETE CASCADE,
-    parent_id       BIGINT REFERENCES budget_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    budget_id       UUID NOT NULL REFERENCES project_budgets(id) ON DELETE CASCADE,
+    parent_id       UUID REFERENCES budget_items(id),
     item_code       VARCHAR(100) NOT NULL,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -53,16 +53,16 @@ CREATE TABLE budget_items (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_budget_items_budget ON budget_items(budget_id);
-CREATE INDEX idx_budget_items_parent ON budget_items(parent_id);
+CREATE INDEX IF NOT EXISTS idx_budget_items_budget ON budget_items(budget_id);
+CREATE INDEX IF NOT EXISTS idx_budget_items_parent ON budget_items(parent_id);
 
 -- ============================================================================
 -- 3. Cash Flow (план/факт)
 -- ============================================================================
 CREATE TABLE cash_flow (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT REFERENCES projects(id),
-    contract_id     BIGINT REFERENCES contracts(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID REFERENCES projects(id),
+    contract_id     UUID REFERENCES contracts(id),
     entry_date      DATE NOT NULL,
     entry_type      VARCHAR(50) NOT NULL,                   -- inflow, outflow
     category        VARCHAR(100) NOT NULL,                   -- advance, progress_payment, material, salary, equipment, overhead, tax, other
@@ -71,28 +71,28 @@ CREATE TABLE cash_flow (
     is_planned      BOOLEAN DEFAULT TRUE,                   -- TRUE = план, FALSE = факт
     description     TEXT,
     reference_type  VARCHAR(50),                             -- contract, acceptance, invoice, payroll
-    reference_id    BIGINT,
+    reference_id    UUID,
     status          VARCHAR(50) NOT NULL DEFAULT 'pending',  -- pending, confirmed, reconciled
     reconciled_at   TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_cashflow_project ON cash_flow(project_id);
-CREATE INDEX idx_cashflow_date ON cash_flow(entry_date);
-CREATE INDEX idx_cashflow_type ON cash_flow(entry_type);
-CREATE INDEX idx_cashflow_category ON cash_flow(category);
+CREATE INDEX IF NOT EXISTS idx_cashflow_project ON cash_flow(project_id);
+CREATE INDEX IF NOT EXISTS idx_cashflow_date ON cash_flow(entry_date);
+CREATE INDEX IF NOT EXISTS idx_cashflow_type ON cash_flow(entry_type);
+CREATE INDEX IF NOT EXISTS idx_cashflow_category ON cash_flow(category);
 
 -- ============================================================================
 -- 4. Счета-фактуры
 -- ============================================================================
 CREATE TABLE invoices (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     invoice_number  VARCHAR(100) NOT NULL UNIQUE,
     invoice_type    VARCHAR(50) NOT NULL,                   -- incoming, outgoing
-    contract_id     BIGINT REFERENCES contracts(id),
-    acceptance_id   BIGINT REFERENCES contract_work_acceptances(id),
-    issuer_id       BIGINT REFERENCES contractors(id),      -- кто выставил
-    recipient_id    BIGINT REFERENCES contractors(id),       -- кому
+    contract_id     UUID REFERENCES contracts(id),
+    acceptance_id   UUID REFERENCES contract_work_acceptances(id),
+    issuer_id       UUID REFERENCES organizations(id),      -- кто выставил
+    recipient_id    UUID REFERENCES organizations(id),       -- кому
     invoice_date    DATE NOT NULL,
     due_date        DATE,
     amount          NUMERIC(18,2) NOT NULL,
@@ -107,17 +107,17 @@ CREATE TABLE invoices (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_invoices_contract ON invoices(contract_id);
-CREATE INDEX idx_invoices_date ON invoices(invoice_date);
-CREATE INDEX idx_invoices_status ON invoices(status);
-CREATE INDEX idx_invoices_type ON invoices(invoice_type);
+CREATE INDEX IF NOT EXISTS idx_invoices_contract ON invoices(contract_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_date ON invoices(invoice_date);
+CREATE INDEX IF NOT EXISTS idx_invoices_status ON invoices(status);
+CREATE INDEX IF NOT EXISTS idx_invoices_type ON invoices(invoice_type);
 
 -- ============================================================================
 -- 5. План-факт анализ
 -- ============================================================================
 CREATE TABLE cost_control (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     report_date     DATE NOT NULL,
     report_type     VARCHAR(50) NOT NULL DEFAULT 'monthly', -- monthly, quarterly, annual, custom
     total_budget    NUMERIC(18,2),
@@ -137,15 +137,15 @@ CREATE TABLE cost_control (
     UNIQUE(project_id, report_date, report_type)
 );
 
-CREATE INDEX idx_cost_control_project ON cost_control(project_id);
-CREATE INDEX idx_cost_control_date ON cost_control(report_date);
+CREATE INDEX IF NOT EXISTS idx_cost_control_project ON cost_control(project_id);
+CREATE INDEX IF NOT EXISTS idx_cost_control_date ON cost_control(report_date);
 
 -- ============================================================================
 -- 6. Банковские счета
 -- ============================================================================
 CREATE TABLE bank_accounts (
-    id              BIGSERIAL PRIMARY KEY,
-    contractor_id   BIGINT REFERENCES contractors(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contractor_id   UUID REFERENCES organizations(id),
     account_name    VARCHAR(300) NOT NULL,
     account_number  VARCHAR(100) NOT NULL,
     bank_name       VARCHAR(200),
@@ -163,30 +163,30 @@ CREATE TABLE bank_accounts (
 -- 7. Транзакции по счетам
 -- ============================================================================
 CREATE TABLE bank_transactions (
-    id              BIGSERIAL PRIMARY KEY,
-    account_id      BIGINT NOT NULL REFERENCES bank_accounts(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    account_id      UUID NOT NULL REFERENCES bank_accounts(id) ON DELETE CASCADE,
     transaction_date DATE NOT NULL,
     description     TEXT,
     amount          NUMERIC(18,2) NOT NULL,
     balance_after   NUMERIC(18,2),
     transaction_type VARCHAR(50) NOT NULL,                  -- debit, credit
     reference_type  VARCHAR(50),                            -- invoice, payment, transfer, fee
-    reference_id    BIGINT,
+    reference_id    UUID,
     reconciled      BOOLEAN DEFAULT FALSE,
     reconciled_at   TIMESTAMPTZ,
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_bank_tx_account ON bank_transactions(account_id);
-CREATE INDEX idx_bank_tx_date ON bank_transactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_bank_tx_account ON bank_transactions(account_id);
+CREATE INDEX IF NOT EXISTS idx_bank_tx_date ON bank_transactions(transaction_date);
 
 -- ============================================================================
 -- 8. Налоги
 -- ============================================================================
 CREATE TABLE tax_records (
-    id              BIGSERIAL PRIMARY KEY,
-    contractor_id   BIGINT REFERENCES contractors(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    contractor_id   UUID REFERENCES organizations(id),
     tax_type        VARCHAR(100) NOT NULL,                  -- vat, income_tax, social_tax, property_tax
     tax_period      VARCHAR(50) NOT NULL,                   -- Q1-2026, 2026
     taxable_amount  NUMERIC(18,2),
@@ -205,8 +205,8 @@ CREATE TABLE tax_records (
 -- 9. Финансовые отчёты
 -- ============================================================================
 CREATE TABLE financial_reports (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT REFERENCES projects(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID REFERENCES projects(id),
     report_type     VARCHAR(100) NOT NULL,                  -- pnl, balance_sheet, cash_flow, budget_vs_actual
     report_period   VARCHAR(50) NOT NULL,                   -- Q1-2026, 2026-annual
     report_data     JSONB,                                  -- данные отчёта
@@ -224,7 +224,7 @@ CREATE TABLE financial_reports (
 -- 10. Валюты и курсы
 -- ============================================================================
 CREATE TABLE exchange_rates (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     from_currency   VARCHAR(3) NOT NULL,
     to_currency     VARCHAR(3) NOT NULL,
     rate            NUMERIC(18,6) NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE exchange_rates (
     UNIQUE(from_currency, to_currency, rate_date)
 );
 
-CREATE INDEX idx_rates_date ON exchange_rates(rate_date);
+CREATE INDEX IF NOT EXISTS idx_rates_date ON exchange_rates(rate_date);
 
 -- ============================================================================
 -- Комментарии

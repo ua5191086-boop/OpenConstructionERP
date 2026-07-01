@@ -8,7 +8,7 @@
 -- 1. Сотрудники
 -- ============================================================================
 CREATE TABLE employees (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     employee_code   VARCHAR(50) NOT NULL UNIQUE,          -- E-2026-001
     full_name       VARCHAR(300) NOT NULL,
     first_name      VARCHAR(100),
@@ -71,21 +71,21 @@ CREATE TABLE employees (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_employees_status ON employees(status);
-CREATE INDEX idx_employees_department ON employees(department);
-CREATE INDEX idx_employees_position ON employees(position);
-CREATE INDEX idx_employees_hire_date ON employees(hire_date);
+CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(status);
+CREATE INDEX IF NOT EXISTS idx_employees_department ON employees(department);
+CREATE INDEX IF NOT EXISTS idx_employees_position ON employees(position);
+CREATE INDEX IF NOT EXISTS idx_employees_hire_date ON employees(hire_date);
 
 -- ============================================================================
 -- 2. Отделы
 -- ============================================================================
 CREATE TABLE departments (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code            VARCHAR(50) NOT NULL UNIQUE,
     name            VARCHAR(200) NOT NULL,
     description     TEXT,
-    parent_id       BIGINT REFERENCES departments(id),
-    head_employee_id BIGINT REFERENCES employees(id),
+    parent_id       UUID REFERENCES departments(id),
+    head_employee_id UUID REFERENCES employees(id),
     cost_center     VARCHAR(50),
     location        VARCHAR(200),
     is_active       BOOLEAN DEFAULT TRUE,
@@ -96,51 +96,51 @@ CREATE TABLE departments (
 -- 3. Табель рабочего времени
 -- ============================================================================
 CREATE TABLE time_attendance (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     work_date       DATE NOT NULL,
     day_type        VARCHAR(20) NOT NULL DEFAULT 'workday', -- workday, weekend, holiday, vacation, sick_leave
     hours_worked    NUMERIC(4,1) DEFAULT 0,
     hours_overtime  NUMERIC(4,1) DEFAULT 0,
     status          VARCHAR(20) NOT NULL DEFAULT 'present',  -- present, absent, late, remote, business_trip
     reason          TEXT,
-    approved_by     BIGINT REFERENCES employees(id),
+    approved_by     UUID REFERENCES employees(id),
     approved_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(employee_id, work_date)
 );
 
-CREATE INDEX idx_attendance_employee ON time_attendance(employee_id);
-CREATE INDEX idx_attendance_date ON time_attendance(work_date);
-CREATE INDEX idx_attendance_month ON time_attendance(employee_id, work_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_employee ON time_attendance(employee_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON time_attendance(work_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_month ON time_attendance(employee_id, work_date);
 
 -- ============================================================================
 -- 4. Отпуска
 -- ============================================================================
 CREATE TABLE employee_leave (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     leave_type      VARCHAR(50) NOT NULL,                   -- annual, sick, maternity, unpaid, study, special
     start_date      DATE NOT NULL,
     end_date        DATE NOT NULL,
     days_count      INTEGER NOT NULL,
     status          VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, approved, rejected, cancelled
     reason          TEXT,
-    approved_by     BIGINT REFERENCES employees(id),
+    approved_by     UUID REFERENCES employees(id),
     approved_at     TIMESTAMPTZ,
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_leave_employee ON employee_leave(employee_id);
-CREATE INDEX idx_leave_dates ON employee_leave(start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_leave_employee ON employee_leave(employee_id);
+CREATE INDEX IF NOT EXISTS idx_leave_dates ON employee_leave(start_date, end_date);
 
 -- ============================================================================
 -- 5. Командировки
 -- ============================================================================
 CREATE TABLE employee_business_trips (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     destination     VARCHAR(500) NOT NULL,
     purpose         TEXT NOT NULL,
     start_date      DATE NOT NULL,
@@ -152,19 +152,19 @@ CREATE TABLE employee_business_trips (
     total_cost      NUMERIC(12,2),
     status          VARCHAR(50) NOT NULL DEFAULT 'planned', -- planned, in_progress, completed, cancelled
     report_submitted BOOLEAN DEFAULT FALSE,
-    approved_by     BIGINT REFERENCES employees(id),
+    approved_by     UUID REFERENCES employees(id),
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_trips_employee ON employee_business_trips(employee_id);
+CREATE INDEX IF NOT EXISTS idx_trips_employee ON employee_business_trips(employee_id);
 
 -- ============================================================================
 -- 6. Начисления зарплаты
 -- ============================================================================
 CREATE TABLE payroll (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     period_year     INTEGER NOT NULL,
     period_month    INTEGER NOT NULL,
     base_salary     NUMERIC(12,2),
@@ -187,14 +187,14 @@ CREATE TABLE payroll (
     UNIQUE(employee_id, period_year, period_month)
 );
 
-CREATE INDEX idx_payroll_employee ON payroll(employee_id);
-CREATE INDEX idx_payroll_period ON payroll(period_year, period_month);
+CREATE INDEX IF NOT EXISTS idx_payroll_employee ON payroll(employee_id);
+CREATE INDEX IF NOT EXISTS idx_payroll_period ON payroll(period_year, period_month);
 
 -- ============================================================================
 -- 7. Охрана труда (HSE)
 -- ============================================================================
 CREATE TABLE hse_incidents (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     incident_number VARCHAR(50) NOT NULL UNIQUE,
     incident_type   VARCHAR(100) NOT NULL,                 -- accident, near_miss, fire, environmental, security
     severity        VARCHAR(50) NOT NULL,                   -- minor, moderate, serious, fatal
@@ -205,22 +205,22 @@ CREATE TABLE hse_incidents (
     affected_employees INTEGER DEFAULT 0,
     lost_days       INTEGER DEFAULT 0,
     status          VARCHAR(50) NOT NULL DEFAULT 'reported', -- reported, investigating, resolved, closed
-    reported_by     BIGINT REFERENCES employees(id),
-    investigated_by BIGINT REFERENCES employees(id),
+    reported_by     UUID REFERENCES employees(id),
+    investigated_by UUID REFERENCES employees(id),
     resolution      TEXT,
     resolved_at     TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_hse_date ON hse_incidents(incident_date);
-CREATE INDEX idx_hse_type ON hse_incidents(incident_type);
+CREATE INDEX IF NOT EXISTS idx_hse_date ON hse_incidents(incident_date);
+CREATE INDEX IF NOT EXISTS idx_hse_type ON hse_incidents(incident_type);
 
 -- ============================================================================
 -- 8. Обучение
 -- ============================================================================
 CREATE TABLE employee_trainings (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     training_name   VARCHAR(500) NOT NULL,
     training_type   VARCHAR(100) NOT NULL,                 -- safety, technical, management, certification
     provider        VARCHAR(200),
@@ -236,17 +236,17 @@ CREATE TABLE employee_trainings (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_trainings_employee ON employee_trainings(employee_id);
+CREATE INDEX IF NOT EXISTS idx_trainings_employee ON employee_trainings(employee_id);
 
 -- ============================================================================
 -- 9. Оценка персонала
 -- ============================================================================
 CREATE TABLE employee_performance (
-    id              BIGSERIAL PRIMARY KEY,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     review_period   VARCHAR(50) NOT NULL,                  -- Q1-2026, 2026-annual
     review_date     DATE NOT NULL,
-    reviewer_id     BIGINT REFERENCES employees(id),
+    reviewer_id     UUID REFERENCES employees(id),
     overall_score   NUMERIC(3,1),                          -- 1.0 - 5.0
     criteria_scores TEXT,                                   -- JSON
     strengths       TEXT,

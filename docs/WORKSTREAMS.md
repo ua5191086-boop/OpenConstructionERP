@@ -16,7 +16,18 @@
 | V004 | Tunnel Module (tbm, drives, rings, segments) | applied | tunnel |
 | V005 | Site Documents (RFI, daily reports, work entries) | applied | core-py |
 | V006 | CDE Core (documents, numbering rules, revisions, transmittals) | applied | core-py |
-| V007 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — перед использованием добавь строку сюда в ТОМ ЖЕ коммите | | |
+| V007 | Contract Module (перенумерована из V003-дубля; contracts из V000 расширена ALTER'ами) | applied | contracts |
+| V008 | HR Module (перенумерована из V004-дубля) | applied | hr |
+| V009 | Finance Module (перенумерована из V005-дубля) | applied | finance |
+| V010 | Procurement Module (перенумерована из V006-дубля) | applied | procurement |
+| V011 | BIM Module (перенумерована из V007) | applied | bim |
+| V012 | AI Module (перенумерована из V008) | applied | ai |
+| V013 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — перед использованием добавь строку сюда в ТОМ ЖЕ коммите | | |
+
+> ⚠️ **2026-07-02, второй инцидент за день:** четыре новых дубля номеров (V003/V004/V005/V006
+> залиты повторно параллельными сессиями) + BIGSERIAL/BIGINT против UUID + FK на contractors/sections
+> + повторное создание таблицы contracts, существующей с V000. Всё исправлено, но теперь
+> **CI автоматически падает при дублях номеров** — договариваться больше не нужно, машина не пустит.
 
 **Правило:** новый номер бронируется строкой в этой таблице в том же коммите,
 что и сама миграция. Перед началом работы — `git pull`. Нашёл занятый номер — перенумеруй свою.

@@ -21,9 +21,9 @@ CREATE TABLE cbs_chapters (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_cbs_project ON cbs_chapters(project_id);
-CREATE INDEX idx_cbs_path ON cbs_chapters USING GIST(path);
-CREATE UNIQUE INDEX uq_cbs_global_code ON cbs_chapters(code) WHERE project_id IS NULL;
+CREATE INDEX IF NOT EXISTS idx_cbs_project ON cbs_chapters(project_id);
+CREATE INDEX IF NOT EXISTS idx_cbs_path ON cbs_chapters USING GIST(path);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_cbs_global_code ON cbs_chapters(code) WHERE project_id IS NULL;
 
 -- ============================================================
 -- 2. BOQ Hierarchy
@@ -42,7 +42,7 @@ CREATE TABLE boq_sections (
     UNIQUE(project_id, code)
 );
 
-CREATE INDEX idx_boq_sections_project ON boq_sections(project_id);
+CREATE INDEX IF NOT EXISTS idx_boq_sections_project ON boq_sections(project_id);
 
 CREATE TABLE boq_complexes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,7 +56,7 @@ CREATE TABLE boq_complexes (
     UNIQUE(project_id, code)
 );
 
-CREATE INDEX idx_boq_complexes_section ON boq_complexes(section_id);
+CREATE INDEX IF NOT EXISTS idx_boq_complexes_section ON boq_complexes(section_id);
 
 CREATE TABLE boq_objects (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -70,7 +70,7 @@ CREATE TABLE boq_objects (
     UNIQUE(project_id, code)
 );
 
-CREATE INDEX idx_boq_objects_complex ON boq_objects(complex_id);
+CREATE INDEX IF NOT EXISTS idx_boq_objects_complex ON boq_objects(complex_id);
 
 CREATE TABLE boq_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -95,12 +95,12 @@ CREATE TABLE boq_items (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_boq_items_object ON boq_items(object_id);
-CREATE INDEX idx_boq_items_cbs ON boq_items(cbs_chapter_id);
-CREATE INDEX idx_boq_items_contractor ON boq_items(contractor_id);
-CREATE INDEX idx_boq_items_contract ON boq_items(contract_id);
-CREATE INDEX idx_boq_items_status ON boq_items(project_id, status);
-CREATE INDEX idx_boq_items_fts ON boq_items USING GIN(to_tsvector('english', name || ' ' || COALESCE(description, '')));
+CREATE INDEX IF NOT EXISTS idx_boq_items_object ON boq_items(object_id);
+CREATE INDEX IF NOT EXISTS idx_boq_items_cbs ON boq_items(cbs_chapter_id);
+CREATE INDEX IF NOT EXISTS idx_boq_items_contractor ON boq_items(contractor_id);
+CREATE INDEX IF NOT EXISTS idx_boq_items_contract ON boq_items(contract_id);
+CREATE INDEX IF NOT EXISTS idx_boq_items_status ON boq_items(project_id, status);
+CREATE INDEX IF NOT EXISTS idx_boq_items_fts ON boq_items USING GIN(to_tsvector('english', name || ' ' || COALESCE(description, '')));
 
 -- ============================================================
 -- 3. Cost Transactions (Plan / Actual / Forecast / Variance)
@@ -126,13 +126,13 @@ CREATE TABLE cost_transactions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_cost_tx_project ON cost_transactions(project_id, period);
-CREATE INDEX idx_cost_tx_boq ON cost_transactions(boq_item_id);
-CREATE INDEX idx_cost_tx_cbs ON cost_transactions(cbs_chapter_id);
-CREATE INDEX idx_cost_tx_type ON cost_transactions(project_id, transaction_type);
-CREATE INDEX idx_cost_tx_contractor ON cost_transactions(contractor_id);
-CREATE INDEX idx_cost_tx_contract ON cost_transactions(contract_id);
-CREATE INDEX idx_cost_tx_period ON cost_transactions(project_id, period DESC);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_project ON cost_transactions(project_id, period);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_boq ON cost_transactions(boq_item_id);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_cbs ON cost_transactions(cbs_chapter_id);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_type ON cost_transactions(project_id, transaction_type);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_contractor ON cost_transactions(contractor_id);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_contract ON cost_transactions(contract_id);
+CREATE INDEX IF NOT EXISTS idx_cost_tx_period ON cost_transactions(project_id, period DESC);
 
 -- ============================================================
 -- 4. Budget Versions
@@ -151,7 +151,7 @@ CREATE TABLE budget_versions (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_budget_versions_project ON budget_versions(project_id);
+CREATE INDEX IF NOT EXISTS idx_budget_versions_project ON budget_versions(project_id);
 
 -- ============================================================
 -- 5. Seed Data: CBS Chapters for Railway Projects

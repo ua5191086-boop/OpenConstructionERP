@@ -8,11 +8,11 @@
 -- 1. Заявки на закупку
 -- ============================================================================
 CREATE TABLE procurement_requests (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     request_number  VARCHAR(50) NOT NULL UNIQUE,          -- PR-2026-001
-    project_id      BIGINT REFERENCES projects(id),
-    section_id      BIGINT REFERENCES sections(id),
-    requested_by    BIGINT REFERENCES employees(id),
+    project_id      UUID REFERENCES projects(id),
+    section_id      UUID REFERENCES boq_sections(id),
+    requested_by    UUID REFERENCES employees(id),
     request_date    DATE NOT NULL,
     required_date   DATE,                                  -- срок поставки
     priority        VARCHAR(20) NOT NULL DEFAULT 'normal', -- low, normal, high, urgent
@@ -21,25 +21,25 @@ CREATE TABLE procurement_requests (
     justification   TEXT,
     estimated_cost  NUMERIC(18,2),
     currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
-    budget_item_id  BIGINT REFERENCES budget_items(id),    -- статья бюджета
-    approved_by     BIGINT REFERENCES employees(id),
+    budget_item_id  UUID REFERENCES budget_items(id),    -- статья бюджета
+    approved_by     UUID REFERENCES employees(id),
     approved_at     TIMESTAMPTZ,
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_pr_project ON procurement_requests(project_id);
-CREATE INDEX idx_pr_status ON procurement_requests(status);
-CREATE INDEX idx_pr_date ON procurement_requests(request_date);
-CREATE INDEX idx_pr_priority ON procurement_requests(priority);
+CREATE INDEX IF NOT EXISTS idx_pr_project ON procurement_requests(project_id);
+CREATE INDEX IF NOT EXISTS idx_pr_status ON procurement_requests(status);
+CREATE INDEX IF NOT EXISTS idx_pr_date ON procurement_requests(request_date);
+CREATE INDEX IF NOT EXISTS idx_pr_priority ON procurement_requests(priority);
 
 -- ============================================================================
 -- 2. Позиции заявки
 -- ============================================================================
 CREATE TABLE procurement_request_items (
-    id              BIGSERIAL PRIMARY KEY,
-    request_id      BIGINT NOT NULL REFERENCES procurement_requests(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    request_id      UUID NOT NULL REFERENCES procurement_requests(id) ON DELETE CASCADE,
     line_number     INTEGER NOT NULL,
     item_code       VARCHAR(100),
     description     TEXT NOT NULL,
@@ -49,26 +49,26 @@ CREATE TABLE procurement_request_items (
     estimated_unit_price NUMERIC(18,2),
     estimated_total NUMERIC(18,2),
     currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
-    boq_item_id     BIGINT REFERENCES boq_items(id),       -- привязка к BOQ
+    boq_item_id     UUID REFERENCES boq_items(id),       -- привязка к BOQ
     material_code   VARCHAR(100),                           -- код материала/оборудования
     catalog_number  VARCHAR(200),                           -- номер по каталогу
-    preferred_vendor BIGINT REFERENCES contractors(id),
+    preferred_vendor UUID REFERENCES organizations(id),
     sort_order      INTEGER DEFAULT 0,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE(request_id, line_number)
 );
 
-CREATE INDEX idx_pri_request ON procurement_request_items(request_id);
+CREATE INDEX IF NOT EXISTS idx_pri_request ON procurement_request_items(request_id);
 
 -- ============================================================================
 -- 3. Заказы на поставку (PO)
 -- ============================================================================
 CREATE TABLE purchase_orders (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     po_number       VARCHAR(50) NOT NULL UNIQUE,          -- PO-2026-001
-    request_id      BIGINT REFERENCES procurement_requests(id),
-    project_id      BIGINT REFERENCES projects(id),
-    vendor_id       BIGINT NOT NULL REFERENCES contractors(id),
+    request_id      UUID REFERENCES procurement_requests(id),
+    project_id      UUID REFERENCES projects(id),
+    vendor_id       UUID NOT NULL REFERENCES organizations(id),
     order_date      DATE NOT NULL,
     delivery_date   DATE,
     delivery_address TEXT,
@@ -81,26 +81,26 @@ CREATE TABLE purchase_orders (
     total_amount    NUMERIC(18,2) NOT NULL,
     currency        VARCHAR(3) NOT NULL DEFAULT 'USD',
     status          VARCHAR(50) NOT NULL DEFAULT 'draft',  -- draft, sent, confirmed, shipped, partially_received, received, cancelled
-    approved_by     BIGINT REFERENCES employees(id),
+    approved_by     UUID REFERENCES employees(id),
     approved_at     TIMESTAMPTZ,
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_po_vendor ON purchase_orders(vendor_id);
-CREATE INDEX idx_po_project ON purchase_orders(project_id);
-CREATE INDEX idx_po_status ON purchase_orders(status);
-CREATE INDEX idx_po_date ON purchase_orders(order_date);
+CREATE INDEX IF NOT EXISTS idx_po_vendor ON purchase_orders(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_po_project ON purchase_orders(project_id);
+CREATE INDEX IF NOT EXISTS idx_po_status ON purchase_orders(status);
+CREATE INDEX IF NOT EXISTS idx_po_date ON purchase_orders(order_date);
 
 -- ============================================================================
 -- 4. Позиции заказа
 -- ============================================================================
 CREATE TABLE purchase_order_items (
-    id              BIGSERIAL PRIMARY KEY,
-    po_id           BIGINT NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    po_id           UUID NOT NULL REFERENCES purchase_orders(id) ON DELETE CASCADE,
     line_number     INTEGER NOT NULL,
-    request_item_id BIGINT REFERENCES procurement_request_items(id),
+    request_item_id UUID REFERENCES procurement_request_items(id),
     item_code       VARCHAR(100),
     description     TEXT NOT NULL,
     specification   TEXT,
@@ -116,32 +116,32 @@ CREATE TABLE purchase_order_items (
     UNIQUE(po_id, line_number)
 );
 
-CREATE INDEX idx_poi_po ON purchase_order_items(po_id);
+CREATE INDEX IF NOT EXISTS idx_poi_po ON purchase_order_items(po_id);
 
 -- ============================================================================
 -- 5. Поставки / приход
 -- ============================================================================
 CREATE TABLE goods_receipts (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     receipt_number  VARCHAR(50) NOT NULL UNIQUE,          -- GR-2026-001
-    po_id           BIGINT NOT NULL REFERENCES purchase_orders(id),
+    po_id           UUID NOT NULL REFERENCES purchase_orders(id),
     receipt_date    DATE NOT NULL,
-    received_by     BIGINT REFERENCES employees(id),
+    received_by     UUID REFERENCES employees(id),
     status          VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, inspected, accepted, rejected, partially_accepted
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_gr_po ON goods_receipts(po_id);
-CREATE INDEX idx_gr_date ON goods_receipts(receipt_date);
+CREATE INDEX IF NOT EXISTS idx_gr_po ON goods_receipts(po_id);
+CREATE INDEX IF NOT EXISTS idx_gr_date ON goods_receipts(receipt_date);
 
 -- ============================================================================
 -- 6. Позиции поставки
 -- ============================================================================
 CREATE TABLE goods_receipt_items (
-    id              BIGSERIAL PRIMARY KEY,
-    receipt_id      BIGINT NOT NULL REFERENCES goods_receipts(id) ON DELETE CASCADE,
-    po_item_id      BIGINT REFERENCES purchase_order_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    receipt_id      UUID NOT NULL REFERENCES goods_receipts(id) ON DELETE CASCADE,
+    po_item_id      UUID REFERENCES purchase_order_items(id),
     item_code       VARCHAR(100),
     description     TEXT,
     unit            VARCHAR(20),
@@ -159,13 +159,13 @@ CREATE TABLE goods_receipt_items (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_gri_receipt ON goods_receipt_items(receipt_id);
+CREATE INDEX IF NOT EXISTS idx_gri_receipt ON goods_receipt_items(receipt_id);
 
 -- ============================================================================
 -- 7. Склад / инвентаризация
 -- ============================================================================
 CREATE TABLE inventory_items (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     item_code       VARCHAR(100) NOT NULL UNIQUE,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -187,41 +187,41 @@ CREATE TABLE inventory_items (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_inv_category ON inventory_items(category);
-CREATE INDEX idx_inv_location ON inventory_items(storage_location);
+CREATE INDEX IF NOT EXISTS idx_inv_category ON inventory_items(category);
+CREATE INDEX IF NOT EXISTS idx_inv_location ON inventory_items(storage_location);
 
 -- ============================================================================
 -- 8. Движение склада
 -- ============================================================================
 CREATE TABLE inventory_movements (
-    id              BIGSERIAL PRIMARY KEY,
-    item_id         BIGINT NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    item_id         UUID NOT NULL REFERENCES inventory_items(id) ON DELETE CASCADE,
     movement_date   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     movement_type   VARCHAR(50) NOT NULL,                   -- receipt, issue, transfer, adjustment, return
     quantity        NUMERIC(18,4) NOT NULL,
     unit_price      NUMERIC(18,2),
     total_price     NUMERIC(18,2),
     reference_type  VARCHAR(50),                           -- goods_receipt, purchase_order, work_order, adjustment
-    reference_id    BIGINT,
+    reference_id    UUID,
     from_location   VARCHAR(200),
     to_location     VARCHAR(200),
-    performed_by    BIGINT REFERENCES employees(id),
+    performed_by    UUID REFERENCES employees(id),
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_inv_mov_item ON inventory_movements(item_id);
-CREATE INDEX idx_inv_mov_date ON inventory_movements(movement_date);
-CREATE INDEX idx_inv_mov_type ON inventory_movements(movement_type);
+CREATE INDEX IF NOT EXISTS idx_inv_mov_item ON inventory_movements(item_id);
+CREATE INDEX IF NOT EXISTS idx_inv_mov_date ON inventory_movements(movement_date);
+CREATE INDEX IF NOT EXISTS idx_inv_mov_type ON inventory_movements(movement_type);
 
 -- ============================================================================
 -- 9. Вендоры / поставщики (расширение contractors)
 -- ============================================================================
 CREATE TABLE vendor_evaluations (
-    id              BIGSERIAL PRIMARY KEY,
-    vendor_id       BIGINT NOT NULL REFERENCES contractors(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    vendor_id       UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     evaluation_date DATE NOT NULL,
-    evaluator       BIGINT REFERENCES employees(id),
+    evaluator       UUID REFERENCES employees(id),
     criteria_scores TEXT,                                   -- JSON: quality, delivery, price, service
     overall_score   NUMERIC(3,1),                          -- 1.0 - 5.0
     comments        TEXT,
@@ -230,7 +230,7 @@ CREATE TABLE vendor_evaluations (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_vendor_eval_vendor ON vendor_evaluations(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_vendor_eval_vendor ON vendor_evaluations(vendor_id);
 
 -- ============================================================================
 -- 10. Триггеры

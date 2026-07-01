@@ -8,7 +8,7 @@
 -- 1. AI-агенты
 -- ============================================================================
 CREATE TABLE ai_agents (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_name      VARCHAR(200) NOT NULL UNIQUE,
     agent_type      VARCHAR(100) NOT NULL,                 -- classifier, extractor, predictor, recommender, chatbot
     description     TEXT,
@@ -28,8 +28,8 @@ CREATE TABLE ai_agents (
 -- 2. AI-задачи
 -- ============================================================================
 CREATE TABLE ai_tasks (
-    id              BIGSERIAL PRIMARY KEY,
-    agent_id        BIGINT REFERENCES ai_agents(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    agent_id        UUID REFERENCES ai_agents(id),
     task_type       VARCHAR(100) NOT NULL,                 -- classification, extraction, generation, analysis, prediction
     input_data      TEXT NOT NULL,
     input_format    VARCHAR(50) DEFAULT 'text',             -- text, json, image, document
@@ -42,24 +42,24 @@ CREATE TABLE ai_tasks (
     status          VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, processing, completed, failed
     error_message   TEXT,
     source_type     VARCHAR(50),                            -- boq, tender, contract, hr, finance, procurement, bim
-    source_id       BIGINT,
+    source_id       UUID,
     created_by      VARCHAR(100),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_at    TIMESTAMPTZ
 );
 
-CREATE INDEX idx_ai_tasks_agent ON ai_tasks(agent_id);
-CREATE INDEX idx_ai_tasks_type ON ai_tasks(task_type);
-CREATE INDEX idx_ai_tasks_status ON ai_tasks(status);
-CREATE INDEX idx_ai_tasks_source ON ai_tasks(source_type, source_id);
-CREATE INDEX idx_ai_tasks_created ON ai_tasks(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_agent ON ai_tasks(agent_id);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_type ON ai_tasks(task_type);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_status ON ai_tasks(status);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_source ON ai_tasks(source_type, source_id);
+CREATE INDEX IF NOT EXISTS idx_ai_tasks_created ON ai_tasks(created_at);
 
 -- ============================================================================
 -- 3. Классификация запросов (Ruslan OS dispatcher)
 -- ============================================================================
 CREATE TABLE ai_classifications (
-    id              BIGSERIAL PRIMARY KEY,
-    task_id         BIGINT REFERENCES ai_tasks(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id         UUID REFERENCES ai_tasks(id) ON DELETE CASCADE,
     raw_input       TEXT NOT NULL,
     intent          VARCHAR(200),                           -- намерение пользователя
     entities        JSONB,                                  -- извлечённые сущности
@@ -77,15 +77,15 @@ CREATE TABLE ai_classifications (
 -- 4. Извлечение данных (OCR / парсинг)
 -- ============================================================================
 CREATE TABLE ai_extractions (
-    id              BIGSERIAL PRIMARY KEY,
-    task_id         BIGINT REFERENCES ai_tasks(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id         UUID REFERENCES ai_tasks(id) ON DELETE CASCADE,
     document_type   VARCHAR(100),                          -- invoice, contract, boq, report, drawing
     file_path       VARCHAR(1000),
     extracted_data  JSONB,                                  -- извлечённые данные
     fields_count    INTEGER,
     accuracy        NUMERIC(5,2),                           -- точность извлечения
     validated       BOOLEAN DEFAULT FALSE,
-    validated_by    BIGINT REFERENCES employees(id),
+    validated_by    UUID REFERENCES employees(id),
     validated_at    TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -94,11 +94,11 @@ CREATE TABLE ai_extractions (
 -- 5. Прогнозы / предсказания
 -- ============================================================================
 CREATE TABLE ai_predictions (
-    id              BIGSERIAL PRIMARY KEY,
-    task_id         BIGINT REFERENCES ai_tasks(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id         UUID REFERENCES ai_tasks(id) ON DELETE CASCADE,
     prediction_type VARCHAR(100) NOT NULL,                  -- cost_forecast, delay_risk, quality_risk, budget_overrun
     target_entity   VARCHAR(100),                           -- project, contract, section
-    target_id       BIGINT,
+    target_id       UUID,
     predicted_value NUMERIC(18,2),
     confidence      NUMERIC(5,2),
     actual_value    NUMERIC(18,2),
@@ -110,15 +110,15 @@ CREATE TABLE ai_predictions (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_predictions_type ON ai_predictions(prediction_type);
-CREATE INDEX idx_ai_predictions_target ON ai_predictions(target_entity, target_id);
+CREATE INDEX IF NOT EXISTS idx_ai_predictions_type ON ai_predictions(prediction_type);
+CREATE INDEX IF NOT EXISTS idx_ai_predictions_target ON ai_predictions(target_entity, target_id);
 
 -- ============================================================================
 -- 6. Рекомендации
 -- ============================================================================
 CREATE TABLE ai_recommendations (
-    id              BIGSERIAL PRIMARY KEY,
-    task_id         BIGINT REFERENCES ai_tasks(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id         UUID REFERENCES ai_tasks(id) ON DELETE CASCADE,
     recommendation_type VARCHAR(100) NOT NULL,              -- vendor, material, method, schedule, risk_mitigation
     title           VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -126,7 +126,7 @@ CREATE TABLE ai_recommendations (
     expected_impact TEXT,                                   -- ожидаемый эффект
     confidence      NUMERIC(5,2),
     status          VARCHAR(50) NOT NULL DEFAULT 'pending', -- pending, accepted, rejected, implemented
-    accepted_by     BIGINT REFERENCES employees(id),
+    accepted_by     UUID REFERENCES employees(id),
     accepted_at     TIMESTAMPTZ,
     implemented_at  TIMESTAMPTZ,
     actual_impact   TEXT,
@@ -137,7 +137,7 @@ CREATE TABLE ai_recommendations (
 -- 7. Чат-история (Ruslan OS conversations)
 -- ============================================================================
 CREATE TABLE ai_conversations (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id      VARCHAR(100) NOT NULL,
     user_message    TEXT NOT NULL,
     assistant_message TEXT NOT NULL,
@@ -152,14 +152,14 @@ CREATE TABLE ai_conversations (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_ai_conv_session ON ai_conversations(session_id);
-CREATE INDEX idx_ai_conv_created ON ai_conversations(created_at);
+CREATE INDEX IF NOT EXISTS idx_ai_conv_session ON ai_conversations(session_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conv_created ON ai_conversations(created_at);
 
 -- ============================================================================
 -- 8. AI-метрики
 -- ============================================================================
 CREATE TABLE ai_metrics (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     report_date     DATE NOT NULL DEFAULT CURRENT_DATE,
     total_requests  INTEGER DEFAULT 0,
     total_tokens    INTEGER DEFAULT 0,

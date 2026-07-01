@@ -25,6 +25,13 @@ jobs:
           python-version: "3.12"
       - name: Python syntax check
         run: python -m compileall scripts/
+      - name: Guard — duplicate migration version numbers (see docs/WORKSTREAMS.md)
+        run: |
+          DUPES=$(ls database/migrations/ | grep -oP '^V\d+' | sort | uniq -d)
+          if [ -n "$DUPES" ]; then
+            echo "::error::Duplicate migration version numbers: $DUPES — read docs/WORKSTREAMS.md, renumber your migration"
+            exit 1
+          fi
       - name: Install core-py dependencies
         run: pip install -r services/core-py/requirements.txt pytest
       - name: Unit tests

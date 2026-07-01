@@ -39,10 +39,10 @@ CREATE TABLE tenders (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tenders_status ON tenders(status);
-CREATE INDEX idx_tenders_client ON tenders(client_id);
-CREATE INDEX idx_tenders_project ON tenders(project_id);
-CREATE INDEX idx_tenders_deadline ON tenders(submission_deadline);
+CREATE INDEX IF NOT EXISTS idx_tenders_status ON tenders(status);
+CREATE INDEX IF NOT EXISTS idx_tenders_client ON tenders(client_id);
+CREATE INDEX IF NOT EXISTS idx_tenders_project ON tenders(project_id);
+CREATE INDEX IF NOT EXISTS idx_tenders_deadline ON tenders(submission_deadline);
 
 -- ============================================================================
 -- 2. Лоты тендера
@@ -62,7 +62,7 @@ CREATE TABLE tender_lots (
     UNIQUE(tender_id, lot_number)
 );
 
-CREATE INDEX idx_tender_lots_tender ON tender_lots(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_lots_tender ON tender_lots(tender_id);
 
 -- ============================================================================
 -- 3. Позиции лота (привязка к BOQ)
@@ -81,7 +81,7 @@ CREATE TABLE tender_lot_items (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_lot_items_lot ON tender_lot_items(lot_id);
+CREATE INDEX IF NOT EXISTS idx_tender_lot_items_lot ON tender_lot_items(lot_id);
 
 -- ============================================================================
 -- 4. Участники тендера
@@ -106,10 +106,10 @@ CREATE TABLE tender_bidders (
     UNIQUE(tender_id, lot_id, contractor_id)
 );
 
-CREATE INDEX idx_tender_bidders_tender ON tender_bidders(tender_id);
-CREATE INDEX idx_tender_bidders_lot ON tender_bidders(lot_id);
-CREATE INDEX idx_tender_bidders_contractor ON tender_bidders(contractor_id);
-CREATE INDEX idx_tender_bidders_winner ON tender_bidders(tender_id, is_winner) WHERE is_winner = TRUE;
+CREATE INDEX IF NOT EXISTS idx_tender_bidders_tender ON tender_bidders(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_bidders_lot ON tender_bidders(lot_id);
+CREATE INDEX IF NOT EXISTS idx_tender_bidders_contractor ON tender_bidders(contractor_id);
+CREATE INDEX IF NOT EXISTS idx_tender_bidders_winner ON tender_bidders(tender_id, is_winner) WHERE is_winner = TRUE;
 
 -- ============================================================================
 -- 5. Ценовые предложения участников (по позициям)
@@ -131,7 +131,7 @@ CREATE TABLE tender_bid_items (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_bid_items_bidder ON tender_bid_items(bidder_id);
+CREATE INDEX IF NOT EXISTS idx_tender_bid_items_bidder ON tender_bid_items(bidder_id);
 
 -- ============================================================================
 -- 6. Оценка заявок
@@ -151,8 +151,8 @@ CREATE TABLE tender_evaluations (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_evaluations_tender ON tender_evaluations(tender_id);
-CREATE INDEX idx_tender_evaluations_bidder ON tender_evaluations(bidder_id);
+CREATE INDEX IF NOT EXISTS idx_tender_evaluations_tender ON tender_evaluations(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_evaluations_bidder ON tender_evaluations(bidder_id);
 
 -- ============================================================================
 -- 7. Критерии оценки
@@ -168,7 +168,7 @@ CREATE TABLE tender_evaluation_criteria (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_criteria_tender ON tender_evaluation_criteria(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_criteria_tender ON tender_evaluation_criteria(tender_id);
 
 -- ============================================================================
 -- 8. Документы тендера
@@ -186,7 +186,7 @@ CREATE TABLE tender_documents (
     uploaded_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_documents_tender ON tender_documents(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_documents_tender ON tender_documents(tender_id);
 
 -- ============================================================================
 -- 9. Вопросы и разъяснения
@@ -205,7 +205,7 @@ CREATE TABLE tender_clarifications (
     answered_at     TIMESTAMPTZ
 );
 
-CREATE INDEX idx_tender_clarifications_tender ON tender_clarifications(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_clarifications_tender ON tender_clarifications(tender_id);
 
 -- ============================================================================
 -- 10. История статусов
@@ -220,7 +220,7 @@ CREATE TABLE tender_status_history (
     changed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_tender_status_history_tender ON tender_status_history(tender_id);
+CREATE INDEX IF NOT EXISTS idx_tender_status_history_tender ON tender_status_history(tender_id);
 
 -- ============================================================================
 -- 11. Вспомогательные функции

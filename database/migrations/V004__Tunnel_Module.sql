@@ -40,7 +40,7 @@ CREATE TABLE tunnel_drives (
     UNIQUE (project_id, code)
 );
 
-CREATE INDEX idx_drives_project ON tunnel_drives(project_id);
+CREATE INDEX IF NOT EXISTS idx_drives_project ON tunnel_drives(project_id);
 
 CREATE TABLE tunnel_rings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -60,8 +60,8 @@ CREATE TABLE tunnel_rings (
     UNIQUE (drive_id, ring_no)
 );
 
-CREATE INDEX idx_rings_drive ON tunnel_rings(drive_id, ring_no);
-CREATE INDEX idx_rings_built ON tunnel_rings(drive_id, built_at);
+CREATE INDEX IF NOT EXISTS idx_rings_drive ON tunnel_rings(drive_id, ring_no);
+CREATE INDEX IF NOT EXISTS idx_rings_built ON tunnel_rings(drive_id, built_at);
 
 CREATE TABLE tunnel_segments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -77,8 +77,8 @@ CREATE TABLE tunnel_segments (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_segments_ring ON tunnel_segments(ring_id);
-CREATE INDEX idx_segments_qc ON tunnel_segments(project_id, qc_status);
+CREATE INDEX IF NOT EXISTS idx_segments_ring ON tunnel_segments(ring_id);
+CREATE INDEX IF NOT EXISTS idx_segments_qc ON tunnel_segments(project_id, qc_status);
 
 -- Ontology object types for the tunnel domain
 INSERT INTO object_types (code, name, icon, module_owner) VALUES
