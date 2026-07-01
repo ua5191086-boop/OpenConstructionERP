@@ -19,6 +19,9 @@ const navItems = [
   { path: '/gis', label: 'GIS', icon: '🗺️' },
   { path: '/risk', label: 'Risk', icon: '⚠️' },
   { path: '/change', label: 'Change', icon: '🔄' },
+  { path: '/tbm', label: 'TBM', icon: '🛠️' },
+  { path: '/ringbuilder', label: 'Ring Builder', icon: '🔘' },
+  { path: '/natm', label: 'NATM', icon: '⛰️' },
 ]
 
 export default function Layout() {

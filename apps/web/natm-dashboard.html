@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — NATM & Microtunnelling Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; text-align: center; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 280px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 16px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-pass { background: #1e3a2f; color: #86efac; }
+.badge-fail { background: #7f1d1d; color: #fca5a5; }
+.badge-pending { background: #1e3a8a; color: #93c5fd; }
+.badge-alarm { background: #7f1d1d; color: #fca5a5; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3, .charts-grid-4 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⛰️ NATM & Microtunnelling Dashboard</h1>
+  <div class="subtitle">Excavation · Shotcrete · Rock Bolts · Convergence · MTBM · Shafts · Settlement</div>
+</div>
+<div class="container" id="app">
+  <div class="filter-bar" style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+    <select id="driveFilter" onchange="reload()" style="background:#0f172a;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 12px;font-size:14px;">
+      <option value="">All Drives</option>
+    </select>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>📐 Excavation Progress (Chainage)</h3><canvas id="chartExcavation"></canvas></div>
+    <div class="chart-card"><h3>🔫 MTBM Thrust Force</h3><canvas id="chartThrust"></canvas></div>
+  </div>
+  <div class="charts-grid-3">
+    <div class="chart-card"><h3>🧱 Shotcrete Strength</h3><canvas id="chartShotcrete"></canvas></div>
+    <div class="chart-card"><h3>🪨 Rock Mass Rating (RMR)</h3><canvas id="chartRMR"></canvas></div>
+    <div class="chart-card"><h3>📉 Settlement Distribution</h3><canvas id="chartSettlement"></canvas></div>
+  </div>
+  <div class="accordion"><div class="accordion-header" onclick="toggle(this)"><h3>🪨 Face Mapping</h3><span class="arrow">▼</span></div><div class="accordion-body" id="faceBody"><table><thead><tr><th>Chainage</th><th>Rock Type</th><th>RMR</th><th>Q-Score</th><th>Fault</th><th>Mapped By</th></tr></thead><tbody id="faceTable"></tbody></table></div></div>
+  <div class="accordion"><div class="accordion-header" onclick="toggle(this)"><h3>🛢️ Grouting Records</h3><span class="arrow">▼</span></div><div class="accordion-body" id="groutBody"><table><thead><tr><th>Date</th><th>Type</th><th>Mix</th><th>Pressure</th><th>Volume</th><th>Take</th></tr></thead><tbody id="groutTable"></tbody></table></div></div>
+</div>
+<script>
+let charts = {};
+let data = {};
+
+async function loadData() {
+  try { data.excavation = await (await fetch('/api/v1/natm/excavation')).json(); } catch { data.excavation = []; }
+  try { data.shotcrete = await (await fetch('/api/v1/natm/shotcrete')).json(); } catch { data.shotcrete = []; }
+  try { data.rockBolts = await (await fetch('/api/v1/natm/rock-bolts')).json(); } catch { data.rockBolts = []; }
+  try { data.convergence = await (await fetch('/api/v1/natm/convergence')).json(); } catch { data.convergence = []; }
+  try { data.faceMapping = await (await fetch('/api/v1/natm/face-mapping')).json(); } catch { data.faceMapping = []; }
+  try { data.mtbmThrust = await (await fetch('/api/v1/natm/mtbm-thrust')).json(); } catch { data.mtbmThrust = []; }
+  try { data.mtbmDrives = await (await fetch('/api/v1/natm/mtbm-drives')).json(); } catch { data.mtbmDrives = []; }
+  try { data.grouting = await (await fetch('/api/v1/natm/grouting')).json(); } catch { data.grouting = []; }
+  try { data.settlement = await (await fetch('/api/v1/natm/settlement')).json(); } catch { data.settlement = []; }
+  try { data.summary = await (await fetch('/api/v1/natm/summary')).json(); } catch { data.summary = {}; }
+  populateFilter();
+  render();
+}
+
+function populateFilter() {
+  const sel = document.getElementById('driveFilter');
+  const drives = [...new Set((data.excavation||[]).map(e => e.drive_id).filter(Boolean))];
+  drives.forEach(d => { const opt = document.createElement('option'); opt.value = d; opt.textContent = d; sel.appendChild(opt); });
+}
+
+function render() {
+  const exc = data.excavation || [];
+  const shot = data.shotcrete || [];
+  const bolts = data.rockBolts || [];
+  const conv = data.convergence || [];
+  const face = data.faceMapping || [];
+  const thrust = data.mtbmThrust || [];
+  const grout = data.grouting || [];
+  const settle = data.settlement || [];
+  const sm = data.summary || {};
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Excavation Rounds</div><div class="value blue">${sm.total_excavation_rounds || exc.length}</div></div>
+    <div class="stat-card"><div class="label">Shotcrete Records</div><div class="value green">${sm.total_shotcrete || shot.length}</div></div>
+    <div class="stat-card"><div class="label">Rock Bolts</div><div class="value yellow">${sm.total_rock_bolts || bolts.length}</div></div>
+    <div class="stat-card"><div class="label">Face Maps</div><div class="value purple">${sm.total_face_maps || face.length}</div></div>
+    <div class="stat-card"><div class="label">MTBM Thrusts</div><div class="value purple">${thrust.length}</div></div>
+    <div class="stat-card"><div class="label">Settlement Alarms</div><div class="value red">${sm.active_settlement_alarms || 0}</div></div>
+  `;
+
+  // Excavation progress
+  const sortedExc = [...exc].sort((a,b) => a.chainage_from - b.chainage_from);
+  makeChart('chartExcavation', 'line', {
+    labels: sortedExc.map(e => `R${e.round_no}`),
+    datasets: [
+      { label: 'Chainage From', data: sortedExc.map(e => e.chainage_from || 0), borderColor: '#3b82f6', fill: false, tension: 0.3 },
+      { label: 'Chainage To', data: sortedExc.map(e => e.chainage_to || 0), borderColor: '#22c55e', fill: false, tension: 0.3 }
+    ]
+  });
+
+  // MTBM Thrust
+  const sortedThrust = [...thrust].sort((a,b) => a.pipe_no - b.pipe_no);
+  makeChart('chartThrust', 'bar', {
+    labels: sortedThrust.map(t => `P${t.pipe_no}`),
+    datasets: [{ label: 'Thrust Force (kN)', data: sortedThrust.map(t => t.thrust_force_kN || 0), backgroundColor: '#f97316' }]
+  });
+
+  // Shotcrete strength
+  const strData = shot.filter(s => s.compressive_strength_mpa).slice(0, 50);
+  makeChart('chartShotcrete', 'bar', {
+    labels: strData.map((s,i) => i+1),
+    datasets: [{ label: 'Compressive Strength (MPa)', data: strData.map(s => s.compressive_strength_mpa), backgroundColor: strData.map(s => s.compressive_strength_mpa >= 30 ? '#22c55e' : '#f97316') }]
+  });
+
+  // RMR scores
+  const rmrData = face.filter(f => f.rmr_score).slice(0, 50);
+  makeChart('chartRMR', 'bar', {
+    labels: rmrData.map((f,i) => i+1),
+    datasets: [{ label: 'RMR Score', data: rmrData.map(f => f.rmr_score), backgroundColor: rmrData.map(f => f.rmr_score >= 60 ? '#22c55e' : f.rmr_score >= 40 ? '#f59e0b' : '#ef4444') }]
+  });
+
+  // Settlement
+  const sData = settle.slice(0, 100);
+  makeChart('chartSettlement', 'scatter', {
+    datasets: [{
+      label: 'Settlement (mm)',
+      data: sData.map(s => ({x: s.chainage || 0, y: s.settlement_mm || 0})),
+      backgroundColor: sData.map(s => s.alarm_triggered ? '#ef4444' : '#3b82f6')
+    }]
+  });
+
+  // Face mapping table
+  document.getElementById('faceTable').innerHTML = face.map(f => `<tr><td>${(f.chainage||'').toFixed(1)}</td><td>${f.rock_type||''}</td><td>${f.rmr_score||''}</td><td>${f.q_score||''}</td><td>${f.fault_zone ? '⚠️ Yes' : 'No'}</td><td>${f.mapped_by||''}</td></tr>`).join('');
+
+  // Grouting table
+  document.getElementById('groutTable').innerHTML = grout.slice(0, 50).map(g => `<tr><td>${g.grout_date ? new Date(g.grout_date).toLocaleDateString() : ''}</td><td>${g.grouting_type||''}</td><td>${g.grout_mix_type||''}</td><td>${g.pressure_bar||0} bar</td><td>${g.volume_actual_m3||0} m³</td><td>${g.take_kgm||0} kg/m</td></tr>`).join('');
+}
+
+function makeChart(id, type, config) {
+  if (charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, {
+    type, data: config,
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+function toggle(el) { el.classList.toggle('active'); el.nextElementSibling.classList.toggle('open'); }
+function reload() { Object.values(charts).forEach(c => c.destroy()); charts = {}; loadData(); }
+
+loadData();
+</script>
+</body>
+</html>

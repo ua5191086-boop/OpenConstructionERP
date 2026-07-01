@@ -18,6 +18,9 @@ import QualityPage from './pages/QualityPage'
 import GISPage from './pages/GISPage'
 import RiskPage from './pages/RiskPage'
 import ChangePage from './pages/ChangePage'
+import TBMPage from './pages/TBMPage'
+import RingBuilderPage from './pages/RingBuilderPage'
+import NATMPage from './pages/NATMPage'
 
 function App() {
   return (
@@ -42,6 +45,9 @@ function App() {
           <Route path="/gis" element={<GISPage />} />
           <Route path="/risk" element={<RiskPage />} />
           <Route path="/change" element={<ChangePage />} />
+          <Route path="/tbm" element={<TBMPage />} />
+          <Route path="/ringbuilder" element={<RingBuilderPage />} />
+          <Route path="/natm" element={<NATMPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

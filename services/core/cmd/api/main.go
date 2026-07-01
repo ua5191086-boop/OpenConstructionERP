@@ -119,6 +119,18 @@ func main() {
 		riskHandler := handlers.NewRiskHandler(database.DB)
 		riskHandler.RegisterRoutes(r)
 
+		// TBM Management Module
+		tbmHandler := handlers.NewTBMHandler(database.DB)
+		tbmHandler.RegisterRoutes(r)
+
+		// Ring Builder & Segment Tracking Module
+		ringBuilderHandler := handlers.NewRingBuilderHandler(database.DB)
+		ringBuilderHandler.RegisterRoutes(r)
+
+		// NATM & Microtunnelling Module
+		natmHandler := handlers.NewNATMHandler(database.DB)
+		natmHandler.RegisterRoutes(r)
+
 		// Change Management Module
 		changeHandler := handlers.NewChangeHandler(database.DB)
 		changeHandler.RegisterRoutes(r)

@@ -1044,3 +1044,241 @@ export interface ChangeLogEntry {
   changed_by: string;
   changed_at: string;
 }
+
+// ============================================================
+// Tunnel Management (V021, V022, V023)
+// ============================================================
+
+// --- TBM Management (V021) ---
+export interface TBMTelemetry {
+  id: string;
+  tbm_id: string;
+  recorded_at: string;
+  thrust_force_kN?: number;
+  torque_kNm?: number;
+  advance_rate_mmmin?: number;
+  face_pressure_bar?: number;
+  epb_face_pressure_bar?: number;
+  slurry_density_kgm3?: number;
+  cutterhead_rpm?: number;
+}
+
+export interface TBMAlarm {
+  id: string;
+  tbm_id: string;
+  alarm_code: string;
+  alarm_severity: string;
+  alarm_name: string;
+  triggered_at: string;
+  acknowledged_at?: string;
+  is_active: boolean;
+}
+
+export interface TBMOperator {
+  id: string;
+  employee_id: string;
+  full_name: string;
+  qualification: string;
+  is_active: boolean;
+}
+
+export interface TBMShift {
+  id: string;
+  tbm_id: string;
+  shift_date: string;
+  shift_label: string;
+  operator_name?: string;
+  rings_built: number;
+  advance_mm: number;
+  downtime_minutes: number;
+}
+
+export interface TBMConsumable {
+  id: string;
+  tbm_id: string;
+  consumable_type: string;
+  item_name: string;
+  quantity_used: number;
+  quantity_remaining: number;
+  unit: string;
+  used_at: string;
+}
+
+export interface TBMPerformance {
+  id: string;
+  tbm_id: string;
+  metric_date: string;
+  shift_label: string;
+  rings_built: number;
+  advance_mm: number;
+  avg_advance_rate_mmmin: number;
+  utilisation_pct: number;
+  tbm_availability_pct: number;
+  performance_factor: number;
+}
+
+// --- Ring Builder (V022) ---
+export interface RingDesign {
+  id: string;
+  project_id: string;
+  design_code: string;
+  design_name: string;
+  ring_type: string;
+  inner_diameter_mm: number;
+  outer_diameter_mm: number;
+  ring_width_mm: number;
+  segment_count: number;
+  status: string;
+}
+
+export interface SegmentProduction {
+  id: string;
+  project_id: string;
+  segment_code: string;
+  segment_type: string;
+  cast_batch: string;
+  cast_at: string;
+  status: string;
+  qc_status: string;
+  qr_code: string;
+  location: string;
+}
+
+export interface SegmentQC {
+  id: string;
+  segment_id: string;
+  qc_result: string;
+  qc_inspector: string;
+  qc_date: string;
+  compressive_strength_mpa?: number;
+}
+
+export interface SegmentInventory {
+  id: string;
+  segment_type: string;
+  quantity_planned: number;
+  quantity_produced: number;
+  quantity_passed_qc: number;
+  quantity_installed: number;
+  quantity_in_stock: number;
+  quantity_defective: number;
+}
+
+export interface RingMeasurement {
+  id: string;
+  ring_id: string;
+  measured_at: string;
+  horizontal_convergence_mm?: number;
+  vertical_convergence_mm?: number;
+  ovality_pct?: number;
+  settlement_mm?: number;
+  instrument_type: string;
+}
+
+// --- NATM & Microtunnelling (V023) ---
+export interface NATMExcavation {
+  id: string;
+  drive_id: string;
+  round_no: number;
+  chainage_from: number;
+  chainage_to: number;
+  excavation_date: string;
+  method: string;
+  geotech_class: string;
+  support_class: string;
+}
+
+export interface NATMShotcrete {
+  id: string;
+  drive_id: string;
+  application_date: string;
+  shotcrete_type: string;
+  thickness_mm: number;
+  compressive_strength_mpa: number;
+  qc_status: string;
+}
+
+export interface NATMRockBolt {
+  id: string;
+  drive_id: string;
+  bolt_type: string;
+  bolt_diameter_mm: number;
+  quantity_installed: number;
+  pretension_kN: number;
+}
+
+export interface NATMConvergence {
+  id: string;
+  drive_id: string;
+  measurement_point: string;
+  measured_at: string;
+  displacement_vertical_mm: number;
+  displacement_horizontal_mm: number;
+  cumulative_displacement_mm: number;
+  alarm_triggered: boolean;
+}
+
+export interface NATMFaceMapping {
+  id: string;
+  drive_id: string;
+  chainage: number;
+  rock_type: string;
+  rmr_score: number;
+  q_score: number;
+  fault_zone: boolean;
+  mapped_by: string;
+}
+
+export interface MTBMDrive {
+  id: string;
+  project_id: string;
+  drive_code: string;
+  drive_name: string;
+  pipe_type: string;
+  pipe_diameter_mm: number;
+  status: string;
+}
+
+export interface MTBMThrust {
+  id: string;
+  mtbm_drive_id: string;
+  pipe_no: number;
+  thrust_force_kN: number;
+  advance_speed_mmmin: number;
+  torque_kNm: number;
+  face_pressure_bar: number;
+}
+
+export interface Shaft {
+  id: string;
+  shaft_code: string;
+  shaft_name: string;
+  shaft_type: string;
+  diameter_m: number;
+  depth_m: number;
+  status: string;
+}
+
+export interface GroutingRecord {
+  id: string;
+  project_id: string;
+  grouting_type: string;
+  grout_date: string;
+  grout_mix_type: string;
+  pressure_bar: number;
+  volume_actual_m3: number;
+  take_kgm: number;
+}
+
+export interface SettlementPoint {
+  id: string;
+  project_id: string;
+  point_id: string;
+  point_type: string;
+  chainage: number;
+  monitored_at: string;
+  settlement_mm: number;
+  cumulative_settlement_mm: number;
+  alarm_triggered: boolean;
+  instrument_type: string;
+}

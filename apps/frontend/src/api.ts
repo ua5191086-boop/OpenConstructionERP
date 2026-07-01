@@ -316,3 +316,119 @@ export const changeApi = {
   listApprovalWorkflow: () => fetchApi<any[]>('/api/v1/change/approval-workflow'),
   listChangeLog: () => fetchApi<any[]>('/api/v1/change/change-log'),
 };
+
+// --- TBM Management ---
+export const tbmApi = {
+  listTelemetry: (params?: { tbm_id?: string; limit?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.tbm_id) qs.set('tbm_id', params.tbm_id);
+    if (params?.limit) qs.set('limit', String(params.limit));
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/tbm/telemetry${q ? '?' + q : ''}`);
+  },
+  listAlarms: (params?: { tbm_id?: string; active?: boolean }) => {
+    const qs = new URLSearchParams();
+    if (params?.tbm_id) qs.set('tbm_id', params.tbm_id);
+    if (params?.active) qs.set('active', 'true');
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/tbm/alarms${q ? '?' + q : ''}`);
+  },
+  listOperators: () => fetchApi<any[]>('/api/v1/tbm/operators'),
+  listShifts: (tbm_id?: string) => {
+    const qs = tbm_id ? `?tbm_id=${tbm_id}` : '';
+    return fetchApi<any[]>(`/api/v1/tbm/shifts${qs}`);
+  },
+  listConsumables: (params?: { tbm_id?: string; consumable_type?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.tbm_id) qs.set('tbm_id', params.tbm_id);
+    if (params?.consumable_type) qs.set('consumable_type', params.consumable_type);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/tbm/consumables${q ? '?' + q : ''}`);
+  },
+  listPerformance: (tbm_id?: string) => {
+    const qs = tbm_id ? `?tbm_id=${tbm_id}` : '';
+    return fetchApi<any[]>(`/api/v1/tbm/performance${qs}`);
+  },
+  getSummary: () => fetchApi<any>('/api/v1/tbm/summary'),
+};
+
+// --- Ring Builder ---
+export const ringBuilderApi = {
+  listDesigns: (params?: { project_id?: string }) => {
+    const qs = params?.project_id ? `?project_id=${params.project_id}` : '';
+    return fetchApi<any[]>(`/api/v1/ringbuilder/designs${qs}`);
+  },
+  listProduction: (params?: { project_id?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.project_id) qs.set('project_id', params.project_id);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/ringbuilder/production${q ? '?' + q : ''}`);
+  },
+  listQC: (segment_id?: string) => {
+    const qs = segment_id ? `?segment_id=${segment_id}` : '';
+    return fetchApi<any[]>(`/api/v1/ringbuilder/qc${qs}`);
+  },
+  listInventory: () => fetchApi<any[]>('/api/v1/ringbuilder/inventory'),
+  listMeasurements: (ring_id?: string) => {
+    const qs = ring_id ? `?ring_id=${ring_id}` : '';
+    return fetchApi<any[]>(`/api/v1/ringbuilder/measurements${qs}`);
+  },
+  getSummary: () => fetchApi<any>('/api/v1/ringbuilder/summary'),
+};
+
+// --- NATM & Microtunnelling ---
+export const natmApi = {
+  listExcavation: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/excavation${qs}`);
+  },
+  listShotcrete: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/shotcrete${qs}`);
+  },
+  listRockBolts: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/rock-bolts${qs}`);
+  },
+  listSteelSets: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/steel-sets${qs}`);
+  },
+  listConvergence: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/convergence${qs}`);
+  },
+  listFaceMapping: (drive_id?: string) => {
+    const qs = drive_id ? `?drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/face-mapping${qs}`);
+  },
+  listMTBMDrives: () => fetchApi<any[]>('/api/v1/natm/mtbm-drives'),
+  listMTBMThrust: (drive_id?: string) => {
+    const qs = drive_id ? `?mtbm_drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/mtbm-thrust${qs ? '?' + qs : ''}`);
+  },
+  listMTBMLubrication: (drive_id?: string) => {
+    const qs = drive_id ? `?mtbm_drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/mtbm-lubrication${qs ? '?' + qs : ''}`);
+  },
+  listMTBMSurvey: (drive_id?: string) => {
+    const qs = drive_id ? `?mtbm_drive_id=${drive_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/mtbm-survey${qs ? '?' + qs : ''}`);
+  },
+  listShafts: () => fetchApi<any[]>('/api/v1/natm/shafts'),
+  listShaftEquipment: (shaft_id?: string) => {
+    const qs = shaft_id ? `?shaft_id=${shaft_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/shaft-equipment${qs}`);
+  },
+  listCrossPassages: () => fetchApi<any[]>('/api/v1/natm/cross-passages'),
+  listGrouting: (project_id?: string) => {
+    const qs = project_id ? `?project_id=${project_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/grouting${qs}`);
+  },
+  listSettlement: (project_id?: string) => {
+    const qs = project_id ? `?project_id=${project_id}` : '';
+    return fetchApi<any[]>(`/api/v1/natm/settlement${qs}`);
+  },
+  getSummary: () => fetchApi<any>('/api/v1/natm/summary'),
+};

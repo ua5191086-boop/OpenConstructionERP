@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — TBM Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; text-align: center; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.yellow { color: #eab308; }
+.stat-card .value.purple { color: #a855f7; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.filter-bar { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.filter-bar select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 16px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 16px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-critical { background: #7f1d1d; color: #fca5a5; }
+.badge-warning { background: #9a3412; color: #fdba74; }
+.badge-info { background: #1e3a8a; color: #93c5fd; }
+.badge-active { background: #3b1e1e; color: #f87171; }
+.badge-cleared { background: #1e3a2f; color: #86efac; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🛠️ TBM Management Dashboard</h1>
+  <div class="subtitle">Real-Time Telemetry · Alarms · Operators · Consumables · Performance</div>
+</div>
+<div class="container" id="app">
+  <div class="filter-bar">
+    <select id="tbmFilter" onchange="reload()"><option value="">All TBMs</option></select>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="charts-grid">
+    <div class="chart-card"><h3>📊 Telemetry — Thrust & Torque</h3><canvas id="chartThrustTorque"></canvas></div>
+    <div class="chart-card"><h3>📊 Advance Rate & Utilisation</h3><canvas id="chartAdvance"></canvas></div>
+  </div>
+  <div class="charts-grid-3">
+    <div class="chart-card"><h3>🔔 Alarms by Severity</h3><canvas id="chartAlarms"></canvas></div>
+    <div class="chart-card"><h3>⛏️ Consumables by Type</h3><canvas id="chartConsumables"></canvas></div>
+    <div class="chart-card"><h3>📈 Performance Factor</h3><canvas id="chartPerf"></canvas></div>
+  </div>
+  <div class="accordion"><div class="accordion-header" onclick="toggle(this)"><h3>🔔 Active Alarms</h3><span class="arrow">▼</span></div><div class="accordion-body" id="alarmsBody"><table><thead><tr><th>Code</th><th>Name</th><th>Severity</th><th>Triggered</th><th>Status</th></tr></thead><tbody id="alarmsTable"></tbody></table></div></div>
+  <div class="accordion"><div class="accordion-header" onclick="toggle(this)"><h3>⏱️ Shift Log</h3><span class="arrow">▼</span></div><div class="accordion-body" id="shiftsBody"><table><thead><tr><th>Date</th><th>Shift</th><th>Operator</th><th>Rings</th><th>Advance</th><th>Downtime</th></tr></thead><tbody id="shiftsTable"></tbody></table></div></div>
+</div>
+<script>
+let charts = {};
+let data = {};
+
+async function loadData() {
+  try {
+    const r = await fetch('/api/v1/tbm/telemetry');
+    if (!r.ok) throw new Error('API unavailable');
+    data.telemetry = await r.json();
+  } catch { data.telemetry = []; }
+  try { data.alarms = await (await fetch('/api/v1/tbm/alarms')).json(); } catch { data.alarms = []; }
+  try { data.operators = await (await fetch('/api/v1/tbm/operators')).json(); } catch { data.operators = []; }
+  try { data.shifts = await (await fetch('/api/v1/tbm/shifts')).json(); } catch { data.shifts = []; }
+  try { data.consumables = await (await fetch('/api/v1/tbm/consumables')).json(); } catch { data.consumables = []; }
+  try { data.performance = await (await fetch('/api/v1/tbm/performance')).json(); } catch { data.performance = []; }
+  try { data.summary = await (await fetch('/api/v1/tbm/summary')).json(); } catch { data.summary = {}; }
+  render();
+}
+
+function render() {
+  const tel = data.telemetry || [];
+  const alarms = data.alarms || [];
+  const shifts = data.shifts || [];
+  const consumables = data.consumables || [];
+  const perf = data.performance || [];
+  const sm = data.summary || {};
+
+  // Stats
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Telemetry Points</div><div class="value blue">${tel.length}</div></div>
+    <div class="stat-card"><div class="label">Active Alarms</div><div class="value red">${sm.active_alarms || 0}</div></div>
+    <div class="stat-card"><div class="label">Total Rings</div><div class="value green">${sm.total_rings || 0}</div></div>
+    <div class="stat-card"><div class="label">Advance (m)</div><div class="value purple">${Math.round((sm.total_advance_mm||0)/1000)}</div></div>
+    <div class="stat-card"><div class="label">Utilisation</div><div class="value green">${(sm.avg_utilisation_pct||0).toFixed(1)}%</div></div>
+    <div class="stat-card"><div class="label">Operators</div><div class="value blue">${(data.operators||[]).length}</div></div>
+  `;
+
+  // Chart: Thrust & Torque
+  const recentTel = tel.slice(0, 50).reverse();
+  const labels = recentTel.map((t,i) => i);
+  const thrust = recentTel.map(t => t.thrust_force_kN || 0);
+  const torque = recentTel.map(t => t.torque_kNm || 0);
+  makeChart('chartThrustTorque', 'line', { labels, datasets: [
+    { label: 'Thrust (kN)', data: thrust, borderColor: '#3b82f6', tension: 0.3, fill: false },
+    { label: 'Torque (kNm)', data: torque, borderColor: '#f97316', tension: 0.3, fill: false }
+  ]});
+
+  // Chart: Advance Rate
+  const advRate = recentTel.map(t => t.advance_rate_mmmin || 0);
+  const facePress = recentTel.map(t => t.face_pressure_bar || 0);
+  makeChart('chartAdvance', 'line', { labels, datasets: [
+    { label: 'Advance Rate (mm/min)', data: advRate, borderColor: '#22c55e', tension: 0.3, fill: false, yAxisID: 'y' },
+    { label: 'Face Pressure (bar)', data: facePress, borderColor: '#a855f7', tension: 0.3, fill: false, yAxisID: 'y1' }
+  ], scales: { y: { type: 'linear', position: 'left', grid: { color: '#1e293b' } }, y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false } } }});
+
+  // Chart: Alarms by severity
+  const sevCount = {critical:0,warning:0,info:0,emergency:0};
+  alarms.forEach(a => { if (sevCount[a.alarm_severity] !== undefined) sevCount[a.alarm_severity]++ });
+  makeChart('chartAlarms', 'doughnut', {
+    labels: Object.keys(sevCount).filter(k => sevCount[k] > 0),
+    datasets: [{ data: Object.values(sevCount).filter(v => v > 0), backgroundColor: ['#ef4444','#f97316','#3b82f6','#a855f7'] }]
+  });
+
+  // Chart: Consumables
+  const conByType = {};
+  consumables.forEach(c => { conByType[c.consumable_type] = (conByType[c.consumable_type] || 0) + c.quantity_used });
+  const conLabels = Object.keys(conByType);
+  const conData = Object.values(conByType);
+  const conColors = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899'];
+  makeChart('chartConsumables', 'bar', {
+    labels: conLabels, datasets: [{ label: 'Quantity Used', data: conData, backgroundColor: conColors.slice(0, conLabels.length) }]
+  });
+
+  // Chart: Performance Factor
+  const pfData = perf.slice(0, 30).reverse();
+  const pfLabels = pfData.map(p => p.metric_date ? new Date(p.metric_date).toLocaleDateString() : '');
+  makeChart('chartPerf', 'bar', {
+    labels: pfLabels, datasets: [
+      { label: 'PF', data: pfData.map(p => p.performance_factor || 0), backgroundColor: pfData.map(p => (p.performance_factor||0) >= 1 ? '#22c55e' : '#f97316') }
+    ]
+  });
+
+  // Alarms table
+  const activeAlarms = alarms.filter(a => a.is_active);
+  document.getElementById('alarmsTable').innerHTML = activeAlarms.map(a => `<tr><td>${a.alarm_code}</td><td>${a.alarm_name}</td><td><span class="badge badge-${a.alarm_severity}">${a.alarm_severity}</span></td><td>${a.triggered_at ? new Date(a.triggered_at).toLocaleString() : ''}</td><td><span class="badge badge-active">ACTIVE</span></td></tr>`).join('');
+
+  // Shifts table
+  document.getElementById('shiftsTable').innerHTML = shifts.slice(0, 100).map(s => `<tr><td>${s.shift_date}</td><td>${s.shift_label}</td><td>${s.operator_name || ''}</td><td>${s.rings_built}</td><td>${s.advance_mm} mm</td><td>${s.downtime_minutes} min</td></tr>`).join('');
+}
+
+function makeChart(id, type, config) {
+  if (charts[id]) { charts[id].destroy(); }
+  const ctx = document.getElementById(id).getContext('2d');
+  charts[id] = new Chart(ctx, {
+    type,
+    data: config,
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: config.scales || {
+        x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } },
+        y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+}
+
+function toggle(el) {
+  el.classList.toggle('active');
+  const body = el.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+function reload() {
+  Object.values(charts).forEach(c => c.destroy());
+  charts = {};
+  loadData();
+}
+
+loadData();
+</script>
+</body>
+</html>
