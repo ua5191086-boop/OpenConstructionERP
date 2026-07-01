@@ -1,0 +1,338 @@
+version: '3.9'
+
+# ============================================================
+# OpenConstructionERP — Single-Node Deployment Profile
+# Full stack for MVP: 1 server, 64GB RAM, 8+ cores
+# ============================================================
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+networks:
+  oce-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  postgres-data:
+  clickhouse-data:
+  minio-data:
+  redis-data:
+  opensearch-data:
+  kafka-data:
+  keycloak-data:
+
+services:
+  # ============================================================
+  # DATABASE LAYER
+  # ============================================================
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: oce-postgres
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["5432:5432"]
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oce}
+      POSTGRES_USER: ${POSTGRES_USER:-oce}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-oce_secret}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U oce"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.3-alpine
+    container_name: oce-clickhouse
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["8123:8123", "9000:9000"]
+    environment:
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD:-oce_secret}
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+    ulimits:
+      nofile: 262144
+    logging: *default-logging
+
+  opensearch:
+    image: opensearchproject/opensearch:2.14
+    container_name: oce-opensearch
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["9200:9200", "9600:9600"]
+    environment:
+      discovery.type: single-node
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: ${OPENSEARCH_INITIAL_ADMIN_PASSWORD:-oce_secret}
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    ulimits:
+      nofile: 65536
+      memlock: -1
+    logging: *default-logging
+
+  redis:
+    image: redis:7-alpine
+    container_name: oce-redis
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["6379:6379"]
+    command: redis-server --requirepass ${REDIS_PASSWORD:-oce_secret} --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    logging: *default-logging
+
+  # ============================================================
+  # STORAGE LAYER
+  # ============================================================
+  minio:
+    image: minio/minio:latest
+    container_name: oce-minio
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["9000:9000", "9001:9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-oce}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-oce_secret}
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+
+  # ============================================================
+  # MESSAGE BROKER
+  # ============================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.6
+    container_name: oce-kafka
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["9092:9092"]
+    environment:
+      CLUSTER_ID: oce-kafka-cluster
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+    logging: *default-logging
+
+  # ============================================================
+  # AUTHENTICATION
+  # ============================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: oce-keycloak
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["8080:8080"]
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-oce}
+      KC_DB_USERNAME: ${POSTGRES_USER:-oce}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-oce_secret}
+      KC_HOSTNAME: localhost
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-oce_secret}
+    command: start-dev --import-realm
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    logging: *default-logging
+
+  # ============================================================
+  # CORE PLATFORM (Go)
+  # ============================================================
+  core-api:
+    build:
+      context: .
+      dockerfile: services/core/Dockerfile
+    container_name: oce-core
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["8081:8081"]
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-oce}
+      DB_USER: ${POSTGRES_USER:-oce}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-oce_secret}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-oce_secret}
+      KAFKA_BROKERS: kafka:9092
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-oce}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-oce_secret}
+      OPENSEARCH_HOST: opensearch
+      OPENSEARCH_PORT: 9200
+      JWT_SECRET: ${JWT_SECRET:-oce-jwt-secret}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-oce-encryption-key-32bytes-2026!!!!!}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    logging: *default-logging
+
+  # ============================================================
+  # FRONTEND
+  # ============================================================
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: oce-web
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["3000:3000"]
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8081
+      NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8080
+      NEXT_PUBLIC_KEYCLOAK_REALM: oce
+      NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: oce-web
+    depends_on:
+      - core-api
+    logging: *default-logging
+
+  # ============================================================
+  # AI SERVICE
+  # ============================================================
+  ai-svc:
+    build:
+      context: .
+      dockerfile: services/ai-svc/Dockerfile
+    container_name: oce-ai
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["8082:8082"]
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB:-oce}
+      DB_USER: ${POSTGRES_USER:-oce}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-oce_secret}
+      OPENSEARCH_HOST: opensearch
+      KAFKA_BROKERS: kafka:9092
+      LLM_PROVIDER: openai
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_MODEL: gpt-4o
+    depends_on:
+      - postgres
+      - opensearch
+    logging: *default-logging
+
+  # ============================================================
+  # BIM SERVICE
+  # ============================================================
+  bim-svc:
+    build:
+      context: .
+      dockerfile: services/bim-svc/Dockerfile
+    container_name: oce-bim
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["8083:8083"]
+    environment:
+      DB_HOST: postgres
+      DB_NAME: ${POSTGRES_DB:-oce}
+      DB_USER: ${POSTGRES_USER:-oce}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-oce_secret}
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-oce}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-oce_secret}
+    depends_on:
+      - postgres
+      - minio
+    logging: *default-logging
+
+  # ============================================================
+  # MONITORING
+  # ============================================================
+  prometheus:
+    image: prom/prometheus:v2.52
+    container_name: oce-prometheus
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["9090:9090"]
+    volumes:
+      - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    logging: *default-logging
+
+  grafana:
+    image: grafana/grafana:11.0
+    container_name: oce-grafana
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["3001:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-oce_secret}
+      GF_INSTALL_PLUGINS: grafana-piechart-panel
+    volumes:
+      - ./infra/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infra/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    logging: *default-logging
+
+  # ============================================================
+  # REVERSE PROXY
+  # ============================================================
+  nginx:
+    image: nginx:1.26-alpine
+    container_name: oce-nginx
+    restart: unless-stopped
+    networks: [oce-net]
+    ports: ["80:80", "443:443"]
+    volumes:
+      - ./infra/docker/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+      - core-api
+      - keycloak
+      - grafana
+    logging: *default-logging
