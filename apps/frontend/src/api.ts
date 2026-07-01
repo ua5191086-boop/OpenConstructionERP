@@ -248,3 +248,71 @@ export const hseApi = {
   listEmergencyPlans: () => fetchApi<any[]>('/api/v1/hse/emergency-plans'),
   listChemicals: () => fetchApi<any[]>('/api/v1/hse/chemicals'),
 };
+
+// --- Quality Management ---
+export const qualityApi = {
+  listITPs: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/quality/itps${qs}`);
+  },
+  listInspections: (params?: { project_id?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.project_id) qs.set('project_id', params.project_id);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/quality/inspections${q ? '?' + q : ''}`);
+  },
+  listTestResults: () => fetchApi<any[]>('/api/v1/quality/test-results'),
+  listNCRs: (params?: { status?: string }) => {
+    const qs = params?.status ? `?status=${params.status}` : '';
+    return fetchApi<any[]>(`/api/v1/quality/ncrs${qs}`);
+  },
+  listCorrectiveActions: () => fetchApi<any[]>('/api/v1/quality/corrective-actions'),
+  listCalibration: () => fetchApi<any[]>('/api/v1/quality/calibration'),
+  listQualityMetrics: () => fetchApi<any[]>('/api/v1/quality/quality-metrics'),
+};
+
+// --- GIS & Survey ---
+export const gisApi = {
+  listLayers: () => fetchApi<any[]>('/api/v1/gis/layers'),
+  listFeatures: () => fetchApi<any[]>('/api/v1/gis/features'),
+  listSurveyPoints: () => fetchApi<any[]>('/api/v1/gis/survey-points'),
+  listSurveyRuns: () => fetchApi<any[]>('/api/v1/gis/survey-runs'),
+  listStations: () => fetchApi<any[]>('/api/v1/gis/survey-stations'),
+  listAlignments: () => fetchApi<any[]>('/api/v1/gis/alignments'),
+  listCrossSections: () => fetchApi<any[]>('/api/v1/gis/cross-sections'),
+  listDroneFlights: () => fetchApi<any[]>('/api/v1/gis/drone-flights'),
+};
+
+// --- Risk Management ---
+export const riskApi = {
+  listCategories: () => fetchApi<any[]>('/api/v1/risk/categories'),
+  listRegisters: (params?: { project_id?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.project_id) qs.set('project_id', params.project_id);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/risk/registers${q ? '?' + q : ''}`);
+  },
+  listMatrices: () => fetchApi<any[]>('/api/v1/risk/matrices'),
+  listMonteCarlo: () => fetchApi<any[]>('/api/v1/risk/monte-carlo'),
+  listScenarios: () => fetchApi<any[]>('/api/v1/risk/scenarios'),
+  listMitigations: () => fetchApi<any[]>('/api/v1/risk/mitigations'),
+  listEscalations: () => fetchApi<any[]>('/api/v1/risk/escalations'),
+  listDashboard: () => fetchApi<any[]>('/api/v1/risk/dashboard'),
+};
+
+// --- Change Management ---
+export const changeApi = {
+  listRequests: (params?: { project_id?: string; status?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.project_id) qs.set('project_id', params.project_id);
+    if (params?.status) qs.set('status', params.status);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/api/v1/change/requests${q ? '?' + q : ''}`);
+  },
+  listOrders: () => fetchApi<any[]>('/api/v1/change/orders'),
+  listImpactAnalysis: () => fetchApi<any[]>('/api/v1/change/impact-analysis'),
+  listApprovalWorkflow: () => fetchApi<any[]>('/api/v1/change/approval-workflow'),
+  listChangeLog: () => fetchApi<any[]>('/api/v1/change/change-log'),
+};

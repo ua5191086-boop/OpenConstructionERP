@@ -106,6 +106,22 @@ func main() {
 		// HSE Module
 		hseHandler := handlers.NewHSEHandler(database.DB)
 		hseHandler.RegisterRoutes(r)
+
+		// Quality Module
+		qualityHandler := handlers.NewQualityHandler(database.DB)
+		qualityHandler.RegisterRoutes(r)
+
+		// GIS & Survey Module
+		gisHandler := handlers.NewGISHandler(database.DB)
+		gisHandler.RegisterRoutes(r)
+
+		// Risk Management Module
+		riskHandler := handlers.NewRiskHandler(database.DB)
+		riskHandler.RegisterRoutes(r)
+
+		// Change Management Module
+		changeHandler := handlers.NewChangeHandler(database.DB)
+		changeHandler.RegisterRoutes(r)
 	})
 
 	// Start server

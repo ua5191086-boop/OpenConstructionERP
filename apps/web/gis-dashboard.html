@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — GIS & Survey Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.yellow { color: #eab308; }
+.stat-card .value.cyan { color: #06b6d4; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-completed { background: #1e3a2f; color: #86efac; }
+.badge-active { background: #1e3a2f; color: #34d399; }
+.badge-planned { background: #1e2f3b; color: #38bdf8; }
+.badge-processing { background: #3b2f1e; color: #fbbf24; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🗺️ GIS & Survey Dashboard</h1>
+  <div class="subtitle">Geospatial — Layers, Survey Points, Alignments, Cross Sections, Drone Flights</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading GIS data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid-3">
+      <div class="chart-card"><h3>🗺️ Survey Points by Type</h3><canvas id="spTypeChart"></canvas></div>
+      <div class="chart-card"><h3>📡 Survey Runs by Status</h3><canvas id="srStatusChart"></canvas></div>
+      <div class="chart-card"><h3>✈️ Drone Flights by Status</h3><canvas id="dfStatusChart"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>🛤️ Alignments by Type</h3><canvas id="alnTypeChart"></canvas></div>
+      <div class="chart-card"><h3>📐 Cross Sections per Alignment</h3><canvas id="csChart"></canvas></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <h3>🗺️ GIS Layers</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body open" id="layersBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📍 Survey Points</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="spBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📡 Survey Runs</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="srBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>✈️ Drone Flights</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="dfBody"></div>
+    </div>
+  </div>
+</div>
+<script>
+let DATA = null, charts = {}, selectedProject = '';
+function loadData() {
+  fetch('gis_data.json')
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .catch(e => { document.getElementById('loading').innerHTML = `<div class="value red" style="font-size:18px;">⚠️ ${e.message}</div><p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_gis.py</code></p>`; return null; })
+    .then(d => { DATA = d; initApp(); });
+}
+function initApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  const sel = document.getElementById('projectFilter');
+  const projects = [...new Set(DATA.survey_points.map(i => i.project_name))];
+  sel.innerHTML = '<option value="">All Projects</option>'+projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.addEventListener('change', () => { selectedProject = sel.value; renderAll(); });
+  renderAll();
+}
+function toggleAccordion(h) { h.classList.toggle('active'); h.nextElementSibling.classList.toggle('open'); }
+function destroyCharts() { Object.values(charts).forEach(c => c && c.destroy()); charts = {}; }
+function filter(arr) { return selectedProject ? arr.filter(x => x.project_name === selectedProject) : arr; }
+function renderAll() {
+  const layers = filter(DATA.layers), points = filter(DATA.survey_points), runs = filter(DATA.survey_runs);
+  const flights = filter(DATA.drone_flights), align = filter(DATA.alignments), cs = filter(DATA.cross_sections);
+  const stations = filter(DATA.stations), features = filter(DATA.features);
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Active Layers</div><div class="value blue">${layers.length}</div></div>
+    <div class="stat-card"><div class="label">Features</div><div class="value green">${features.length}</div></div>
+    <div class="stat-card"><div class="label">Survey Points</div><div class="value orange">${points.length}</div></div>
+    <div class="stat-card"><div class="label">Survey Runs</div><div class="value purple">${runs.length}</div></div>
+    <div class="stat-card"><div class="label">Stations</div><div class="value cyan">${stations.length}</div></div>
+    <div class="stat-card"><div class="label">Alignments</div><div class="value yellow">${align.length}</div></div>
+    <div class="stat-card"><div class="label">Cross Sections</div><div class="value blue">${cs.length}</div></div>
+    <div class="stat-card"><div class="label">Drone Flights</div><div class="value green">${flights.length}</div></div>`;
+  destroyCharts();
+  renderBarChart('spTypeChart', points, 'point_type', 'Survey Points by Type');
+  renderBarChart('srStatusChart', runs, 'status', 'Survey Runs by Status');
+  renderBarChart('dfStatusChart', flights, 'status', 'Drone Flights by Status');
+  renderBarChart('alnTypeChart', align, 'alignment_type', 'Alignments by Type');
+  renderBarChart('csChart', cs, null, 'Cross Sections by Project', true);
+  renderTable('layersBody', ['Layer Name','Type','Geometry','Source','Status'], layers.slice(0,50), l => [l.layer_name, l.layer_type, l.geometry_type, l.source_type, `<span class="badge badge-${l.status}">${l.status}</span>`]);
+  renderTable('spBody', ['Code','Type','Lat','Lng','Elevation','Method','Status'], points.slice(0,50), p => [p.point_code, p.point_type, p.latitude.toFixed(5), p.longitude.toFixed(5), p.elevation||'—', p.method, `<span class="badge badge-${p.status}">${p.status}</span>`]);
+  renderTable('srBody', ['Run Code','Name','Type','Start','End','Crew','Points','Status'], runs.slice(0,50), r => [r.run_code, r.run_name, r.survey_type, r.start_date, r.end_date||'—', r.crew_lead, r.point_count||0, `<span class="badge badge-${r.status}">${r.status}</span>`]);
+  renderTable('dfBody', ['Flight Code','Name','Drone','Pilot','Date','Duration','Area (ha)','Status'], flights.slice(0,50), f => [f.flight_code, f.flight_name, f.drone_model, f.pilot, f.flight_date, f.flight_duration_minutes+'m', f.area_covered_ha, `<span class="badge badge-${f.status}">${f.status}</span>`]);
+}
+function renderBarChart(canvasId, data, key, label, skipKey=false) {
+  let labels, values;
+  if (skipKey) {
+    const counts = {}; data.forEach(d => { const k = d.project_name || 'unknown'; counts[k] = (counts[k]||0)+1; });
+    labels = Object.keys(counts); values = Object.values(counts);
+  } else {
+    const counts = {}; data.forEach(d => { const k = d[key] || 'unknown'; counts[k] = (counts[k]||0)+1; });
+    labels = Object.keys(counts); values = Object.values(counts);
+  }
+  const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899'];
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0,labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+function renderTable(id, headers, data, rowFn) {
+  const c = document.getElementById(id);
+  if (data.length===0) { c.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No records</p>'; return; }
+  c.innerHTML = `<table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map(r => `<tr>${rowFn(r).map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+loadData();
+</script>
+</body>
+</html>

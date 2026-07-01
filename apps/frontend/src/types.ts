@@ -620,3 +620,427 @@ export interface HSEChemical {
   storage_location: string;
   safety_data_sheet: string;
 }
+
+// ============================================================
+// Quality Management
+// ============================================================
+export interface QualityITP {
+  id: string;
+  project_id: number;
+  project_name: string;
+  itp_number: number;
+  itp_code: string;
+  itp_name: string;
+  itp_type: string;
+  description: string;
+  status: string;
+}
+
+export interface QualityInspection {
+  id: string;
+  project_id: number;
+  project_name: string;
+  record_number: number;
+  record_code: string;
+  title: string;
+  inspection_type: string;
+  inspector: string;
+  inspection_date: string;
+  result: string;
+  defects_found: number;
+}
+
+export interface QualityTestResult {
+  id: string;
+  project_id: number;
+  project_name: string;
+  test_number: number;
+  test_code: string;
+  test_name: string;
+  test_type: string;
+  test_date: string;
+  measured_value: number;
+  min_acceptable: number;
+  max_acceptable: number;
+  result: string;
+  lab_name: string;
+}
+
+export interface QualityNCR {
+  id: string;
+  project_id: number;
+  project_name: string;
+  ncr_number: number;
+  ncr_code: string;
+  title: string;
+  ncr_category: string;
+  severity: string;
+  source: string;
+  description: string;
+  discovered_date: string;
+  discovered_by: string;
+  root_cause: string | null;
+  disposition_type: string | null;
+  rework_cost: number;
+  schedule_impact: number;
+  status: string;
+}
+
+export interface QualityCorrectiveAction {
+  id: string;
+  project_id: number;
+  project_name: string;
+  ca_number: number;
+  ca_code: string;
+  title: string;
+  action_type: string;
+  assigned_to: string;
+  priority: string;
+  due_date: string;
+  effectiveness: string | null;
+  status: string;
+}
+
+export interface QualityCalibration {
+  id: string;
+  project_id: number;
+  project_name: string;
+  equipment_name: string;
+  equipment_model: string;
+  serial_number: string;
+  calibration_frequency_days: number;
+  last_calibration_date: string;
+  next_calibration_date: string;
+  calibration_result: string;
+  status: string;
+}
+
+export interface QualityMetric {
+  id: string;
+  project_id: number;
+  project_name: string;
+  report_month: string;
+  total_inspections: number;
+  inspections_passed: number;
+  inspections_failed: number;
+  total_tests: number;
+  tests_passed: number;
+  tests_failed: number;
+  ncr_opened: number;
+  ncr_closed: number;
+  ncr_critical: number;
+  first_pass_yield: number;
+  rework_cost: number;
+}
+
+// ============================================================
+// GIS & Survey
+// ============================================================
+export interface GISLayer {
+  id: string;
+  project_id: number;
+  project_name: string;
+  layer_name: string;
+  layer_type: string;
+  geometry_type: string;
+  source_type: string;
+  is_visible: boolean;
+  status: string;
+}
+
+export interface GISFeature {
+  id: string;
+  project_id: number;
+  project_name: string;
+  feature_name: string;
+  feature_type: string;
+  geometry: any;
+  properties: any;
+}
+
+export interface GISSurveyPoint {
+  id: string;
+  project_id: number;
+  project_name: string;
+  point_number: number;
+  point_code: string;
+  point_name: string;
+  point_type: string;
+  latitude: number;
+  longitude: number;
+  elevation: number;
+  northing: number;
+  easting: number;
+  zone: string;
+  accuracy_mm: number;
+  method: string;
+  survey_date: string;
+  status: string;
+}
+
+export interface GISSurveyRun {
+  id: string;
+  project_id: number;
+  project_name: string;
+  run_number: number;
+  run_code: string;
+  run_name: string;
+  survey_type: string;
+  start_date: string;
+  end_date: string;
+  instrument: string;
+  crew_lead: string;
+  point_count: number;
+  status: string;
+}
+
+export interface GISStation {
+  id: string;
+  project_id: number;
+  project_name: string;
+  station_number: number;
+  station_code: string;
+  station_name: string;
+  station_type: string;
+  northing: number;
+  easting: number;
+  elevation: number;
+}
+
+export interface GISAlignment {
+  id: string;
+  project_id: number;
+  project_name: string;
+  alignment_code: string;
+  alignment_name: string;
+  alignment_type: string;
+  start_chainage: number;
+  end_chainage: number;
+  total_length: number;
+  geometry: any;
+  status: string;
+}
+
+export interface GISCrossSection {
+  id: string;
+  project_id: number;
+  project_name: string;
+  section_number: number;
+  chainage: number;
+  offset_left: number;
+  offset_right: number;
+  geometry: any;
+  points: any[];
+  cut_area: number;
+  fill_area: number;
+}
+
+export interface GISDroneFlight {
+  id: string;
+  project_id: number;
+  project_name: string;
+  flight_number: number;
+  flight_code: string;
+  flight_name: string;
+  drone_model: string;
+  pilot: string;
+  flight_date: string;
+  flight_duration_minutes: number;
+  altitude_m: number;
+  area_covered_ha: number;
+  gsd_cm: number;
+  overlap_pct: number;
+  images_count: number;
+  processing_status: string;
+  sensor_type: string;
+  output_type: string;
+  status: string;
+}
+
+// ============================================================
+// Risk Management
+// ============================================================
+export interface RiskCategory {
+  id: string;
+  category_code: string;
+  category_name: string;
+  category_type: string;
+  description: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface RiskRegister {
+  id: string;
+  project_id: number;
+  project_name: string;
+  risk_number: number;
+  risk_code: string;
+  risk_name: string;
+  risk_type: string;
+  description: string;
+  probability_score: number;
+  impact_score: number;
+  risk_score: number;
+  risk_rating: string;
+  cost_impact: number;
+  schedule_impact_days: number;
+  risk_owner: string;
+  risk_response: string;
+  status: string;
+}
+
+export interface RiskScenario {
+  id: string;
+  project_id: number;
+  project_name: string;
+  scenario_number: number;
+  scenario_code: string;
+  scenario_name: string;
+  scenario_type: string;
+  description: string;
+  cost_impact_min: number;
+  cost_impact_max: number;
+  cost_impact_ml: number;
+  schedule_impact_min: number;
+  schedule_impact_max: number;
+  schedule_impact_ml: number;
+  probability_pct: number;
+  severity: string;
+  status: string;
+}
+
+export interface RiskMitigation {
+  id: string;
+  project_id: number;
+  project_name: string;
+  action_number: number;
+  action_code: string;
+  action_name: string;
+  action_type: string;
+  assigned_to: string;
+  budget: number;
+  due_date: string;
+  effectiveness: string | null;
+  status: string;
+}
+
+export interface RiskEscalation {
+  id: string;
+  project_id: number;
+  project_name: string;
+  escalation_number: number;
+  escalation_code: string;
+  title: string;
+  reason: string;
+  escalated_to: string;
+  escalated_by: string;
+  decision: string | null;
+  status: string;
+}
+
+export interface RiskMonteCarlo {
+  id: string;
+  project_id: number;
+  project_name: string;
+  run_label: string;
+  run_type: string;
+  iterations: number;
+  p10_value: number;
+  p50_value: number;
+  p90_value: number;
+  mean_value: number;
+  confidence_level: number;
+  status: string;
+}
+
+export interface RiskDashboard {
+  id: string;
+  project_id: number;
+  project_name: string;
+  snapshot_date: string;
+  total_risks: number;
+  open_risks: number;
+  extreme_risks: number;
+  high_risks: number;
+  medium_risks: number;
+  low_risks: number;
+  threats: number;
+  opportunities: number;
+  risk_exposure: number;
+  mitigation_progress_pct: number;
+}
+
+// ============================================================
+// Change Management
+// ============================================================
+export interface ChangeRequest {
+  id: string;
+  project_id: number;
+  project_name: string;
+  cr_number: number;
+  cr_code: string;
+  cr_name: string;
+  cr_type: string;
+  source: string;
+  priority: string;
+  description: string;
+  reason: string;
+  proposed_by: string;
+  proposed_date: string;
+  required_by_date: string;
+  status: string;
+}
+
+export interface ChangeOrder {
+  id: string;
+  project_id: number;
+  project_name: string;
+  co_number: number;
+  co_code: string;
+  co_name: string;
+  co_type: string;
+  scope_change: string;
+  cost_change: number;
+  schedule_change_days: number;
+  justification: string;
+  contractor_name: string;
+  approved_by: string;
+  status: string;
+}
+
+export interface ChangeImpactAnalysis {
+  id: string;
+  project_id: number;
+  project_name: string;
+  impact_type: string;
+  description: string;
+  impact_level: string;
+  cost_impact: number;
+  schedule_impact_days: number;
+  analyzed_by: string;
+  analysis_date: string;
+  status: string;
+}
+
+export interface ChangeApprovalWorkflow {
+  id: string;
+  project_id: number;
+  project_name: string;
+  step_order: number;
+  step_name: string;
+  approver_role: string;
+  status: string;
+}
+
+export interface ChangeLogEntry {
+  id: string;
+  project_id: number;
+  project_name: string;
+  log_type: string;
+  previous_status: string | null;
+  new_status: string | null;
+  description: string;
+  changed_by: string;
+  changed_at: string;
+}

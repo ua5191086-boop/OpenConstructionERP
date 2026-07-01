@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Risk Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.charts-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.project-select { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 14px; min-width: 300px; margin-bottom: 16px; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-extreme { background: #7f1d1d; color: #fca5a5; }
+.badge-high { background: #9a3412; color: #fdba74; }
+.badge-medium { background: #854d0e; color: #fde047; }
+.badge-low { background: #1e3a2f; color: #86efac; }
+.badge-very_low { background: #1e3a2f; color: #34d399; }
+.badge-open { background: #3b1e1e; color: #f87171; }
+.badge-closed { background: #1e2f3b; color: #38bdf8; }
+.badge-escalated { background: #3b2f1e; color: #fbbf24; }
+.badge-resolved { background: #1e3a2f; color: #86efac; }
+@media (max-width: 768px) { .charts-grid, .charts-grid-3 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>⚠️ Risk Management Dashboard</h1>
+  <div class="subtitle">Risk Management — Register, Monte Carlo, Scenarios, Mitigation, Escalation</div>
+</div>
+<div class="container">
+  <div id="loading" class="stat-card" style="text-align:center;padding:40px;">
+    <div class="value blue" style="font-size:18px;">Loading Risk data...</div>
+  </div>
+  <div id="content" style="display:none;">
+    <select id="projectFilter" class="project-select"></select>
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="charts-grid-3">
+      <div class="chart-card"><h3>📊 Risks by Rating</h3><canvas id="riskRatingChart"></canvas></div>
+      <div class="chart-card"><h3>🔄 Threats vs Opportunities</h3><canvas id="threatOppChart"></canvas></div>
+      <div class="chart-card"><h3>📈 Risk Exposure ($)</h3><canvas id="exposureChart"></canvas></div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>📉 Monte Carlo P10/P50/P90</h3><canvas id="mcChart"></canvas></div>
+      <div class="chart-card"><h3>📋 Mitigation Status</h3><canvas id="mitStatusChart"></canvas></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header active" onclick="toggleAccordion(this)">
+        <h3>📋 Risk Register</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body open" id="registerBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📊 Scenarios</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="scenarioBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>🔧 Mitigation Actions</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="mitBody"></div>
+    </div>
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        <h3>📢 Escalations</h3><span class="arrow">▼</span>
+      </div>
+      <div class="accordion-body" id="escBody"></div>
+    </div>
+  </div>
+</div>
+<script>
+let DATA = null, charts = {}, selectedProject = '';
+function loadData() {
+  fetch('risk_data.json')
+    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .catch(e => { document.getElementById('loading').innerHTML = `<div class="value red" style="font-size:18px;">⚠️ ${e.message}</div><p style="color:#94a3b8;margin-top:12px;">Run: <code style="background:#1e293b;padding:4px 8px;border-radius:4px;">python3 scripts/generate_risk.py</code></p>`; return null; })
+    .then(d => { DATA = d; initApp(); });
+}
+function initApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('content').style.display = 'block';
+  const sel = document.getElementById('projectFilter');
+  const projects = [...new Set(DATA.registers.map(i => i.project_name))];
+  sel.innerHTML = '<option value="">All Projects</option>'+projects.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel.addEventListener('change', () => { selectedProject = sel.value; renderAll(); });
+  renderAll();
+}
+function toggleAccordion(h) { h.classList.toggle('active'); h.nextElementSibling.classList.toggle('open'); }
+function destroyCharts() { Object.values(charts).forEach(c => c && c.destroy()); charts = {}; }
+function filter(arr) { return selectedProject ? arr.filter(x => x.project_name === selectedProject) : arr; }
+
+function renderAll() {
+  const regs = filter(DATA.registers), scens = filter(DATA.scenarios), mits = filter(DATA.mitigations);
+  const escs = filter(DATA.escalations), mc = filter(DATA.monte_carlo_runs), dash = filter(DATA.dashboard);
+  const openRisks = regs.filter(r => r.status !== 'closed').length;
+  const extremeRisks = regs.filter(r => r.risk_rating === 'extreme').length;
+  const highRisks = regs.filter(r => r.risk_rating === 'high').length;
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card"><div class="label">Total Risks</div><div class="value blue">${regs.length}</div></div>
+    <div class="stat-card"><div class="label">Open Risks</div><div class="value red">${openRisks}</div></div>
+    <div class="stat-card"><div class="label">Extreme</div><div class="value red">${extremeRisks}</div></div>
+    <div class="stat-card"><div class="label">High</div><div class="value orange">${highRisks}</div></div>
+    <div class="stat-card"><div class="label">Scenarios</div><div class="value purple">${scens.length}</div></div>
+    <div class="stat-card"><div class="label">Mitigations</div><div class="value green">${mits.length}</div></div>
+    <div class="stat-card"><div class="label">Escalations</div><div class="value yellow">${escs.length}</div></div>
+    <div class="stat-card"><div class="label">MC Runs</div><div class="value blue">${mc.length}</div></div>`;
+  destroyCharts();
+  renderBar('riskRatingChart', regs, 'risk_rating', 'Risks by Rating');
+  renderPie('threatOppChart', 'Threats vs Opportunities', ['threat','opportunity'], [regs.filter(r=>r.risk_type==='threat').length, regs.filter(r=>r.risk_type==='opportunity').length]);
+  renderBar('exposureChart', dash, null, 'Risk Exposure ($)', true);
+  renderMCChart(mc);
+  renderBar('mitStatusChart', mits, 'status', 'Mitigation Status');
+  renderTable('registerBody', ['Code','Risk Name','Rating','Prob','Impact','Score','Owner','Response','Status'], regs.slice(0,50), r => [
+    r.risk_code, r.risk_name, `<span class="badge badge-${r.risk_rating}">${r.risk_rating}</span>`,
+    r.probability_score, r.impact_score, r.risk_score,
+    r.risk_owner||'—', r.risk_response,
+    `<span class="badge badge-${r.status}">${r.status}</span>`
+  ]);
+  renderTable('scenarioBody', ['Code','Name','Type','Cost Min','Cost ML','Cost Max','Sched Min','Sched ML','Sched Max','Prob','Severity','Status'], scens.slice(0,50), s => [
+    s.scenario_code, s.scenario_name, s.scenario_type,
+    `$${(s.cost_impact_min||0).toLocaleString()}`, `$${(s.cost_impact_ml||0).toLocaleString()}`, `$${(s.cost_impact_max||0).toLocaleString()}`,
+    s.schedule_impact_min||0, s.schedule_impact_ml||0, s.schedule_impact_max||0,
+    s.probability_pct+'%', s.severity, s.status
+  ]);
+  renderTable('mitBody', ['Code','Action','Type','Assignee','Budget','Due Date','Effectiveness','Status'], mits.slice(0,50), m => [
+    m.action_code, m.action_name, m.action_type, m.assigned_to||'—',
+    `$${(m.budget||0).toLocaleString()}`, m.due_date||'—', m.effectiveness||'—', m.status
+  ]);
+  renderTable('escBody', ['Code','Title','Escalated To','Escalated By','Decision','Status'], escs.slice(0,50), e => [
+    e.escalation_code, e.title, e.escalated_to, e.escalated_by, e.decision||'—',
+    `<span class="badge badge-${e.status}">${e.status}</span>`
+  ]);
+}
+function renderBar(canvasId, data, key, label, skipKey=false) {
+  let labels, values;
+  if (skipKey) {
+    const counts = {}; data.forEach(d => { const k = d.project_name || 'unknown'; counts[k] = (counts[k]||0)+1; });
+    labels = Object.keys(counts); values = Object.values(counts);
+  } else {
+    const counts = {}; data.forEach(d => { const k = d[key] || 'unknown'; counts[k] = (counts[k]||0)+1; });
+    labels = Object.keys(counts); values = Object.values(counts);
+  }
+  const palette = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899'];
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'bar', data: { labels, datasets: [{ data: values, backgroundColor: palette.slice(0,labels.length), borderRadius: 4 }] },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+function renderPie(canvasId, label, labels, values) {
+  if (values.reduce((a,b)=>a+b,0)===0) values=[1];
+  charts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type: 'doughnut', data: { labels, datasets: [{ data: values, backgroundColor: ['#ef4444','#22c55e'], borderColor: '#0f172a', borderWidth: 2 }] },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+}
+function renderMCChart(mc) {
+  const labels = mc.map(m => m.run_label || m.id || 'Run');
+  const p10 = mc.map(m => m.p10_value || 0);
+  const p50 = mc.map(m => m.p50_value || 0);
+  const p90 = mc.map(m => m.p90_value || 0);
+  charts.mcChart = new Chart(document.getElementById('mcChart'), {
+    type: 'bar', data: { labels, datasets: [
+      { label: 'P10', data: p10, backgroundColor: '#22c55e', borderRadius: 4 },
+      { label: 'P50', data: p50, backgroundColor: '#3b82f6', borderRadius: 4 },
+      { label: 'P90', data: p90, backgroundColor: '#ef4444', borderRadius: 4 },
+    ]},
+    options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8', boxWidth: 12 } } }, scales: { y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }, x: { ticks: { color: '#94a3b8', maxRotation: 45 } } } }
+  });
+}
+function renderTable(id, headers, data, rowFn) {
+  const c = document.getElementById(id);
+  if (data.length===0) { c.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No records</p>'; return; }
+  c.innerHTML = `<table><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr></thead><tbody>${data.map(r => `<tr>${rowFn(r).map(c => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+}
+loadData();
+</script>
+</body>
+</html>

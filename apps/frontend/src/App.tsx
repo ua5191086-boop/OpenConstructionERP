@@ -14,6 +14,10 @@ import DocControlPage from './pages/DocControlPage'
 import SchedulePage from './pages/SchedulePage'
 import EquipmentPage from './pages/EquipmentPage'
 import HSEPage from './pages/HSEPage'
+import QualityPage from './pages/QualityPage'
+import GISPage from './pages/GISPage'
+import RiskPage from './pages/RiskPage'
+import ChangePage from './pages/ChangePage'
 
 function App() {
   return (
@@ -34,6 +38,10 @@ function App() {
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/equipment" element={<EquipmentPage />} />
           <Route path="/hse" element={<HSEPage />} />
+          <Route path="/quality" element={<QualityPage />} />
+          <Route path="/gis" element={<GISPage />} />
+          <Route path="/risk" element={<RiskPage />} />
+          <Route path="/change" element={<ChangePage />} />
         </Route>
       </Routes>
     </BrowserRouter>

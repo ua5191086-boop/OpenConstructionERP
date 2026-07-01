@@ -15,6 +15,10 @@ const navItems = [
   { path: '/schedule', label: 'Schedule', icon: '📅' },
   { path: '/equipment', label: 'Equipment', icon: '🏗️' },
   { path: '/hse', label: 'HSE', icon: '🛡️' },
+  { path: '/quality', label: 'Quality', icon: '✅' },
+  { path: '/gis', label: 'GIS', icon: '🗺️' },
+  { path: '/risk', label: 'Risk', icon: '⚠️' },
+  { path: '/change', label: 'Change', icon: '🔄' },
 ]
 
 export default function Layout() {
