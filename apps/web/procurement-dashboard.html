@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Закупки</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.stat-card .label{color:#94a3b8;font-size:13px;text-transform:uppercase}
+.stat-card .value{font-size:28px;font-weight:700;margin-top:8px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.purple{color:#a855f7}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:16px;margin-bottom:16px}
+.chart-card canvas{max-height:300px}
+.materials{padding:0 30px 30px}
+.materials h2{font-size:20px;margin-bottom:16px;color:#f8fafc}
+table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:12px;overflow:hidden}
+th{background:#0f172a;color:#94a3b8;font-size:12px;text-transform:uppercase;padding:12px 16px;text-align:left}
+td{padding:12px 16px;border-bottom:1px solid #1e293b;color:#e2e8f0;font-size:14px}
+tr:hover{background:#1e293b}
+.filter-bar{display:flex;gap:12px;padding:0 30px 20px;flex-wrap:wrap}
+.filter-bar input{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 16px;color:#e2e8f0;font-size:14px;flex:1;min-width:200px}
+.filter-bar input:focus{outline:none;border-color:#3b82f6}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>📦 <span>OpenConstructionERP</span> — Закупки</h1><div style="color:#94a3b8;font-size:14px;margin-top:4px;">Управление закупками, PO, склад</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="filter-bar">
+  <input type="text" id="filterSearch" placeholder="🔍 Поиск по названию материала..." oninput="apply()">
+</div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 По категориям</h3><canvas id="catChart"></canvas></div>
+  <div class="chart-card"><h3>💰 Стоимость по позициям</h3><canvas id="costChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Распределение количества</h3><canvas id="qtyChart"></canvas></div>
+  <div class="chart-card"><h3>🏷️ Единицы измерения</h3><canvas id="unitChart"></canvas></div>
+</div>
+<div class="materials" id="matList">
+  <h2>📋 Материалы и оборудование</h2>
+  <table><thead><tr><th>Код</th><th>Наименование</th><th>Ед.</th><th>Количество</th><th>Цена</th><th>Сумма</th></tr></thead><tbody id="matBody"></tbody></table>
+</div>
+<script>
+const MATERIALS=[
+  {code:'MAT-001',name:'Цемент М500',unit:'т',qty:2500,price:120,total:300000},
+  {code:'MAT-002',name:'Арматура А500С',unit:'т',qty:1200,price:480,total:576000},
+  {code:'MAT-003',name:'Бетон В25',unit:'м³',qty:8000,price:65,total:520000},
+  {code:'MAT-004',name:'Кабель силовой',unit:'м',qty:35000,price:12,total:420000},
+  {code:'MAT-005',name:'Труба стальная',unit:'т',qty:300,price:850,total:255000},
+  {code:'MAT-006',name:'Щебень фр.20-40',unit:'м³',qty:4000,price:20,total:80000},
+  {code:'MAT-007',name:'Песок строительный',unit:'м³',qty:3500,price:14,total:49000},
+  {code:'MAT-008',name:'Электроды сварочные',unit:'кг',qty:3000,price:5,total:15000},
+  {code:'MAT-009',name:'Краска антикоррозийная',unit:'л',qty:1500,price:10,total:15000},
+  {code:'MAT-010',name:'Болты М20',unit:'шт',qty:15000,price:1.2,total:18000},
+  {code:'MAT-011',name:'Насос дренажный',unit:'шт',qty:30,price:1800,total:54000},
+  {code:'MAT-012',name:'Вентилятор осевой',unit:'шт',qty:60,price:2800,total:168000},
+  {code:'MAT-013',name:'Трансформатор ТМ-1000',unit:'шт',qty:5,price:35000,total:175000},
+  {code:'MAT-014',name:'Кабель-канал',unit:'м',qty:8000,price:6,total:48000},
+  {code:'MAT-015',name:'Геотекстиль',unit:'м²',qty:15000,price:3,total:45000},
+];
+const CATEGORIES={'Сыпучие':['Цемент','Щебень','Песок'],'Металл':['Арматура','Труба','Болты'],'Электро':['Кабель','Трансформатор','Кабель-канал'],'Оборудование':['Насос','Вентилятор'],'Химия':['Краска','Электроды'],'Текстиль':['Геотекстиль'],'Бетон':['Бетон']};
+function getCat(name){for(const[c,items]of Object.entries(CATEGORIES))if(items.some(i=>name.includes(i)))return c;return 'Прочее'}
+MATERIALS.forEach(m=>m.cat=getCat(m.name));
+function renderStats(){
+  const total=MATERIALS.length;
+  const sum=MATERIALS.reduce((s,m)=>s+m.total,0);
+  const maxItem=MATERIALS.reduce((a,b)=>a.total>b.total?a:b);
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="label">Позиций</div><div class="value blue">${total}</div></div>
+    <div class="stat-card"><div class="label">Общая стоимость</div><div class="value green">$${(sum/1e6).toFixed(2)}M</div></div>
+    <div class="stat-card"><div class="label">Макс. позиция</div><div class="value yellow">${maxItem.name}</div></div>
+    <div class="stat-card"><div class="label">Средняя цена</div><div class="value purple">$${Math.round(sum/total).toLocaleString()}</div></div>`;
+}
+function renderCharts(){
+  const cc={};MATERIALS.forEach(m=>{cc[m.cat]=(cc[m.cat]||0)+m.total});
+  const colors=['#3b82f6','#22c55e','#eab308','#a855f7','#f97316','#ef4444','#06b6d4'];
+  new Chart(document.getElementById('catChart'),{type:'doughnut',data:{labels:Object.keys(cc),datasets:[{data:Object.values(cc).map(v=>v/1e3),backgroundColor:colors.slice(0,Object.keys(cc).length),borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8',font:{size:10}}}}}});
+  const sorted=[...MATERIALS].sort((a,b)=>b.total-a.total);
+  new Chart(document.getElementById('costChart'),{type:'bar',data:{labels:sorted.map(m=>m.name.length>15?m.name.slice(0,15)+'...':m.name),datasets:[{label:'Сумма, $K',data:sorted.map(m=>m.total/1e3),backgroundColor:'#3b82f6',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)+'K',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8',font:{size:10}}}}}});
+  new Chart(document.getElementById('qtyChart'),{type:'bar',data:{labels:MATERIALS.map(m=>m.name.length>12?m.name.slice(0,12)+'...':m.name),datasets:[{label:'Количество',data:MATERIALS.map(m=>m.qty),backgroundColor:'#22c55e',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{type:'logarithmic',ticks:{color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8',font:{size:8}}}}}});
+  const uc={};MATERIALS.forEach(m=>{uc[m.unit]=(uc[m.unit]||0)+1});
+  new Chart(document.getElementById('unitChart'),{type:'doughnut',data:{labels:Object.keys(uc),datasets:[{data:Object.values(uc),backgroundColor:['#3b82f6','#22c55e','#eab308','#a855f7','#f97316'],borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+}
+function renderTable(filtered){
+  document.getElementById('matBody').innerHTML=filtered.map(m=>`<tr><td style="color:#3b82f6;font-weight:600">${m.code}</td><td>${m.name}</td><td>${m.unit}</td><td>${m.qty.toLocaleString()}</td><td>$${m.price.toLocaleString()}</td><td style="color:#22c55e;font-weight:600">$${m.total.toLocaleString()}</td></tr>`).join('');
+}
+function apply(){
+  const q=document.getElementById('filterSearch').value.toLowerCase();
+  renderTable(MATERIALS.filter(m=>!q||m.name.toLowerCase().includes(q)||m.code.toLowerCase().includes(q)));
+}
+document.getElementById('updateTime').textContent='Обновлено: '+new Date().toLocaleString('ru-RU');
+renderStats();renderCharts();renderTable(MATERIALS);
+</script>
+</body>
+</html>
