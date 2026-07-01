@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Договоры</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-bottom: 1px solid #334155; padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header h1 span { color: #3b82f6; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; padding: 20px 30px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 13px; text-transform: uppercase; }
+.stat-card .value { font-size: 28px; font-weight: 700; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.yellow { color: #eab308; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.charts { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; padding: 0 30px 20px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.contracts { padding: 0 30px 30px; }
+.contracts h2 { font-size: 20px; margin-bottom: 16px; color: #f8fafc; }
+.contract-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; margin-bottom: 16px; overflow: hidden; }
+.contract-header { padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-bottom: 1px solid #334155; }
+.contract-header:hover { background: #1e293b; }
+.contract-header .code { font-weight: 700; color: #3b82f6; font-size: 14px; }
+.contract-header .name { color: #f8fafc; font-size: 16px; margin-top: 2px; }
+.contract-header .status { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+.status-draft { background: #334155; color: #94a3b8; }
+.status-signed { background: #1e3a5f; color: #60a5fa; }
+.status-active { background: #1a3a2a; color: #4ade80; }
+.status-completed { background: #1a2a3a; color: #818cf8; }
+.status-terminated { background: #3a1a1a; color: #f87171; }
+.contract-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+.contract-body.open { max-height: 2000px; }
+.contract-details { padding: 20px; }
+.detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; }
+.detail-row .label { color: #94a3b8; }
+.detail-row .value { color: #e2e8f0; font-weight: 500; }
+.milestone-bar { display: flex; height: 24px; border-radius: 12px; overflow: hidden; margin: 8px 0; background: #0f172a; }
+.milestone-seg { display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; font-weight: 600; }
+.milestone-seg.completed { background: #22c55e; }
+.milestone-seg.active { background: #3b82f6; }
+.milestone-seg.pending { background: #334155; }
+.filter-bar { display: flex; gap: 12px; padding: 0 30px 20px; flex-wrap: wrap; }
+.filter-bar select, .filter-bar input { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 10px 16px; color: #e2e8f0; font-size: 14px; }
+.filter-bar select:focus, .filter-bar input:focus { outline: none; border-color: #3b82f6; }
+.filter-bar select { min-width: 150px; }
+.filter-bar input { flex: 1; min-width: 200px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>📋 <span>OpenConstructionERP</span> — Договоры</h1>
+    <div class="subtitle" style="color:#94a3b8;font-size:14px;margin-top:4px;">Модуль управления контрактами</div>
+  </div>
+  <div style="text-align:right;font-size:12px;color:#64748b;" id="updateTime"></div>
+</div>
+<div class="stats" id="stats"></div>
+<div class="filter-bar">
+  <select id="filterStatus" onchange="applyFilters()">
+    <option value="all">Все статусы</option>
+    <option value="draft">Черновик</option>
+    <option value="signed">Подписан</option>
+    <option value="active">В работе</option>
+    <option value="completed">Завершён</option>
+  </select>
+  <select id="filterType" onchange="applyFilters()">
+    <option value="all">Все типы</option>
+    <option value="lump_sum">Твёрдая цена</option>
+    <option value="unit_price">Единичные расценки</option>
+    <option value="cost_plus">Издержки +</option>
+    <option value="design_build">Проект-Стройка</option>
+    <option value="epc">EPC</option>
+  </select>
+  <input type="text" id="filterSearch" placeholder="🔍 Поиск..." oninput="applyFilters()">
+</div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 По статусам</h3><canvas id="statusChart"></canvas></div>
+  <div class="chart-card"><h3>💰 Суммы договоров</h3><canvas id="amountChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Оплачено vs Начислено</h3><canvas id="paymentChart"></canvas></div>
+  <div class="chart-card"><h3>🏢 По подрядчикам</h3><canvas id="contractorChart"></canvas></div>
+</div>
+<div class="contracts" id="contractsList"><h2>📋 Список договоров</h2></div>
+<script>
+const CONTRACTORS = ['CAI Interbudmontazh GmbH','ТОО "Алматыметрострой"','АО "НК "КТЖ"','ТОО "СтройИнвест Групп"','China Railway Construction Corp.','Vinci Construction','Strabag SE','Porr AG','Gülermak A.Ş.','ТОО "Базис-А"','ТОО "Курылыс-Монтаж"','ТОО "BI-Group"'];
+const SECTIONS = ['ПК 0+000 — ПК 30+000','ПК 30+000 — ПК 60+000','ПК 60+000 — ПК 90+000','ПК 90+000 — ПК 120+000','Станция Центральная','Станция Восточная','Станция Западная','Депо'];
+const NAMES = ['Строительство участка метро','Поставка ТПМК','Электроснабжение','Вентиляция','Отделочные работы','Путевые работы','Генеральный подряд','Инженерные изыскания','Разработка ПСД'];
+const TYPES = ['lump_sum','unit_price','cost_plus','design_build','epc'];
+const STATUSES = ['draft','signed','active','completed'];
+const FUNDING = ['Госбюджет РК','Местный бюджет','ГЧП','Грант ЕБРР','Частные'];
+function rand(a,b){return Math.random()*(b-a)+a;}
+function randInt(a,b){return Math.floor(rand(a,b+1));}
+function genData(n){
+  const data=[];
+  for(let i=0;i<n;i++){
+    const sec=SECTIONS[randInt(0,SECTIONS.length-1)];
+    const name=NAMES[randInt(0,NAMES.length-1)]+' — '+sec;
+    const status=STATUSES[Math.min(i,STATUSES.length-1)];
+    const type=TYPES[randInt(0,TYPES.length-1)];
+    const amount=Math.round(rand(500000,50000000)*100)/100;
+    const client=CONTRACTORS[randInt(0,CONTRACTORS.length-1)];
+    let contractor=CONTRACTORS[randInt(0,CONTRACTORS.length-1)];
+    while(contractor===client)contractor=CONTRACTORS[randInt(0,CONTRACTORS.length-1)];
+    const msCount=randInt(3,8);
+    const milestones=[];
+    for(let m=0;m<msCount;m++){
+      const msAmt=Math.round(amount*rand(0.05,0.25)*100)/100;
+      const msStatus=m<randInt(1,msCount)?'completed':'pending';
+      milestones.push({number:m+1,name:'Этап '+(m+1),amount:msAmt,status:msStatus});
+    }
+    const paid=milestones.filter(m=>m.status==='completed').reduce((s,m)=>s+m.amount,0);
+    data.push({code:'C-2026-'+(i+1).toString().padStart(3,'0'),name,status,type,amount,client,contractor,funding:FUNDING[randInt(0,FUNDING.length-1)],milestones,paid:Math.round(paid*100)/100});
+  }
+  return data;
+}
+const contracts=genData(8);
+function renderStats(){
+  const total=contracts.length;
+  const totalAmt=contracts.reduce((s,c)=>s+c.amount,0);
+  const totalPaid=contracts.reduce((s,c)=>s+c.paid,0);
+  const active=contracts.filter(c=>c.status==='active').length;
+  const completed=contracts.filter(c=>c.status==='completed').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat-card"><div class="label">Всего договоров</div><div class="value blue">${total}</div></div>
+    <div class="stat-card"><div class="label">Общая сумма</div><div class="value green">$${(totalAmt/1e6).toFixed(1)}M</div></div>
+    <div class="stat-card"><div class="label">Оплачено</div><div class="value yellow">$${(totalPaid/1e6).toFixed(1)}M</div></div>
+    <div class="stat-card"><div class="label">В работе</div><div class="value orange">${active}</div></div>
+    <div class="stat-card"><div class="label">Завершено</div><div class="value purple">${completed}</div></div>`;
+}
+function renderCharts(){
+  const sc={};contracts.forEach(c=>{sc[c.status]=(sc[c.status]||0)+1;});
+  const sl={draft:'Черновик',signed:'Подписан',active:'В работе',completed:'Завершён'};
+  const sc2={draft:'#64748b',signed:'#3b82f6',active:'#22c55e',completed:'#818cf8'};
+  new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:Object.keys(sc).map(k=>sl[k]||k),datasets:[{data:Object.values(sc),backgroundColor:Object.keys(sc).map(k=>sc2[k]||'#64748b'),borderWidth:0}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}}}});
+  const sb=[...contracts].sort((a,b)=>b.amount-a.amount);
+  new Chart(document.getElementById('amountChart'),{type:'bar',data:{labels:sb.map(c=>c.code),datasets:[{label:'Сумма, $',data:sb.map(c=>c.amount/1e6),backgroundColor:sb.map(c=>sc2[c.status]||'#64748b'),borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)+'M',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+  new Chart(document.getElementById('paymentChart'),{type:'bar',data:{labels:contracts.map(c=>c.code),datasets:[{label:'Начислено',data:contracts.map(c=>c.amount/1e6),backgroundColor:'#64748b',borderRadius:4},{label:'Оплачено',data:contracts.map(c=>c.paid/1e6),backgroundColor:'#22c55e',borderRadius:4}]},options:{responsive:true,plugins:{legend:{position:'bottom',labels:{color:'#94a3b8'}}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)+'M',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+  const cc={};contracts.forEach(c=>{cc[c.contractor]=(cc[c.contractor]||0)+c.amount;});
+  const ce=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  new Chart(document.getElementById('contractorChart'),{type:'bar',data:{labels:ce.map(e=>e[0].length>20?e[0].slice(0,20)+'...':e[0]),datasets:[{label:'Сумма, $',data:ce.map(e=>e[1]/1e6),backgroundColor:'#a855f7',borderRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toFixed(0)+'M',color:'#94a3b8'},grid:{color:'#1e293b'}},x:{ticks:{color:'#94a3b8'}}}}});
+}
+function renderContracts(filtered){
+  const sl={draft:'Черновик',signed:'Подписан',active:'В работе',completed:'Завершён'};
+  const tl={lump_sum:'Твёрдая цена',unit_price:'Единичные расценки',cost_plus:'Издержки +',design_build:'Проект-Стройка',epc:'EPC'};
+  let html='<h2>📋 Список договоров</h2>';
+  filtered.forEach((c,i)=>{
+    const pct=c.amount?Math.round(c.paid/c.amount*100):0;
+    html+=`<div class="contract-card"><div class="contract-header" onclick="toggle(${i})"><div><div class="code">${c.code}</div><div class="name">${c.name}</div></div><div style="text-align:right"><div class="status status-${c.status}">${sl[c.status]||c.status}</div><div style="color:#94a3b8;font-size:12px;margin-top:4px">$${(c.amount/1e6).toFixed(1)}M</div></div></div><div class="contract-body" id="body${i}"><div class="contract-details">
+      <div class="detail-row"><span class="label">Тип</span><span class="value">${tl[c.type]||c.type}</span></div>
+      <div class="detail-row"><span class="label">Заказчик</span><span class="value">${c.client}</span></div>
+      <div class="detail-row"><span class="label">Подрядчик</span><span class="value">${c.contractor}</span></div>
+      <div class="detail-row"><span class="label">Сумма</span><span class="value">$${c.amount.toLocaleString()}</span></div>
+      <div class="detail-row"><span class="label">Оплачено</span><span class="value">$${c.paid.toLocaleString()} (${pct}%)</span></div>
+      <div class="detail-row"><span class="label">Финансирование</span><span class="value">${c.funding}</span></div>
+      <div class="detail-row"><span class="label">Этапы (${c.milestones.length})</span><span class="value"></span></div>
+      <div class="milestone-bar">${c.milestones.map(m=>`<div class="milestone-seg ${m.status}" style="flex:${m.amount}">${m.status==='completed'?'✓':''}</div>`).join('')}</div>
+      ${c.milestones.map(m=>`<div class="detail-row" style="font-size:13px"><span class="label">${m.name}</span><span class="value" style="color:${m.status==='completed'?'#22c55e':'#94a3b8'}">$${m.amount.toLocaleString()} — ${m.status==='completed'?'✅ Выполнен':'⏳ Ожидает'}</span></div>`).join('')}
+    </div></div></div>`;
+  });
+  document.getElementById('contractsList').innerHTML=html;
+}
+function toggle(i){document.getElementById('body'+i).classList.toggle('open');}
+function applyFilters(){
+  const s=document.getElementById('filterStatus').value;
+  const t=document.getElementById('filterType').value;
+  const q=document.getElementById('filterSearch').value.toLowerCase();
+  renderContracts(contracts.filter(c=>(s==='all'||c.status===s)&&(t==='all'||c.type===t)&&(!q||c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q))));
+}
+document.getElementById('updateTime').textContent='Обновлено: '+new Date().toLocaleString('ru-RU');
+renderStats();renderCharts();renderContracts(contracts);
+</script>
+</body>
+</html>
