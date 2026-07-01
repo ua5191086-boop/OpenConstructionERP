@@ -165,3 +165,107 @@ export interface AITask {
   status: string;
   agent_id: string;
 }
+
+// --- Project Management ---
+export interface PMProject {
+  id: number;
+  code: string;
+  name: string;
+  project_type: string;
+  status: string;
+  phase: string;
+  budget_total: number;
+  budget_currency: string;
+  country: string;
+  city: string;
+  start_date: string;
+  end_date: string;
+  duration_days: number;
+  risk_class: string;
+  complexity: string;
+}
+
+export interface PMWBSItem {
+  id: number;
+  project_id: number;
+  parent_id: number | null;
+  wbs_code: string;
+  name: string;
+  wbs_level: number;
+  sort_order: number;
+  is_leaf: boolean;
+  progress_pct: number;
+  status: string;
+}
+
+export interface PMMilestone {
+  id: number;
+  project_id: number;
+  milestone_code: string;
+  name: string;
+  milestone_type: string;
+  planned_date: string;
+  actual_date: string | null;
+  status: string;
+  weight_pct: number;
+  is_gate: boolean;
+}
+
+export interface PMPhase {
+  id: number;
+  project_id: number;
+  phase_code: string;
+  name: string;
+  sort_order: number;
+  status: string;
+  completion_pct: number;
+  budget_amount: number;
+}
+
+export interface PMRisk {
+  id: number;
+  project_id: number;
+  risk_code: string;
+  name: string;
+  risk_category: string;
+  probability_score: number;
+  impact_score: number;
+  risk_score: number;
+  probability: string;
+  impact: string;
+  potential_cost: number;
+  mitigation_strategy: string;
+  status: string;
+}
+
+export interface PMChange {
+  id: number;
+  project_id: number;
+  change_number: string;
+  change_type: string;
+  source: string;
+  description: string;
+  cost_impact: number;
+  schedule_impact: number;
+  status: string;
+}
+
+export interface PMLesson {
+  id: number;
+  project_id: number;
+  category: string;
+  title: string;
+  is_positive: boolean;
+  severity: string;
+  status: string;
+}
+
+export interface PMPortfolio {
+  id: number;
+  code: string;
+  name: string;
+  portfolio_type: string;
+  parent_id: number | null;
+  budget_total: number;
+  status: string;
+}

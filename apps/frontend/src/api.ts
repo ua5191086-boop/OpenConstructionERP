@@ -105,3 +105,45 @@ export const aiApi = {
   listTasks: () => fetchApi<any[]>('/ai/tasks'),
   listConversations: () => fetchApi<any[]>('/ai/conversations'),
 };
+
+// --- Project Management ---
+export const pmApi = {
+  listProjects: (params?: { status?: string; project_type?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status) qs.set('status', params.status);
+    if (params?.project_type) qs.set('project_type', params.project_type);
+    const q = qs.toString();
+    return fetchApi<any[]>(`/pm/projects${q ? '?' + q : ''}`);
+  },
+  getProject: (id: string) => fetchApi<any>(`/pm/projects/${id}`),
+  listWBSItems: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/wbs-items${qs}`);
+  },
+  listMilestones: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/milestones${qs}`);
+  },
+  listPhases: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/phases${qs}`);
+  },
+  listTeam: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/team${qs}`);
+  },
+  listPortfolios: () => fetchApi<any[]>('/pm/portfolios'),
+  listRisks: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/risks${qs}`);
+  },
+  listChanges: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/changes${qs}`);
+  },
+  listLessons: (projectId?: string) => {
+    const qs = projectId ? `?project_id=${projectId}` : '';
+    return fetchApi<any[]>(`/pm/lessons${qs}`);
+  },
+  getDashboard: () => fetchApi<any>('/pm/dashboard'),
+};

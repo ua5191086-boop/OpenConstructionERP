@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Project Management Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 24px 32px; border-bottom: 1px solid #334155; }
+.header h1 { font-size: 24px; font-weight: 700; color: #f8fafc; }
+.header .subtitle { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { color: #94a3b8; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-card .value { font-size: 28px; font-weight: 700; color: #f8fafc; margin-top: 8px; }
+.stat-card .value.green { color: #22c55e; }
+.stat-card .value.blue { color: #3b82f6; }
+.stat-card .value.purple { color: #a855f7; }
+.stat-card .value.orange { color: #f97316; }
+.stat-card .value.red { color: #ef4444; }
+.stat-card .value.yellow { color: #eab308; }
+.charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { color: #f8fafc; font-size: 16px; margin-bottom: 16px; }
+.chart-card canvas { max-height: 300px; }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; margin-bottom: 16px; }
+.filters-bar select, .filters-bar input { background: #0f172a; color: #e2e8f0; border: 1px solid #334155; border-radius: 6px; padding: 8px 12px; font-size: 13px; }
+.filters-bar label { color: #94a3b8; font-size: 12px; }
+.project-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+.project-card .project-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.project-card .project-header h3 { color: #f8fafc; font-size: 18px; }
+.project-card .project-header .code { color: #64748b; font-size: 12px; font-family: monospace; }
+.project-card .project-meta { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 12px; }
+.project-card .project-meta span { font-size: 13px; color: #94a3b8; }
+.project-card .project-meta .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+.badge-construction { background: #1e3a5f; color: #60a5fa; }
+.badge-design { background: #3b2f1e; color: #fbbf24; }
+.badge-tender { background: #1e3a2f; color: #34d399; }
+.badge-planning { background: #2f1e3b; color: #a78bfa; }
+.badge-lead { background: #3b1e2f; color: #f472b6; }
+.badge-closed { background: #1e2f3b; color: #38bdf8; }
+.progress-bar { height: 6px; background: #334155; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+.progress-bar .fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+.accordion { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.accordion-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; }
+.accordion-header:hover { background: #334155; }
+.accordion-header h3 { color: #f8fafc; font-size: 16px; }
+.accordion-header .arrow { color: #64748b; transition: transform 0.2s; }
+.accordion-header.active .arrow { transform: rotate(180deg); }
+.accordion-body { display: none; padding: 16px 20px; }
+.accordion-body.open { display: block; }
+.wbs-tree { padding-left: 0; list-style: none; }
+.wbs-tree li { padding: 6px 0; position: relative; }
+.wbs-tree .wbs-node { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.wbs-tree .wbs-node:hover { background: #334155; }
+.wbs-tree .wbs-code { font-family: monospace; font-size: 11px; color: #64748b; min-width: 50px; }
+.wbs-tree .wbs-name { color: #e2e8f0; font-size: 13px; }
+.wbs-tree .wbs-progress { margin-left: auto; font-size: 11px; color: #94a3b8; }
+.wbs-tree .wbs-toggle { color: #64748b; cursor: pointer; width: 16px; text-align: center; }
+.wbs-tree ul { padding-left: 24px; list-style: none; }
+.wbs-tree ul.hidden { display: none; }
+.risk-matrix { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; max-width: 400px; margin: 12px 0; }
+.risk-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 10px; border-radius: 4px; font-weight: 600; }
+.risk-1 { background: #166534; color: #86efac; }
+.risk-2 { background: #3b7a1e; color: #bef264; }
+.risk-3 { background: #854d0e; color: #fde047; }
+.risk-4 { background: #9a3412; color: #fdba74; }
+.risk-5 { background: #7f1d1d; color: #fca5a5; }
+.risk-6 { background: #5b1a1a; color: #f87171; }
+.risk-7 { background: #3b0f0f; color: #ef4444; }
+.risk-8 { background: #1f0a0a; color: #dc2626; }
+.risk-9 { background: #0a0505; color: #b91c1c; }
+.gantt-bar { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.gantt-label { min-width: 180px; font-size: 12px; color: #94a3b8; }
+.gantt-track { flex: 1; height: 20px; background: #334155; border-radius: 4px; position: relative; }
+.gantt-fill { height: 100%; border-radius: 4px; position: absolute; top: 0; }
+.gantt-fill.completed { background: #22c55e; }
+.gantt-fill.in_progress { background: #3b82f6; }
+.gantt-fill.delayed { background: #ef4444; }
+.gantt-fill.planned { background: #64748b; }
+.table-container { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.table-header { padding: 16px 20px; border-bottom: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+.table-header h3 { color: #f8fafc; font-size: 16px; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; border-bottom: 1px solid #334155; }
+td { padding: 10px 20px; font-size: 14px; border-bottom: 1px solid #1e293b; }
+tr:hover { background: #334155; }
+tr:nth-child(even) { background: #0f172a; }
+tr:nth-child(even):hover { background: #334155; }
+.amount { text-align: right; font-variant-numeric: tabular-nums; }
+.amount.positive { color: #22c55e; }
+.amount.negative { color: #ef4444; }
+@media (max-width: 768px) { .charts-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>🏗️ OpenConstructionERP</h1>
+    <div class="subtitle">Project Management Dashboard — Portfolio View</div>
+</div>
+<div class="container">
+    <div class="filters-bar">
+        <label>Portfolio:</label>
+        <select id="portfolioFilter" onchange="applyFilters()">
+            <option value="">All Portfolios</option>
+        </select>
+        <label>Status:</label>
+        <select id="statusFilter" onchange="applyFilters()">
+            <option value="">All Statuses</option>
+            <option value="construction">Construction</option>
+            <option value="design">Design</option>
+            <option value="tender">Tender</option>
+            <option value="planning">Planning</option>
+            <option value="lead">Lead</option>
+            <option value="closed">Closed</option>
+        </select>
+        <label>Type:</label>
+        <select id="typeFilter" onchange="applyFilters()">
+            <option value="">All Types</option>
+            <option value="metro">Metro</option>
+            <option value="tunnel">Tunnel</option>
+            <option value="bridge">Bridge</option>
+            <option value="road">Road</option>
+            <option value="building">Building</option>
+            <option value="industrial">Industrial</option>
+            <option value="water">Water</option>
+        </select>
+        <label>Search:</label>
+        <input type="text" id="searchFilter" placeholder="Project name..." oninput="applyFilters()">
+    </div>
+
+    <div class="stats-grid" id="statsGrid"></div>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h3>Budget by Project</h3>
+            <canvas id="budgetChart"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Risk Distribution</h3>
+            <canvas id="riskChart"></canvas>
+        </div>
+    </div>
+
+    <div class="accordion" id="portfolioAccordion">
+        <div class="accordion-header active" onclick="toggleAccordion(this)">
+            <h3>📊 Portfolio Overview</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body open" id="portfolioBody"></div>
+    </div>
+
+    <div class="accordion" id="wbsAccordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h3>🌳 WBS Tree — Work Breakdown Structure</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body" id="wbsBody"></div>
+    </div>
+
+    <div class="accordion" id="ganttAccordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h3>📅 Gantt-like Schedule View</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body" id="ganttBody"></div>
+    </div>
+
+    <div class="accordion" id="riskAccordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h3>⚠️ Risk Register</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body" id="riskBody"></div>
+    </div>
+
+    <div class="accordion" id="milestoneAccordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h3>🏁 Milestones</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body" id="milestoneBody"></div>
+    </div>
+
+    <div class="accordion" id="changesAccordion">
+        <div class="accordion-header" onclick="toggleAccordion(this)">
+            <h3>📝 Changes & Variations</h3>
+            <span class="arrow">▼</span>
+        </div>
+        <div class="accordion-body" id="changesBody"></div>
+    </div>
+</div>
+
+<script>
+let pmData = null;
+let budgetChart = null;
+let riskChart = null;
+
+async function loadPM() {
+    try {
+        const resp = await fetch('pm_data.json');
+        pmData = await resp.json();
+        renderDashboard();
+    } catch(e) {
+        document.querySelector('.container').innerHTML = `
+            <div style="text-align:center;padding:80px;color:#94a3b8">
+                <h2>📁 PM data not found</h2>
+                <p style="margin-top:12px">Run <code>python3 scripts/generate_pm.py</code> first</p>
+            </div>`;
+    }
+}
+
+function getStatusBadge(status) {
+    const map = {
+        'construction': 'badge-construction',
+        'design': 'badge-design',
+        'tender': 'badge-tender',
+        'planning': 'badge-planning',
+        'lead': 'badge-lead',
+        'closed': 'badge-closed',
+    };
+    return map[status] || 'badge-lead';
+}
+
+function formatCurrency(n) {
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+    return '$' + Number(n).toLocaleString('en-US');
+}
+
+function toggleAccordion(header) {
+    header.classList.toggle('active');
+    const body = header.nextElementSibling;
+    body.classList.toggle('open');
+}
+
+function renderWBS(items, container) {
+    const byParent = {};
+    items.forEach(item => {
+        const pid = item.parent_id || 'root';
+        if (!byParent[pid]) byParent[pid] = [];
+        byParent[pid].push(item);
+    });
+
+    function renderLevel(parentId, depth) {
+        const children = byParent[parentId] || [];
+        if (children.length === 0) return '';
+        let html = '<ul' + (depth > 0 ? ' class="hidden"' : '') + '>';
+        children.sort((a, b) => a.sort_order - b.sort_order).forEach(item => {
+            const hasChildren = byParent[item.id] && byParent[item.id].length > 0;
+            const progressColor = item.progress_pct > 80 ? '#22c55e' : item.progress_pct > 40 ? '#3b82f6' : item.progress_pct > 0 ? '#f97316' : '#64748b';
+            html += '<li>';
+            html += '<div class="wbs-node">';
+            if (hasChildren) {
+                html += '<span class="wbs-toggle" onclick="toggleWBS(this)">▶</span>';
+            } else {
+                html += '<span class="wbs-toggle" style="visibility:hidden">▶</span>';
+            }
+            html += `<span class="wbs-code">${item.wbs_code}</span>`;
+            html += `<span class="wbs-name">${item.name}</span>`;
+            html += `<span class="wbs-progress">${item.progress_pct}%</span>`;
+            html += '</div>';
+            html += `<div class="progress-bar"><div class="fill" style="width:${item.progress_pct}%;background:${progressColor}"></div></div>`;
+            html += renderLevel(item.id, depth + 1);
+            html += '</li>';
+        });
+        html += '</ul>';
+        return html;
+    }
+
+    container.innerHTML = '<div class="wbs-tree">' + renderLevel('root', 0) + '</div>';
+}
+
+function toggleWBS(el) {
+    const ul = el.parentElement.nextElementSibling;
+    if (ul && ul.tagName === 'UL') {
+        ul.classList.toggle('hidden');
+        el.textContent = ul.classList.contains('hidden') ? '▶' : '▼';
+    }
+}
+
+function renderGantt(phases, container) {
+    if (phases.length === 0) {
+        container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No phase data available</p>';
+        return;
+    }
+    let html = '';
+    phases.forEach(p => {
+        const statusClass = p.status === 'completed' ? 'completed' : p.status === 'active' ? 'in_progress' : p.status === 'delayed' ? 'delayed' : 'planned';
+        html += `<div class="gantt-bar">
+            <span class="gantt-label">${p.name}</span>
+            <div class="gantt-track">
+                <div class="gantt-fill ${statusClass}" style="width:${p.completion_pct}%"></div>
+            </div>
+            <span style="font-size:11px;color:#94a3b8;min-width:40px;text-align:right">${p.completion_pct}%</span>
+        </div>`;
+    });
+    container.innerHTML = html;
+}
+
+function renderRiskMatrix(risks, container) {
+    if (risks.length === 0) {
+        container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No risks registered</p>';
+        return;
+    }
+    let html = '<div class="risk-matrix">';
+    for (let p = 5; p >= 1; p--) {
+        for (let i = 1; i <= 5; i++) {
+            const score = p * i;
+            const cls = score <= 3 ? 'risk-1' : score <= 6 ? 'risk-2' : score <= 9 ? 'risk-3' : score <= 12 ? 'risk-4' : 'risk-5';
+            const count = risks.filter(r => r.probability_score === p && r.impact_score === i).length;
+            html += `<div class="risk-cell ${cls}">${count || ''}</div>`;
+        }
+    }
+    html += '</div>';
+    html += '<div style="font-size:11px;color:#64748b;margin-top:8px">Probability ↑ (1-5) × Impact → (1-5) | Score = P × I</div>';
+
+    // Risk table
+    html += '<table style="margin-top:12px"><thead><tr><th>Code</th><th>Risk</th><th>Category</th><th>P</th><th>I</th><th>Score</th><th>Status</th><th>Strategy</th></tr></thead><tbody>';
+    risks.sort((a, b) => b.risk_score - a.risk_score).forEach(r => {
+        html += `<tr>
+            <td style="font-family:monospace;font-size:12px;color:#64748b">${r.risk_code}</td>
+            <td>${r.name}</td>
+            <td><span style="font-size:11px;color:#94a3b8">${r.risk_category}</span></td>
+            <td>${r.probability_score}</td>
+            <td>${r.impact_score}</td>
+            <td style="font-weight:600;color:${r.risk_score >= 12 ? '#ef4444' : r.risk_score >= 8 ? '#f97316' : '#22c55e'}">${r.risk_score}</td>
+            <td><span style="font-size:11px;color:#94a3b8">${r.status}</span></td>
+            <td><span style="font-size:11px;color:#94a3b8">${r.mitigation_strategy || '—'}</span></td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function renderMilestones(milestones, container) {
+    if (milestones.length === 0) {
+        container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No milestones</p>';
+        return;
+    }
+    let html = '<table><thead><tr><th>Code</th><th>Milestone</th><th>Type</th><th>Planned</th><th>Actual</th><th>Status</th><th>Gate</th></tr></thead><tbody>';
+    milestones.forEach(m => {
+        const statusColor = m.status === 'achieved' ? '#22c55e' : m.status === 'delayed' ? '#ef4444' : m.status === 'at_risk' ? '#f97316' : '#64748b';
+        html += `<tr>
+            <td style="font-family:monospace;font-size:12px;color:#64748b">${m.milestone_code}</td>
+            <td>${m.name}</td>
+            <td><span style="font-size:11px;color:#94a3b8">${m.milestone_type}</span></td>
+            <td>${m.planned_date}</td>
+            <td>${m.actual_date || '—'}</td>
+            <td style="color:${statusColor};font-weight:600">${m.status}</td>
+            <td>${m.is_gate ? '🚧' : '—'}</td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function renderChanges(changes, container) {
+    if (changes.length === 0) {
+        container.innerHTML = '<p style="color:#64748b;text-align:center;padding:20px">No changes recorded</p>';
+        return;
+    }
+    let html = '<table><thead><tr><th>#</th><th>Type</th><th>Source</th><th>Description</th><th class="amount">Cost Impact</th><th class="amount">Schedule (days)</th><th>Status</th></tr></thead><tbody>';
+    changes.forEach(c => {
+        const costClass = c.cost_impact >= 0 ? 'positive' : 'negative';
+        html += `<tr>
+            <td style="font-family:monospace;font-size:12px;color:#64748b">${c.change_number}</td>
+            <td><span style="font-size:11px;color:#94a3b8">${c.change_type}</span></td>
+            <td><span style="font-size:11px;color:#94a3b8">${c.source}</span></td>
+            <td>${c.description}</td>
+            <td class="amount ${costClass}">${formatCurrency(c.cost_impact)}</td>
+            <td class="amount">${c.schedule_impact > 0 ? '+' : ''}${c.schedule_impact}</td>
+            <td><span style="font-size:11px;color:#94a3b8">${c.status}</span></td>
+        </tr>`;
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+function applyFilters() {
+    if (!pmData) return;
+    const portfolioId = document.getElementById('portfolioFilter').value;
+    const status = document.getElementById('statusFilter').value;
+    const type = document.getElementById('typeFilter').value;
+    const search = document.getElementById('searchFilter').value.toLowerCase();
+
+    let filtered = pmData.projects;
+    if (portfolioId) {
+        const projectIds = pmData.portfolio_projects.filter(p => p.portfolio_id === portfolioId).map(p => p.project_id);
+        filtered = filtered.filter(p => projectIds.includes(p.code));
+    }
+    if (status) filtered = filtered.filter(p => p.status === status);
+    if (type) filtered = filtered.filter(p => p.project_type === type);
+    if (search) filtered = filtered.filter(p => p.name.toLowerCase().includes(search) || p.code.toLowerCase().includes(search));
+
+    renderFiltered(filtered);
+}
+
+function renderFiltered(projects) {
+    const projectIds = new Set(projects.map(p => p.code));
+
+    // Stats
+    const totalBudget = projects.reduce((s, p) => s + p.budget_total, 0);
+    const totalRisks = pmData.risks.filter(r => projectIds.has(r.project_id)).length;
+    const totalMilestones = pmData.milestones.filter(m => projectIds.has(m.project_id)).length;
+    const activeProjects = projects.filter(p => !['closed', 'lead'].includes(p.status)).length;
+
+    document.getElementById('statsGrid').innerHTML = `
+        <div class="stat-card"><div class="label">Projects</div><div class="value blue">${projects.length}</div></div>
+        <div class="stat-card"><div class="label">Total Budget</div><div class="value green">${formatCurrency(totalBudget)}</div></div>
+        <div class="stat-card"><div class="label">Active Projects</div><div class="value yellow">${activeProjects}</div></div>
+        <div class="stat-card"><div class="label">Risks</div><div class="value red">${totalRisks}</div></div>
+        <div class="stat-card"><div class="label">Milestones</div><div class="value purple">${totalMilestones}</div></div>
+    `;
+
+    // Budget chart
+    const budgetLabels = projects.map(p => p.code);
+    const budgetValues = projects.map(p => p.budget_total);
+    const budgetColors = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#6366f1','#ec4899','#0ea5e9'];
+
+    if (budgetChart) budgetChart.destroy();
+    budgetChart = new Chart(document.getElementById('budgetChart'), {
+        type: 'bar',
+        data: {
+            labels: budgetLabels,
+            datasets: [{
+                data: budgetValues,
+                backgroundColor: budgetColors.slice(0, budgetLabels.length),
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: v => '$' + (v/1e6).toFixed(0) + 'M', color: '#94a3b8' }, grid: { color: '#334155' } },
+                x: { ticks: { color: '#94a3b8', maxRotation: 45 } }
+            }
+        }
+    });
+
+    // Risk chart
+    const riskByCat = {};
+    pmData.risks.filter(r => projectIds.has(r.project_id)).forEach(r => {
+        riskByCat[r.risk_category] = (riskByCat[r.risk_category] || 0) + 1;
+    });
+    const riskLabels = Object.keys(riskByCat);
+    const riskValues = Object.values(riskByCat);
+    const riskColors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#a855f7','#ec4899'];
+
+    if (riskChart) riskChart.destroy();
+    riskChart = new Chart(document.getElementById('riskChart'), {
+        type: 'doughnut',
+        data: {
+            labels: riskLabels,
+            datasets: [{
+                data: riskValues,
+                backgroundColor: riskColors.slice(0, riskLabels.length),
+                borderColor: '#1e293b',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: {
+                legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 } } }
+            }
+        }
+    });
+
+    // Portfolio cards
+    const portfolioBody = document.getElementById('portfolioBody');
+    portfolioBody.innerHTML = projects.map(p => {
+        const phases = pmData.phases.filter(ph => ph.project_id === p.code);
+        const risks = pmData.risks.filter(r => r.project_id === p.code);
+        const milestones = pmData.milestones.filter(m => m.project_id === p.code);
+        const avgProgress = phases.length > 0 ? Math.round(phases.reduce((s, ph) => s + ph.completion_pct, 0) / phases.length) : 0;
+        const progressColor = avgProgress > 80 ? '#22c55e' : avgProgress > 40 ? '#3b82f6' : avgProgress > 0 ? '#f97316' : '#64748b';
+        const highRisks = risks.filter(r => r.risk_score >= 12).length;
+
+        return `<div class="project-card">
+            <div class="project-header">
+                <div>
+                    <h3>${p.name}</h3>
+                    <span class="code">${p.code}</span>
+                </div>
+                <span class="badge ${getStatusBadge(p.status)}">${p.status}</span>
+            </div>
+            <div class="project-meta">
+                <span>📍 ${p.city}, ${p.country}</span>
+                <span>🏗️ ${p.project_type}</span>
+                <span>💰 ${formatCurrency(p.budget_total)}</span>
+                <span>📅 ${p.start_date} → ${p.end_date}</span>
+                <span>⚠️ ${highRisks} high risks</span>
+                <span>🏁 ${milestones.length} milestones</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:#94a3b8">
+                <span>Overall Progress</span>
+                <span>${avgProgress}%</span>
+            </div>
+            <div class="progress-bar"><div class="fill" style="width:${avgProgress}%;background:${progressColor}"></div></div>
+        </div>`;
+    }).join('');
+
+    // WBS — show first project's WBS
+    const firstProject = projects[0];
+    if (firstProject) {
+        const wbsItems = pmData.wbs_items.filter(w => w.project_id === firstProject.code);
+        renderWBS(wbsItems, document.getElementById('wbsBody'));
+        document.querySelector('#wbsAccordion .accordion-header h3').textContent = `🌳 WBS Tree — ${firstProject.name}`;
+    }
+
+    // Gantt — show first project's phases
+    if (firstProject) {
+        const phases = pmData.phases.filter(ph => ph.project_id === firstProject.code);
+        renderGantt(phases, document.getElementById('ganttBody'));
+        document.querySelector('#ganttAccordion .accordion-header h3').textContent = `📅 Schedule — ${firstProject.name}`;
+    }
+
+    // Risks — all filtered
+    const allRisks = pmData.risks.filter(r => projectIds.has(r.project_id));
+    renderRiskMatrix(allRisks, document.getElementById('riskBody'));
+
+    // Milestones — all filtered
+    const allMilestones = pmData.milestones.filter(m => projectIds.has(m.project_id));
+    renderMilestones(allMilestones, document.getElementById('milestoneBody'));
+
+    // Changes — all filtered
+    const allChanges = pmData.changes.filter(c => projectIds.has(c.project_id));
+    renderChanges(allChanges, document.getElementById('changesBody'));
+}
+
+function renderDashboard() {
+    // Populate portfolio filter
+    const pfFilter = document.getElementById('portfolioFilter');
+    pmData.portfolios.forEach(pf => {
+        const opt = document.createElement('option');
+        opt.value = pf.id;
+        opt.textContent = pf.name;
+        pfFilter.appendChild(opt);
+    });
+
+    renderFiltered(pmData.projects);
+}
+
+loadPM();
+</script>
+</body>
+</html>

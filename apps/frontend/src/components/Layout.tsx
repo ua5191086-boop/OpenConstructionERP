@@ -10,6 +10,7 @@ const navItems = [
   { path: '/procurement', label: 'Procurement', icon: '📦' },
   { path: '/bim', label: 'BIM', icon: '🏗️' },
   { path: '/ai', label: 'AI', icon: '🤖' },
+  { path: '/pm', label: 'PM', icon: '📁' },
 ]
 
 export default function Layout() {

@@ -86,6 +86,10 @@ func main() {
 		// AI Module
 		aiHandler := handlers.NewAIHandler(database.DB)
 		aiHandler.RegisterRoutes(r)
+
+		// Project Management Module
+		pmHandler := handlers.NewPMHandler(database.DB)
+		pmHandler.RegisterRoutes(r)
 	})
 
 	// Start server
