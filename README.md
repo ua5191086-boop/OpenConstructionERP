@@ -52,6 +52,7 @@ Deploy:      Kubernetes/Helm/ArgoCD + single-node Compose profile — ADR-015
 - **`services/core-py/`** — Python reference implementation of the platform core (FastAPI):
   - Minimal **ontology API** (ADR-001): object types, objects, links, graph neighbourhood — every project and BOQ item lives in the semantic graph
   - **Projects API** + **BOQ vertical**: Excel import with RU/EN header auto-mapping, summary by CBS chapter with **regional coefficients**, styled Excel export
+  - **CDE core** (D-01 lite): document register with per-type mask numbering, revision history, ISO 19650 state machine (WIP→Shared→Published→Archived) with suitability codes, transmittals with revision snapshots
   - **Executive report** (P-01 lite): one-call `.xlsx` for leadership — KPI status, cost by chapter, tunnel drives, open/overdue RFIs, recent daily reports
   - **Cost control vertical** (F-01/F-02 lite): cost transactions (Actual/Commitment/Forecast) against BOQ items, plan-vs-actual summary by CBS chapter with variance and spent%, budget version snapshots
   - **Tunnel vertical** (L-01/L-03): drives, bulk shift ring registration, chainage derivation, progress analytics (rings/day, S-curve, ETA to breakthrough) + tunnel dashboard at `/tunnel.html`

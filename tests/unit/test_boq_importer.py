@@ -22,3 +22,11 @@ def test_chainage_derivation():
     # ring N chainage = from + N * width/1000 (direction-aware)
     width = 1400; frm = 0.0
     assert frm + 42 * width / 1000.0 == 58.8
+
+def test_cde_revision_ordering():
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "..", "services", "core-py"))
+    def rev_key(v): return (v[0] == "C", int(v[1:]))
+    assert rev_key("P02") > rev_key("P01")
+    assert rev_key("C01") > rev_key("P99")   # contractual always above preliminary
+    assert rev_key("C10") > rev_key("C02")

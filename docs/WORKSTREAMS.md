@@ -15,7 +15,8 @@
 | V003 | Tender Module (перенумерована из V002, FK/UUID исправлены) | applied | tenders |
 | V004 | Tunnel Module (tbm, drives, rings, segments) | applied | tunnel |
 | V005 | Site Documents (RFI, daily reports, work entries) | applied | core-py |
-| V006 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — перед использованием добавь строку сюда в ТОМ ЖЕ коммите | | |
+| V006 | CDE Core (documents, numbering rules, revisions, transmittals) | applied | core-py |
+| V007 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — перед использованием добавь строку сюда в ТОМ ЖЕ коммите | | |
 
 **Правило:** новый номер бронируется строкой в этой таблице в том же коммите,
 что и сама миграция. Перед началом работы — `git pull`. Нашёл занятый номер — перенумеруй свою.
