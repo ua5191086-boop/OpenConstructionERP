@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Permits</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:14px}
+.controls{padding:16px 30px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1e293b;border-bottom:1px solid #334155}
+.controls select,.controls button{padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:14px;cursor:pointer}
+.controls button{background:#3b82f6;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#2563eb}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;text-align:center}
+.stat-card .label{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:15px;margin-bottom:14px}
+.chart-card canvas{max-height:280px;width:100%!important}
+.tables{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 30px 30px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;overflow-x:auto}
+.table-card h3{color:#f8fafc;font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;font-size:11px;text-transform:uppercase}
+td{padding:8px 6px;border-bottom:1px solid #1e293b}
+tr:hover td{background:#1a1f2e}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px}
+.badge-green{background:#1a3a2a;color:#4ade80}
+.badge-red{background:#3a1a1a;color:#f87171}
+.badge-yellow{background:#3a2a1a;color:#fbbf24}
+.badge-blue{background:#1a2a3a;color:#60a5fa}
+@media(max-width:768px){.charts,.tables{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>📋 <span>OpenConstructionERP</span> — Permits</h1><div class="sub">V030 • Permit Applications, Inspections, Conditions</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="controls">
+  <label style="color:#94a3b8;font-size:13px">Status:</label>
+  <select id="statusFilter"><option value="">— All —</option><option>approved</option><option>under_review</option><option>rejected</option><option>draft</option></select>
+  <button onclick="loadData()">Refresh</button>
+</div>
+<div class="stats" id="statsKpi"></div>
+<div class="charts">
+  <div class="chart-card"><h3>📋 Applications by Status</h3><canvas id="appStatusChart"></canvas></div>
+  <div class="chart-card"><h3>📊 Applications by Type</h3><canvas id="appTypeChart"></canvas></div>
+  <div class="chart-card"><h3>🔍 Inspection Results</h3><canvas id="inspectionChart"></canvas></div>
+  <div class="chart-card"><h3>⚠️ Condition Compliance</h3><canvas id="condChart"></canvas></div>
+</div>
+<div class="tables">
+  <div class="table-card"><h3>📋 Permit Applications</h3><table><thead><tr><th>Application#</th><th>Type</th><th>Body</th><th>Fee</th><th>Status</th></tr></thead><tbody id="appTable"></tbody></table></div>
+  <div class="table-card"><h3>🔍 Upcoming Inspections</h3><table><thead><tr><th>Type</th><th>Inspector</th><th>Scheduled</th><th>Status</th></tr></thead><tbody id="inspTable"></tbody></table></div>
+</div>
+<script>
+const API_BASE = '/api/v1/protected/permits';
+let CHART_INSTANCES = {};
+const COLORS = ['#22c55e','#3b82f6','#f97316','#eab308','#ef4444','#a855f7'];
+
+async function loadData() {
+  try {
+    const [apps, docs, insp, renewals, cond, bodies] = await Promise.all([
+      fetch(`${API_BASE}/applications`).then(r=>r.ok?r.json():[]),
+      fetch(`${API_BASE}/documents`).catch(()=>[]),
+      fetch(`${API_BASE}/inspections`).catch(()=>[]),
+      fetch(`${API_BASE}/renewals`).catch(()=>[]),
+      fetch(`${API_BASE}/conditions`).catch(()=>[]),
+      fetch(`${API_BASE}/bodies`).then(r=>r.ok?r.json():[]),
+    ]);
+    renderDashboard(apps, insp, cond, bodies);
+  } catch(e) {
+    const m = genMock();
+    renderDashboard(m.apps, m.inspections, m.conditions, m.bodies);
+  }
+}
+function genMock() {
+  const apps = Array.from({length:15},(_,i)=>({application_number:`PERM-${i+1}`,application_type:['construction','environmental','safety','excavation'][i%4],body_name:`Body ${i%5+1}`,fee_amount:Math.random()*40000+1000,status:['approved','under_review','draft','rejected'][i%4]}));
+  const inspections = Array.from({length:12},(_,i)=>({inspection_type:['initial','periodic','follow_up'][i%3],inspector_name:`Inspector ${String.fromCharCode(65+i%4)}`,scheduled_date:new Date().toISOString().slice(0,10),status:['scheduled','completed','deferred'][i%3]}));
+  const conditions = Array.from({length:20},(_,i)=>({description:`Condition ${i+1}`,status:['pending','compliant','overdue','waived'][i%4]}));
+  const bodies = Array.from({length:6},(_,i)=>({body_name:`Regulatory Body ${i+1}`,body_code:`RB-${i+1}`}));
+  return {apps, inspections, conditions, bodies};
+}
+function renderDashboard(apps, inspections, conditions, bodies) {
+  document.getElementById('updateTime').textContent = new Date().toISOString().slice(0,19).replace('T',' ');
+  const approved = apps.filter(a=>a.status==='approved').length;
+  const pending = apps.filter(a=>a.status==='under_review'||a.status==='draft').length;
+  document.getElementById('statsKpi').innerHTML = `
+    <div class="stat-card"><div class="label">Total Applications</div><div class="value blue">${apps.length}</div></div>
+    <div class="stat-card"><div class="label">Approved</div><div class="value green">${approved}</div></div>
+    <div class="stat-card"><div class="label">Pending Review</div><div class="value yellow">${pending}</div></div>
+    <div class="stat-card"><div class="label">Bodies</div><div class="value purple">${bodies.length}</div></div>
+    <div class="stat-card"><div class="label">Inspections</div><div class="value blue">${inspections.length}</div></div>
+    <div class="stat-card"><div class="label">Conditions</div><div class="value green">${conditions.length}</div></div>`;
+  const g = {}; apps.forEach(a => { g[a.status||'other'] = (g[a.status||'other']||0)+1; });
+  renderChart('appStatusChart','doughnut',Object.keys(g),Object.values(g),COLORS,'Apps');
+  const tg = {}; apps.forEach(a => { tg[a.application_type||'other'] = (tg[a.application_type||'other']||0)+1; });
+  renderChart('appTypeChart','bar',Object.keys(tg),Object.values(tg),'#3b82f6','By Type');
+  const ig = {}; inspections.forEach(i => { ig[i.result||i.status||'scheduled'] = (ig[i.result||i.status||'scheduled']||0)+1; });
+  renderChart('inspectionChart','pie',Object.keys(ig),Object.values(ig),['#22c55e','#eab308','#ef4444','#3b82f6'],'Inspections');
+  const cg = {}; conditions.forEach(c => { cg[c.status||'other'] = (cg[c.status||'other']||0)+1; });
+  renderChart('condChart','doughnut',Object.keys(cg),Object.values(cg),['#22c55e','#f97316','#ef4444','#a855f7'],'Conditions');
+  renderAppTable(apps);
+  renderInspTable(inspections);
+}
+function renderChart(id, type, labels, data, colors, label) {
+  if(CHART_INSTANCES[id]) CHART_INSTANCES[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  CHART_INSTANCES[id] = new Chart(ctx, {
+    type, data: { labels, datasets: [{ label: label||'', data, backgroundColor: Array.isArray(colors)?colors:[colors], borderColor: Array.isArray(colors)?colors:'#1e293b', borderWidth: 1 }]},
+    options: { responsive:true, maintainAspectRatio:true, plugins: { legend: { labels: { color:'#94a3b8', font:{size:11} } } },
+      scales: type==='bar' ? { y: { beginAtZero:true, ticks: { color:'#64748b', font:{size:10} }, grid: { color:'#1e293b' } }, x: { ticks: { color:'#64748b', font:{size:10} } } } : {} }
+  });
+}
+function renderAppTable(apps) {
+  document.getElementById('appTable').innerHTML = apps.slice(0,12).map(a => `
+    <tr><td>${a.application_number||''}</td><td>${(a.application_type||'').replace(/_/g,' ')}</td><td>${a.body_name||''}</td>
+    <td>$${((a.fee_amount||0)/1000).toFixed(0)}K</td>
+    <td><span class="badge badge-${a.status==='approved'?'green':a.status==='rejected'?'red':a.status==='under_review'?'blue':'yellow'}">${a.status||''}</span></td></tr>
+  `).join('');
+}
+function renderInspTable(inspections) {
+  document.getElementById('inspTable').innerHTML = inspections.slice(0,10).map(i => `
+    <tr><td>${(i.inspection_type||'').replace(/_/g,' ')}</td><td>${i.inspector_name||''}</td><td>${(i.scheduled_date||'').slice(0,10)}</td>
+    <td><span class="badge badge-${i.status==='completed'?'green':i.status==='scheduled'?'blue':'yellow'}">${i.status||''}</span></td></tr>
+  `).join('');
+}
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
