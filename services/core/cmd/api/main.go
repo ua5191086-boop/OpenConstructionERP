@@ -88,6 +88,10 @@ func main() {
 		financeHandler := handlers.NewFinanceHandler(database.DB)
 		financeHandler.RegisterRoutes(r)
 
+		// Financial Consolidation & Loans (V054-V055)
+		financialExtHandler := handlers.NewFinancialHandler(database.DB)
+		financialExtHandler.RegisterRoutes(r)
+
 		// Procurement Module
 		procurementHandler := handlers.NewProcurementHandler(database.DB)
 		procurementHandler.RegisterRoutes(r)
