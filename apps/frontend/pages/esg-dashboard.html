@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESG & Sustainability — OpenConstructionERP</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+body{background:#0f172a;color:#e2e8f0;padding:24px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.header h1{font-size:24px;font-weight:600;color:#f1f5f9}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#1e293b;border-radius:12px;padding:20px;border:1px solid #334155}
+.stat-card .label{font-size:12px;text-transform:uppercase;color:#94a3b8;letter-spacing:1px;margin-bottom:8px}
+.stat-card .value{font-size:32px;font-weight:700;color:#f1f5f9}
+.stat-card .sub{font-size:13px;color:#64748b;margin-top:4px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border-radius:12px;padding:16px;border:1px solid #334155;min-height:360px}
+.chart-card.full{grid-column:1/-1}
+.chart-card h3{font-size:14px;font-weight:500;color:#94a3b8;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#94a3b8;font-weight:500;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b;vertical-align:top}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-on_track{background:#22c55e20;color:#22c55e;border:1px solid #22c55e40}
+.badge-at_risk{background:#f59e0b20;color:#f59e0b;border:1px solid #f59e0b40}
+.badge-off_track{background:#ef444420;color:#ef4444;border:1px solid #ef444440}
+.tab-bar{display:flex;gap:4px;margin-bottom:16px;background:#1e293b;border-radius:8px;padding:4px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;color:#64748b;border:none;background:transparent;transition:all .2s}
+.tab.active{background:#3b82f6;color:white}
+.tab:hover:not(.active){background:#334155;color:#e2e8f0}
+.panel{display:none}
+.panel.active{display:block}
+.co2-green{color:#22c55e}
+.co2-yellow{color:#f59e0b}
+.co2-red{color:#ef4444}
+</style>
+</head>
+<body>
+<div class="header"><h1>🌱 ESG & Sustainability</h1><span id="lastUpdate" style="color:#64748b;font-size:13px"></span></div>
+
+<div class="tab-bar">
+<button class="tab active" onclick="switchTab('esg')">ESG Метрики</button>
+<button class="tab" onclick="switchTab('carbon')">Углеродный след</button>
+<button class="tab" onclick="switchTab('stakeholders')">Стейкхолдеры</button>
+</div>
+
+<!-- ESG -->
+<div id="panel-esg" class="panel active">
+<div class="stats-grid" id="esgStats"></div>
+<div class="chart-grid">
+<div class="chart-card" id="esgCategoryChart"></div>
+<div class="chart-card" id="esgStatusChart"></div>
+</div>
+<div class="chart-card full">
+<h3>📋 Все ESG метрики</h3>
+<table><thead><tr><th>Категория</th><th>Код</th><th>Название</th><th>Текущее</th><th>Цель</th><th>Статус</th><th>Период</th></tr></thead>
+<tbody id="esgTable"></tbody></table>
+</div>
+</div>
+
+<!-- CARBON -->
+<div id="panel-carbon" class="panel">
+<div class="stats-grid" id="carbonStats"></div>
+<div class="chart-grid">
+<div class="chart-card" id="carbonScopeChart"></div>
+<div class="chart-card" id="carbonByCategory"></div>
+</div>
+<div class="chart-card full">
+<h3>📋 Углеродный след по записям</h3>
+<table><thead><tr><th>Scope</th><th>Категория</th><th>CO₂ (tCO₂e)</th><th>Источник</th><th>Период</th><th>Статус</th></tr></thead>
+<tbody id="carbonTable"></tbody></table>
+</div>
+</div>
+
+<!-- STAKEHOLDERS -->
+<div id="panel-stakeholders" class="panel">
+<div class="stats-grid" id="stakeholderStats"></div>
+<div class="chart-card full">
+<table><thead><tr><th>Название</th><th>Тип</th><th>Интерес</th><th>Влияние</th><th>Последний контакт</th><th>Статус</th></tr></thead>
+<tbody id="stakeholderTable"></tbody></table>
+</div>
+</div>
+
+<script>
+const BASE = '/api/v1/protected';
+
+function switchTab(name) {
+document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+document.getElementById(`panel-${name}`).classList.add('active');
+}
+
+function parseDate(d) { return d ? new Date(d).toLocaleDateString('ru-RU') : '-' }
+
+// ESG
+async function loadESG() {
+try {
+const {data} = await axios.get(`${BASE}/esg`);
+const onTrack = data.filter(m => m.status === 'on_track').length;
+const atRisk = data.filter(m => m.status === 'at_risk').length;
+const offTrack = data.filter(m => m.status === 'off_track').length;
+document.getElementById('esgStats').innerHTML = `
+<div class="stat-card"><div class="label">Всего метрик</div><div class="value">${data.length}</div></div>
+<div class="stat-card"><div class="label">✅ В порядке</div><div class="value" style="color:#22c55e">${onTrack}</div></div>
+<div class="stat-card"><div class="label">⚠️ Под риском</div><div class="value" style="color:#f59e0b">${atRisk}</div></div>
+<div class="stat-card"><div class="label">❌ Отстают</div><div class="value" style="color:#ef4444">${offTrack}</div></div>
+`;
+const byCat = {}; data.forEach(m => { const c = m.category||'other'; byCat[c] = (byCat[c]||0)+1 });
+const cc = echarts.init(document.getElementById('esgCategoryChart'));
+cc.setOption({
+title:{show:false}, tooltip:{trigger:'item', formatter:'{b}: {c}'},
+series:[{type:'pie', radius:['40%','70%'],
+data:[{name:'Environmental',value:byCat.environmental||0,itemStyle:{color:'#22c55e'}},
+{name:'Social',value:byCat.social||0,itemStyle:{color:'#3b82f6'}},
+{name:'Governance',value:byCat.governance||0,itemStyle:{color:'#8b5cf6'}}],
+label:{color:'#94a3b8',fontSize:11}}]
+});
+const byStatus = {}; data.forEach(m => { const s = m.status||'unknown'; byStatus[s] = (byStatus[s]||0)+1 });
+const sc = echarts.init(document.getElementById('esgStatusChart'));
+sc.setOption({
+title:{show:false}, tooltip:{trigger:'axis'},
+xAxis:{type:'category',data:Object.keys(byStatus),axisLabel:{color:'#94a3b8'}},
+yAxis:{type:'value',axisLabel:{color:'#94a3b8'}},
+series:[{type:'bar',data:Object.values(byStatus),itemStyle:{color:'#3b82f6',borderRadius:[4,4,0,0]}}],
+grid:{left:50,right:20,bottom:30}
+});
+document.getElementById('esgTable').innerHTML = data.map(m => `
+<tr><td><span class="badge badge-${m.status||'on_track'}">${m.category||'-'}</span></td>
+<td>${m.metric_code||'-'}</td><td>${m.metric_name||'-'}</td>
+<td>${m.current_value||'-'}</td><td>${m.target_value||'-'}</td>
+<td><span class="badge badge-${m.status||'on_track'}">${m.status||'-'}</span></td>
+<td>${m.reporting_period||'-'}</td></tr>`).join('');
+} catch(e) { console.error('esg',e) }
+}
+
+// CARBON
+async function loadCarbon() {
+try {
+const {data} = await axios.get(`${BASE}/carbon`);
+const totalCO2 = data.reduce((s,m)=>s+parseFloat(m.co2_amount||0), 0);
+document.getElementById('carbonStats').innerHTML = `
+<div class="stat-card"><div class="label">Всего записей</div><div class="value">${data.length}</div></div>
+<div class="stat-card"><div class="label">Общий CO₂</div><div class="value ${totalCO2>1000?'co2-red':totalCO2>100?'co2-yellow':'co2-green'}">${totalCO2.toLocaleString()}</div><div class="sub">тонн CO₂e</div></div>
+<div class="stat-card"><div class="label">Scope 1</div><div class="value">${data.filter(m=>parseInt(m.scope)===1).reduce((s,m)=>s+parseFloat(m.co2_amount||0),0).toLocaleString()}</div><div class="sub">прямые выбросы</div></div>
+<div class="stat-card"><div class="label">Scope 3</div><div class="value">${data.filter(m=>parseInt(m.scope)===3).reduce((s,m)=>s+parseFloat(m.co2_amount||0),0).toLocaleString()}</div><div class="sub">цепочка поставок</div></div>
+`;
+const byScope = {1:0,2:0,3:0};
+data.forEach(m => { const s = parseInt(m.scope)||0; if(s>=1&&s<=3) byScope[s] += parseFloat(m.co2_amount||0) });
+const scc = echarts.init(document.getElementById('carbonScopeChart'));
+scc.setOption({
+title:{show:false}, tooltip:{trigger:'item', formatter:'{b}: {c} tCO₂e ({d}%)'},
+series:[{type:'pie', radius:['40%','70%'],
+data:[{name:'Scope 1 — Прямые',value:byScope[1],itemStyle:{color:'#ef4444'}},
+{name:'Scope 2 — Энергия',value:byScope[2],itemStyle:{color:'#f59e0b'}},
+{name:'Scope 3 — Цепочка',value:byScope[3],itemStyle:{color:'#22c55e'}}],
+label:{color:'#94a3b8',fontSize:11}}]
+});
+const byCat = {};
+data.forEach(m => { const c = m.category||'other'; byCat[c] = (byCat[c]||0)+parseFloat(m.co2_amount||0) });
+const sortedCats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+const bcc = echarts.init(document.getElementById('carbonByCategory'));
+bcc.setOption({
+title:{show:false}, tooltip:{trigger:'axis'},
+xAxis:{type:'category',data:sortedCats.map(([k])=>k.slice(0,15)),axisLabel:{color:'#94a3b8',fontSize:10,rotate:20}},
+yAxis:{type:'value',name:'tCO₂e',axisLabel:{color:'#94a3b8'}},
+series:[{type:'bar',data:sortedCats.map(([,v])=>v),itemStyle:{color:'#22c55e',borderRadius:[4,4,0,0]}}],
+grid:{left:60,right:20,bottom:60}
+});
+document.getElementById('carbonTable').innerHTML = data.map(m => `
+<tr><td><span class="badge badge-on_track">Scope ${m.scope||'-'}</span></td>
+<td>${m.category||'-'}</td><td class="${parseFloat(m.co2_amount||0)>1000?'co2-red':parseFloat(m.co2_amount||0)>100?'co2-yellow':'co2-green'}"><b>${parseFloat(m.co2_amount||0).toLocaleString()}</b></td>
+<td>${m.source_description?.slice(0,40)||'-'}</td>
+<td>${m.reporting_period||'-'}</td>
+<td><span class="badge badge-${m.status||'estimated'}">${m.status||'-'}</span></td></tr>`).join('');
+} catch(e) { console.error('carbon',e) }
+}
+
+// STAKEHOLDERS
+async function loadStakeholders() {
+try {
+const {data} = await axios.get(`${BASE}/stakeholders`);
+const active = data.filter(s => s.status === 'active').length;
+document.getElementById('stakeholderStats').innerHTML = `
+<div class="stat-card"><div class="label">Всего стейкхолдеров</div><div class="value">${data.length}</div></div>
+<div class="stat-card"><div class="label">Активных</div><div class="value">${active}</div></div>
+`;
+document.getElementById('stakeholderTable').innerHTML = data.map(s => `
+<tr><td><b>${s.name||'-'}</b><br><small style="color:#64748b">${s.organization||''}</small></td>
+<td>${s.stakeholder_type||'-'}</td>
+<td>${s.interest_level||'-'}</td>
+<td>${s.influence_level||'-'}</td>
+<td>${parseDate(s.last_contact_date)}</td>
+<td><span class="badge badge-${s.status==='active'?'on_track':'off_track'}">${s.status||'-'}</span></td></tr>`).join('');
+} catch(e) { console.error('stakeholders',e) }
+}
+
+async function init() {
+document.getElementById('lastUpdate').textContent = `Обновлено: ${new Date().toLocaleString('ru-RU')}`;
+await Promise.all([loadESG(), loadCarbon(), loadStakeholders()]);
+}
+init();
+</script>
+</body>
+</html>

@@ -207,6 +207,14 @@ func main() {
 		// Instrumentation, Dewatering, TBM Maintenance Module (V040)
 		tunnelSvcHandler := handlers.NewTBMServiceHandler(database.DB)
 		tunnelSvcHandler.RegisterRoutes(r)
+
+		// Retention, Guarantees, Multi-Currency Module (V041)
+		retentionHandler := handlers.NewRetentionHandler(database.DB)
+		retentionHandler.RegisterRoutes(r)
+
+		// Audit Trail, Tax, Stakeholders, ESG, Carbon Module (V042-V043)
+		auditHandler := handlers.NewAuditHandler(database.DB)
+		auditHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
