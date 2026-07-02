@@ -25,8 +25,8 @@
 ## Очередь MVP (брать сверху)
 | # | Задача | SAD | Статус |
 |---|--------|-----|--------|
-| 1 | NCR: реестр, workflow open→answered→closed, связь с ITP/BOQ | M-03 | in_progress (core-py, 02.07) |
-| 2 | Permit to Work: типы нарядов, выдача/закрытие, активные по площадке | N-01 | in_progress (core-py, 02.07) |
+| 1 | NCR: реестр, workflow, связь с BOQ/кольцами | M-03 | done (V028 + ncr_hse router) |
+| 2 | Permit to Work: выдача/активация/закрытие, борд активных | N-01 | done (V028 + ncr_hse router) |
 | 3 | API поверх V007 Contract (VO: инициация→оценка→включение в бюджет) | G-02 | todo |
 | 4 | API поверх V009 Finance (invoices/IPC против физпрогресса) | F-05 | todo |
 | 5 | Импорт графика XER (Primavera) → activities | E-01 | todo |
