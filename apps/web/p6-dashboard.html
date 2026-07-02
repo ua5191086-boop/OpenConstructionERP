@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Primavera P6 Connector</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:14px}
+.controls{padding:16px 30px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1e293b;border-bottom:1px solid #334155}
+.controls select,.controls button{padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:14px;cursor:pointer}
+.controls button{background:#3b82f6;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#2563eb}
+.controls button.green{background:#22c55e}
+.controls button.green:hover{background:#16a34a}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;text-align:center}
+.stat-card .label{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:15px;margin-bottom:14px}
+.chart-card canvas{max-height:280px;width:100%!important}
+.tables{padding:0 30px 30px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:20px;overflow-x:auto}
+.table-card h3{color:#f8fafc;font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;font-size:11px;text-transform:uppercase}
+td{padding:8px 6px;border-bottom:1px solid #1e293b}
+tr:hover td{background:#1a1f2e}
+.badge{padding:2px 10px;border-radius:10px;font-size:11px;font-weight:600;display:inline-block}
+.badge-green{background:#1a3a2a;color:#4ade80}
+.badge-red{background:#3a1a1a;color:#f87171}
+.badge-yellow{background:#3a2a1a;color:#fbbf24}
+.badge-blue{background:#1a2a3a;color:#60a5fa}
+.tab-bar{display:flex;gap:4px;padding:0 30px;background:#1e293b}
+.tab-btn{padding:10px 20px;border:none;background:transparent;color:#94a3b8;cursor:pointer;font-size:14px;border-bottom:2px solid transparent;transition:all 0.2s}
+.tab-btn:hover{color:#e2e8f0}
+.tab-btn.active{color:#3b82f6;border-bottom-color:#3b82f6}
+.tab-content{display:none}
+.tab-content.active{display:block}
+@media(max-width:768px){.charts{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🔗 <span>OpenConstructionERP</span> — P6 Connector</h1><div class="sub">Primavera P6 EPPM • Синхронизация проектов, WBS, активностей, ресурсов</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="controls">
+  <label style="color:#94a3b8;font-size:13px">P6 Проект:</label>
+  <select id="projectSelect"><option value="">— Выберите проект —</option></select>
+  <button onclick="loadData()">Обновить</button>
+  <button class="green" onclick="triggerImport()">📥 Импорт XER</button>
+  <span id="statusMsg" style="color:#94a3b8;font-size:12px;margin-left:8px"></span>
+</div>
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('overview',this)">📊 Обзор</button>
+  <button class="tab-btn" onclick="switchTab('activities',this)">📋 Активности</button>
+  <button class="tab-btn" onclick="switchTab('wbs',this)">🏗️ WBS</button>
+  <button class="tab-btn" onclick="switchTab('sync',this)">🔄 Синхронизация</button>
+</div>
+<div class="stats" id="stats"></div>
+<div class="tables">
+  <div id="tab-overview" class="tab-content active">
+    <div class="charts">
+      <div class="chart-card"><h3>📊 Статус активностей</h3><canvas id="activityChart"></canvas></div>
+      <div class="chart-card"><h3>🔄 Прогресс по WBS</h3><canvas id="wbsProgressChart"></canvas></div>
+    </div>
+    <div class="table-card"><h3>🔗 Связанные проекты P6</h3><table><thead><tr><th>P6 ID</th><th>Код</th><th>Наименование</th><th>Статус синх.</th><th>Последняя синх.</th></tr></thead><tbody id="projectTable"></tbody></table></div>
+    <div class="table-card"><h3>🔄 Последние синхронизации</h3><table><thead><tr><th>Тип</th><th>Статус</th><th>Начало</th><th>Завершение</th><th>Обработано</th><th>Создано</th><th>Обновлено</th><th>Ошибка</th></tr></thead><tbody id="syncTable"></tbody></table></div>
+  </div>
+  <div id="tab-activities" class="tab-content">
+    <div class="table-card"><h3>📋 Активности P6</h3><table><thead><tr><th>ID</th><th>Код</th><th>Наименование</th><th>Тип</th><th>Статус</th><th>%</th><th>Начало</th><th>Окончание</th></tr></thead><tbody id="activityTable"></tbody></table></div>
+  </div>
+  <div id="tab-wbs" class="tab-content">
+    <div class="table-card"><h3>🏗️ WBS</h3><table><thead><tr><th>WBS ID</th><th>Код</th><th>Наименование</th><th>Уровень</th><th>Родитель</th><th>Маппинг</th></tr></thead><tbody id="wbsTable"></tbody></table></div>
+  </div>
+  <div id="tab-sync" class="tab-content">
+    <div class="table-card"><h3>🔄 Полный лог синхронизации</h3><table><thead><tr><th>ID</th><th>Тип</th><th>Статус</th><th>Начало</th><th>Длит.(сек)</th><th>Записей</th><th>Файл</th><th>Ошибка</th></tr></thead><tbody id="syncLogTable"></tbody></table></div>
+  </div>
+</div>
+<script>
+const API_BASE = '/api/v1/p6';
+
+// Mock data
+const MOCK_PROJECTS = [
+  {id:'p6-proj-1',p6_id:'P6-001',code:'ALM-METRO-01',name:'Метро Алматы — Строительство',sync_status:'synced',last_sync:'2025-06-30 14:30:00'},
+  {id:'p6-proj-2',p6_id:'P6-002',code:'AST-DRAIN-02',name:'Ливнёвка Астана — 2 очередь',sync_status:'synced',last_sync:'2025-06-28 10:15:00'},
+  {id:'p6-proj-3',p6_id:'P6-003',code:'TRK-RW-01',name:'Ж/Д ветка Туркестан',sync_status:'pending',last_sync:'—'}
+];
+const MOCK_ACTIVITIES = [
+  {id:'A1000',code:'A1000',name:'Подготовка территории',type:'Task',status:'Completed',pct:100,start:'2025-01-15',finish:'2025-02-28'},
+  {id:'A1010',code:'A1010',name:'Земляные работы (котлован)',type:'Task',status:'In Progress',pct:65,start:'2025-03-01',finish:'2025-05-15'},
+  {id:'A1020',code:'A1020',name:'Бетонирование фундамента',type:'Task',status:'In Progress',pct:30,start:'2025-04-01',finish:'2025-07-30'},
+  {id:'A1030',code:'A1030',name:'Монтаж металлоконструкций',type:'Task',status:'Not Started',pct:0,start:'2025-06-01',finish:'2025-09-30'},
+  {id:'A1040',code:'A1040',name:'Прокладка инженерных сетей',type:'Task',status:'Not Started',pct:0,start:'2025-07-01',finish:'2025-10-31'},
+  {id:'M1000',code:'M1000',name:'Начало строительства',type:'Milestone',status:'Completed',pct:100,start:'2025-01-15',finish:'2025-01-15'},
+  {id:'M2000',code:'M2000',name:'Готовность котлована',type:'Milestone',status:'Completed',pct:100,start:'2025-05-15',finish:'2025-05-10'},
+  {id:'M3000',code:'M3000',name:'Завершение бетонирования',type:'Milestone',status:'Not Started',pct:0,start:'2025-07-30',finish:'—'}
+];
+const MOCK_WBS = [
+  {id:'WBS-01',code:'1.0',name:'Подготовка',level:1,parent:'',mapping:'Control Account'},
+  {id:'WBS-02',code:'1.1',name:'Изыскания',level:2,parent:'WBS-01',mapping:'WBS Element'},
+  {id:'WBS-03',code:'1.2',name:'Проектирование',level:2,parent:'WBS-01',mapping:'WBS Element'},
+  {id:'WBS-04',code:'2.0',name:'Строительство',level:1,parent:'',mapping:'Control Account'},
+  {id:'WBS-05',code:'2.1',name:'Земляные работы',level:2,parent:'WBS-04',mapping:'WBS Element'},
+  {id:'WBS-06',code:'2.2',name:'Бетонные работы',level:2,parent:'WBS-04',mapping:'WBS Element'},
+  {id:'WBS-07',code:'2.3',name:'Монтаж',level:2,parent:'WBS-04',mapping:'WBS Element'}
+];
+const MOCK_SYNC_LOG = [
+  {id:'1',type:'full',status:'completed',start:'2025-06-30 14:00',dur:45,records:1250,file:'ALM-METRO-01.xer',err:null},
+  {id:'2',type:'incremental',status:'completed',start:'2025-06-28 10:00',dur:12,records:230,file:'ALM-METRO-01.xer',err:null},
+  {id:'3',type:'incremental',status:'failed',start:'2025-06-25 08:30',dur:8,records:0,file:'ALM-METRO-01.xer',err:'Connection timeout'},
+  {id:'4',type:'full',status:'completed',start:'2025-06-30 10:15',dur:38,records:980,file:'AST-DRAIN-02.xer',err:null}
+];
+const MOCK_SYNC_STATUS = [
+  {project:'P6-001',status:'synced',last:'2025-06-30 14:30',records:1250,error:null},
+  {project:'P6-002',status:'synced',last:'2025-06-28 10:15',records:980,error:null},
+  {project:'P6-003',status:'pending',last:'—',records:0,error:null}
+];
+
+function formatDate(d) { return d || '—'; }
+function statusBadge(s) {
+  if(s==='completed'||s==='synced') return '<span class="badge badge-green">'+s+'</span>';
+  if(s==='failed'||s==='error') return '<span class="badge badge-red">'+s+'</span>';
+  if(s==='running'||s==='in_progress') return '<span class="badge badge-yellow">'+s+'</span>';
+  return '<span class="badge badge-blue">'+s+'</span>';
+}
+
+function populateProjectSelect() {
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = '<option value="">— Выберите проект —</option>';
+  MOCK_PROJECTS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+
+async function loadData() {
+  const projectId = document.getElementById('projectSelect').value;
+  const statusMsg = document.getElementById('statusMsg');
+  statusMsg.textContent = 'Загрузка...';
+
+  // Stats
+  const totalActivities = MOCK_ACTIVITIES.length;
+  const completed = MOCK_ACTIVITIES.filter(a => a.status === 'Completed').length;
+  const inProgress = MOCK_ACTIVITIES.filter(a => a.status === 'In Progress').length;
+  const notStarted = MOCK_ACTIVITIES.filter(a => a.status === 'Not Started').length;
+  const avgPct = Math.round(MOCK_ACTIVITIES.reduce((s,a) => s + a.pct, 0) / totalActivities);
+
+  document.getElementById('stats').innerHTML = `
+    <div class="stat-card"><div class="label">P6 Проектов</div><div class="value blue">${MOCK_PROJECTS.length}</div></div>
+    <div class="stat-card"><div class="label">Активностей</div><div class="value blue">${totalActivities}</div></div>
+    <div class="stat-card"><div class="label">Завершено</div><div class="value green">${completed}</div></div>
+    <div class="stat-card"><div class="label">В работе</div><div class="value yellow">${inProgress}</div></div>
+    <div class="stat-card"><div class="label">Не начато</div><div class="value red">${notStarted}</div></div>
+    <div class="stat-card"><div class="label">Средний %</div><div class="value ${avgPct >= 50 ? 'green' : 'yellow'}">${avgPct}%</div></div>
+  `;
+
+  // Activity chart
+  const actCtx = document.getElementById('activityChart').getContext('2d');
+  new Chart(actCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Завершено','В работе','Не начато'],
+      datasets: [{data:[completed,inProgress,notStarted],backgroundColor:['#22c55e','#eab308','#ef4444'],borderWidth:0}]
+    },
+    options: {responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#94a3b8',padding:12}}}}
+  });
+
+  // WBS progress
+  const wbsCtx = document.getElementById('wbsProgressChart').getContext('2d');
+  new Chart(wbsCtx, {
+    type: 'bar',
+    data: {
+      labels: MOCK_WBS.filter(w => w.level === 1).map(w => w.name),
+      datasets: [{label:'Прогресс %',data:[100,35],backgroundColor:['#3b82f6','#a855f7'],borderRadius:4}]
+    },
+    options: {
+      indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{max:100,ticks:{color:'#64748b',callback:v=>v+'%'},grid:{color:'#1e293b'}},
+        y:{ticks:{color:'#94a3b8'},grid:{display:false}}
+      }
+    }
+  });
+
+  // Project table
+  document.getElementById('projectTable').innerHTML = MOCK_PROJECTS.map(p => `
+    <tr><td>${p.p6_id}</td><td>${p.code}</td><td>${p.name}</td><td>${statusBadge(p.sync_status)}</td><td>${p.last_sync}</td></tr>
+  `).join('');
+
+  // Sync status table
+  document.getElementById('syncTable').innerHTML = MOCK_SYNC_STATUS.map(s => `
+    <tr>
+      <td>${s.project}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td>${s.last}</td>
+      <td>${s.records}</td>
+      <td>${s.records}</td>
+      <td>${s.records}</td>
+      <td>${s.error || '—'}</td>
+    </tr>
+  `).join('');
+
+  // Activities table
+  document.getElementById('activityTable').innerHTML = MOCK_ACTIVITIES.map(a => `
+    <tr>
+      <td>${a.id}</td>
+      <td>${a.code}</td>
+      <td>${a.name}</td>
+      <td>${a.type}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td>${a.pct}%</td>
+      <td>${formatDate(a.start)}</td>
+      <td>${formatDate(a.finish)}</td>
+    </tr>
+  `).join('');
+
+  // WBS table
+  document.getElementById('wbsTable').innerHTML = MOCK_WBS.map(w => `
+    <tr><td>${w.id}</td><td>${w.code}</td><td>${'  '.repeat(w.level)}${w.name}</td><td>${w.level}</td><td>${w.parent || '—'}</td><td>${w.mapping}</td></tr>
+  `).join('');
+
+  // Sync log table
+  document.getElementById('syncLogTable').innerHTML = MOCK_SYNC_LOG.map(s => `
+    <tr>
+      <td>${s.id}</td>
+      <td>${s.type}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td>${s.start}</td>
+      <td>${s.dur}</td>
+      <td>${s.records}</td>
+      <td>${s.file}</td>
+      <td>${s.err || '—'}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('updateTime').textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU');
+  statusMsg.textContent = 'Демо-данные';
+}
+
+function triggerImport() {
+  const projectId = document.getElementById('projectSelect').value;
+  if(!projectId) { alert('Выберите проект'); return; }
+  document.getElementById('statusMsg').textContent = '🚀 Запуск импорта XER...';
+  setTimeout(() => {
+    document.getElementById('statusMsg').textContent = '✅ Импорт завершён (демо)';
+    loadData();
+  }, 1500);
+}
+
+// Init
+populateProjectSelect();
+loadData();
+</script>
+</body>
+</html>
