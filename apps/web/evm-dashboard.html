@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — EVM (Earned Value Management)</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:14px}
+.controls{padding:16px 30px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1e293b;border-bottom:1px solid #334155}
+.controls select,.controls button{padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:14px;cursor:pointer}
+.controls button{background:#3b82f6;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#2563eb}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;text-align:center}
+.stat-card .label{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.stat-card .badge{font-size:11px;padding:2px 8px;border-radius:10px;display:inline-block;margin-top:4px}
+.badge-green{background:#1a3a2a;color:#4ade80}
+.badge-red{background:#3a1a1a;color:#f87171}
+.badge-yellow{background:#3a2a1a;color:#fbbf24}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:15px;margin-bottom:14px}
+.chart-card canvas{max-height:280px;width:100%!important}
+.tables{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 30px 30px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;overflow-x:auto}
+.table-card h3{color:#f8fafc;font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;font-size:11px;text-transform:uppercase}
+td{padding:8px 6px;border-bottom:1px solid #1e293b}
+tr:hover td{background:#1a1f2e}
+.threshold-ok{color:#22c55e}
+.threshold-warn{color:#eab308}
+.threshold-critical{color:#ef4444}
+@media(max-width:768px){.charts,.tables{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>📊 <span>OpenConstructionERP</span> — EVM</h1><div class="sub">Earned Value Management (ANSI/EIA-748) • Освоенный объём</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="controls">
+  <label style="color:#94a3b8;font-size:13px">Проект:</label>
+  <select id="projectSelect"><option value="">— Выберите проект —</option></select>
+  <button onclick="loadData()">Обновить</button>
+  <span id="statusMsg" style="color:#94a3b8;font-size:12px;margin-left:8px"></span>
+</div>
+<div class="stats" id="stats"></div>
+<div class="charts">
+  <div class="chart-card"><h3>📈 S-Кривая (PV / EV / AC)</h3><canvas id="sCurveChart"></canvas></div>
+  <div class="chart-card"><h3>📊 SPI / CPI Тренд</h3><canvas id="spiCpiChart"></canvas></div>
+</div>
+<div class="tables">
+  <div class="table-card"><h3>📋 Контрольные счета (Control Accounts)</h3><table><thead><tr><th>Код</th><th>Наименование</th><th>WBS</th><th>Ответственный</th><th>Статус</th></tr></thead><tbody id="caTable"></tbody></table></div>
+  <div class="table-card"><h3>📅 Периоды отчётов</h3><table><thead><tr><th>Дата</th><th>Тип</th><th>PV</th><th>EV</th><th>AC</th><th>SPI</th><th>CPI</th></tr></thead><tbody id="periodTable"></tbody></table></div>
+</div>
+<script>
+const API_BASE = '/api/v1/evm';
+const CHART_COLORS = {pv:'#3b82f6',ev:'#22c55e',ac:'#ef4444',spi:'#a855f7',cpi:'#f97316'};
+let sCurveChart, spiCpiChart;
+
+// Load projects list
+async function loadProjects() {
+  try {
+    const r = await fetch('/api/v1/protected/evm/projects-list');
+    // Fallback: use mock projects if API not available
+    const sel = document.getElementById('projectSelect');
+    const projects = ['project-a','project-b','project-c'];
+    projects.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p.toUpperCase();
+      sel.appendChild(opt);
+    });
+  } catch(e) {
+    // API not available — will use mock
+  }
+}
+
+function formatCurrency(v) {
+  if(v==null||isNaN(v)) return '—';
+  return new Intl.NumberFormat('ru-RU',{style:'currency',currency:'USD',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+}
+function formatPct(v) {
+  if(v==null||isNaN(v)) return '—';
+  return v.toFixed(2)+'%';
+}
+function formatIndex(v) {
+  if(v==null||isNaN(v)) return '—';
+  return v.toFixed(4);
+}
+function thresholdClass(val, warn, crit, inverse) {
+  if(inverse) { val = -val; warn = -warn; crit = -crit; }
+  if(val < crit) return 'threshold-critical';
+  if(val < warn) return 'threshold-warn';
+  return 'threshold-ok';
+}
+
+// Mock data for demo
+const MOCK_PROJECTS = [
+  {id:'proj-001',name:'Метро Алматы — Барлык'},
+  {id:'proj-002',name:'Ливнёвая канализация Алматы'},
+  {id:'proj-003',name:'Микротоннель Астана'}
+];
+const MOCK_DATA = {
+  'proj-001': {
+    metrics: {bac:450000000,pv:185000000,ev:172000000,ac:168000000,sv:-13000000,cv:4000000,sv_pct:-7.03,cv_pct:2.38,spi:0.9297,cpi:1.0238,eac:439500000,etc:271500000,vac:10500000,tcpi:1.05},
+    curve: [
+      {period:'2025-01',pv:25000000,ev:22000000,ac:21000000},
+      {period:'2025-02',pv:52000000,ev:48000000,ac:46000000},
+      {period:'2025-03',pv:82000000,ev:76000000,ac:74000000},
+      {period:'2025-04',pv:115000000,ev:106000000,ac:103000000},
+      {period:'2025-05',pv:148000000,ev:138000000,ac:134000000},
+      {period:'2025-06',pv:185000000,ev:172000000,ac:168000000}
+    ],
+    spiCpi: [
+      {period:'2025-01',spi:0.88,cpi:1.05},
+      {period:'2025-02',spi:0.92,cpi:1.04},
+      {period:'2025-03',spi:0.93,cpi:1.03},
+      {period:'2025-04',spi:0.92,cpi:1.03},
+      {period:'2025-05',spi:0.93,cpi:1.02},
+      {period:'2025-06',spi:0.93,cpi:1.02}
+    ],
+    controlAccounts:[
+      {code:'CA-001',name:'Подготовительные работы',wbs:'WBS-01',responsible:'Иванов И.И.',status:'active'},
+      {code:'CA-002',name:'Земляные работы',wbs:'WBS-02',responsible:'Петров П.П.',status:'active'},
+      {code:'CA-003',name:'Бетонные работы',wbs:'WBS-03',responsible:'Сидоров С.С.',status:'active'},
+      {code:'CA-004',name:'Монтаж оборудования',wbs:'WBS-04',responsible:'Кузнецов К.К.',status:'active'}
+    ],
+    periods:[
+      {date:'2025-01-31',type:'monthly',pv:25000000,ev:22000000,ac:21000000,spi:0.88,cpi:1.05},
+      {date:'2025-02-28',type:'monthly',pv:27000000,ev:26000000,ac:25000000,spi:0.96,cpi:1.04},
+      {date:'2025-03-31',type:'monthly',pv:30000000,ev:28000000,ac:28000000,spi:0.93,cpi:1.00},
+      {date:'2025-04-30',type:'monthly',pv:33000000,ev:30000000,ac:29000000,spi:0.91,cpi:1.03},
+      {date:'2025-05-31',type:'monthly',pv:33000000,ev:32000000,ac:31000000,spi:0.97,cpi:1.03},
+      {date:'2025-06-30',type:'monthly',pv:37000000,ev:34000000,ac:34000000,spi:0.92,cpi:1.00}
+    ]
+  }
+};
+// Clone mock data for other projects
+MOCK_DATA['proj-002'] = JSON.parse(JSON.stringify(MOCK_DATA['proj-001']));
+MOCK_DATA['proj-002'].metrics.bac = 180000000;
+MOCK_DATA['proj-002'].metrics.pv = 72000000;
+MOCK_DATA['proj-002'].metrics.ev = 65000000;
+MOCK_DATA['proj-002'].metrics.ac = 69000000;
+MOCK_DATA['proj-002'].metrics.sv = -7000000;
+MOCK_DATA['proj-002'].metrics.cv = -4000000;
+MOCK_DATA['proj-002'].metrics.sv_pct = -9.72;
+MOCK_DATA['proj-002'].metrics.cv_pct = -5.80;
+MOCK_DATA['proj-002'].metrics.spi = 0.9028;
+MOCK_DATA['proj-002'].metrics.cpi = 0.9420;
+MOCK_DATA['proj-002'].metrics.eac = 191100000;
+MOCK_DATA['proj-002'].metrics.vac = -11100000;
+MOCK_DATA['proj-002'].metrics.tcpi = 0.91;
+MOCK_DATA['proj-003'] = JSON.parse(JSON.stringify(MOCK_DATA['proj-001']));
+MOCK_DATA['proj-003'].metrics.bac = 85000000;
+MOCK_DATA['proj-003'].metrics.pv = 42000000;
+MOCK_DATA['proj-003'].metrics.ev = 44000000;
+MOCK_DATA['proj-003'].metrics.ac = 41000000;
+MOCK_DATA['proj-003'].metrics.sv = 2000000;
+MOCK_DATA['proj-003'].metrics.cv = 3000000;
+MOCK_DATA['proj-003'].metrics.sv_pct = 4.76;
+MOCK_DATA['proj-003'].metrics.cv_pct = 7.32;
+MOCK_DATA['proj-003'].metrics.spi = 1.0476;
+MOCK_DATA['proj-003'].metrics.cpi = 1.0732;
+MOCK_DATA['proj-003'].metrics.eac = 79200000;
+MOCK_DATA['proj-003'].metrics.vac = 5800000;
+MOCK_DATA['proj-003'].metrics.tcpi = 0.93;
+
+function populateProjectSelect() {
+  const sel = document.getElementById('projectSelect');
+  sel.innerHTML = '<option value="">— Выберите проект —</option>';
+  MOCK_PROJECTS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.id; opt.textContent = p.name;
+    sel.appendChild(opt);
+  });
+}
+
+async function loadData() {
+  const projectId = document.getElementById('projectSelect').value;
+  const statusMsg = document.getElementById('statusMsg');
+  if(!projectId) { statusMsg.textContent = 'Выберите проект'; return; }
+  statusMsg.textContent = 'Загрузка...';
+
+  try {
+    // Try real API first
+    const r = await fetch(`${API_BASE}/projects/${projectId}/summary`);
+    if(r.ok) {
+      const data = await r.json();
+      renderData(data.metrics, projectId);
+      statusMsg.textContent = 'Данные из API';
+      return;
+    }
+  } catch(e) {}
+
+  // Fallback to mock
+  const data = MOCK_DATA[projectId];
+  if(!data) { statusMsg.textContent = 'Нет данных'; return; }
+  renderData(data.metrics, projectId);
+  renderCurve(data.curve);
+  renderSpiCpi(data.spiCpi);
+  renderControlAccounts(data.controlAccounts);
+  renderPeriods(data.periods);
+  statusMsg.textContent = 'Демо-данные';
+  document.getElementById('updateTime').textContent = 'Обновлено: ' + new Date().toLocaleString('ru-RU');
+}
+
+function renderData(metrics, projectId) {
+  const stats = document.getElementById('stats');
+  stats.innerHTML = `
+    <div class="stat-card"><div class="label">BAC</div><div class="value blue">${formatCurrency(metrics.bac)}</div></div>
+    <div class="stat-card"><div class="label">PV (BCWS)</div><div class="value blue">${formatCurrency(metrics.pv)}</div></div>
+    <div class="stat-card"><div class="label">EV (BCWP)</div><div class="value green">${formatCurrency(metrics.ev)}</div></div>
+    <div class="stat-card"><div class="label">AC (ACWP)</div><div class="value ${metrics.ac > metrics.ev ? 'red' : 'green'}">${formatCurrency(metrics.ac)}</div></div>
+    <div class="stat-card"><div class="label">SV</div><div class="value ${metrics.sv >= 0 ? 'green' : 'red'}">${formatCurrency(metrics.sv)}</div><span class="badge ${metrics.sv >= 0 ? 'badge-green' : 'badge-red'}">${formatPct(metrics.sv_pct)}</span></div>
+    <div class="stat-card"><div class="label">CV</div><div class="value ${metrics.cv >= 0 ? 'green' : 'red'}">${formatCurrency(metrics.cv)}</div><span class="badge ${metrics.cv >= 0 ? 'badge-green' : 'badge-red'}">${formatPct(metrics.cv_pct)}</span></div>
+    <div class="stat-card"><div class="label">SPI</div><div class="value ${metrics.spi >= 1.0 ? 'green' : metrics.spi >= 0.8 ? 'yellow' : 'red'}">${formatIndex(metrics.spi)}</div></div>
+    <div class="stat-card"><div class="label">CPI</div><div class="value ${metrics.cpi >= 1.0 ? 'green' : metrics.cpi >= 0.8 ? 'yellow' : 'red'}">${formatIndex(metrics.cpi)}</div></div>
+    <div class="stat-card"><div class="label">EAC</div><div class="value yellow">${formatCurrency(metrics.eac)}</div></div>
+    <div class="stat-card"><div class="label">TCPI</div><div class="value ${metrics.tcpi <= 1.0 ? 'green' : 'red'}">${formatIndex(metrics.tcpi)}</div></div>
+  `;
+}
+
+function renderCurve(curve) {
+  const ctx = document.getElementById('sCurveChart').getContext('2d');
+  if(sCurveChart) sCurveChart.destroy();
+  sCurveChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: curve.map(p => p.period),
+      datasets: [
+        {label:'PV (BCWS)',data:curve.map(p=>p.pv),borderColor:CHART_COLORS.pv,backgroundColor:CHART_COLORS.pv+'20',fill:true,tension:0.3,pointRadius:4},
+        {label:'EV (BCWP)',data:curve.map(p=>p.ev),borderColor:CHART_COLORS.ev,backgroundColor:CHART_COLORS.ev+'20',fill:true,tension:0.3,pointRadius:4},
+        {label:'AC (ACWP)',data:curve.map(p=>p.ac),borderColor:CHART_COLORS.ac,backgroundColor:CHART_COLORS.ac+'20',fill:true,tension:0.3,pointRadius:4}
+      ]
+    },
+    options: {
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8'}}},
+      scales:{
+        x:{ticks:{color:'#64748b'},grid:{color:'#1e293b'}},
+        y:{ticks:{color:'#64748b',callback:v=>'$'+(v/1e6).toFixed(1)+'M'},grid:{color:'#1e293b'}}
+      }
+    }
+  });
+}
+
+function renderSpiCpi(spiCpi) {
+  const ctx = document.getElementById('spiCpiChart').getContext('2d');
+  if(spiCpiChart) spiCpiChart.destroy();
+  spiCpiChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: spiCpi.map(p => p.period),
+      datasets: [
+        {label:'SPI',data:spiCpi.map(p=>p.spi),borderColor:CHART_COLORS.spi,backgroundColor:CHART_COLORS.spi+'20',fill:true,tension:0.3,pointRadius:4},
+        {label:'CPI',data:spiCpi.map(p=>p.cpi),borderColor:CHART_COLORS.cpi,backgroundColor:CHART_COLORS.cpi+'20',fill:true,tension:0.3,pointRadius:4}
+      ]
+    },
+    options: {
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8'}}},
+      scales:{
+        x:{ticks:{color:'#64748b'},grid:{color:'#1e293b'}},
+        y:{min:0.7,max:1.15,ticks:{color:'#64748b'},grid:{color:'#1e293b'}}
+      }
+    }
+  });
+}
+
+function renderControlAccounts(cas) {
+  const tbody = document.getElementById('caTable');
+  tbody.innerHTML = cas.map(c => `
+    <tr><td>${c.code}</td><td>${c.name}</td><td>${c.wbs}</td><td>${c.responsible}</td><td><span class="badge badge-green">${c.status}</span></td></tr>
+  `).join('');
+}
+
+function renderPeriods(periods) {
+  const tbody = document.getElementById('periodTable');
+  tbody.innerHTML = periods.map(p => `
+    <tr>
+      <td>${p.date}</td>
+      <td>${p.type}</td>
+      <td>${formatCurrency(p.pv)}</td>
+      <td>${formatCurrency(p.ev)}</td>
+      <td>${formatCurrency(p.ac)}</td>
+      <td class="${p.spi >= 1.0 ? 'threshold-ok' : p.spi >= 0.8 ? 'threshold-warn' : 'threshold-critical'}">${formatIndex(p.spi)}</td>
+      <td class="${p.cpi >= 1.0 ? 'threshold-ok' : p.cpi >= 0.8 ? 'threshold-warn' : 'threshold-critical'}">${formatIndex(p.cpi)}</td>
+    </tr>
+  `).join('');
+}
+
+// Init
+populateProjectSelect();
+document.getElementById('projectSelect').addEventListener('change', loadData);
+loadData();
+</script>
+</body>
+</html>

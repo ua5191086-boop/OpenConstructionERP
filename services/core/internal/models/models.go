@@ -644,6 +644,244 @@ type AIConversation struct {
 }
 
 // ============================================================================
+// EVM Module (V025)
+// ============================================================================
+
+type EVMControlAccount struct {
+	ID            string    `json:"id"`
+	ProjectID     string    `json:"project_id"`
+	CACode        string    `json:"ca_code"`
+	CAName        string    `json:"ca_name"`
+	Description   *string   `json:"description,omitempty"`
+	WBSCode       *string   `json:"wbs_code,omitempty"`
+	Responsible   *string   `json:"responsible,omitempty"`
+	SortOrder     int       `json:"sort_order"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type EVMBaseline struct {
+	ID            string     `json:"id"`
+	ProjectID     string     `json:"project_id"`
+	BaselineName  string     `json:"baseline_name"`
+	BaselineType  string     `json:"baseline_type"`
+	Version       string     `json:"version"`
+	Description   *string    `json:"description,omitempty"`
+	IsApproved    bool       `json:"is_approved"`
+	ApprovedBy    *string    `json:"approved_by,omitempty"`
+	ApprovedAt    *time.Time `json:"approved_at,omitempty"`
+	IsActive      bool       `json:"is_active"`
+	CreatedAt     time.Time  `json:"created_at"`
+}
+
+type EVMPeriod struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	ControlAccountID *string   `json:"control_account_id,omitempty"`
+	BaselineID       *string   `json:"baseline_id,omitempty"`
+	PeriodDate       string    `json:"period_date"`
+	PeriodType       string    `json:"period_type"`
+	PlannedValue     float64   `json:"planned_value"`
+	PlannedHours     float64   `json:"planned_hours"`
+	PlannedProgress  float64   `json:"planned_progress"`
+	IsCumulative     bool      `json:"is_cumulative"`
+	Notes            *string   `json:"notes,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type EVMActual struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	ControlAccountID *string   `json:"control_account_id,omitempty"`
+	PeriodDate       string    `json:"period_date"`
+	ActualCost       float64   `json:"actual_cost"`
+	ActualHours      float64   `json:"actual_hours"`
+	EarnedValue      float64   `json:"earned_value"`
+	ProgressPct      float64   `json:"progress_pct"`
+	PhysicalPct      *float64  `json:"physical_pct,omitempty"`
+	DataSource       string    `json:"data_source"`
+	SourceID         *string   `json:"source_id,omitempty"`
+	RecordedAt       time.Time `json:"recorded_at"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type EVMMetric struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	ControlAccountID *string   `json:"control_account_id,omitempty"`
+	PeriodDate       string    `json:"period_date"`
+	PV               float64   `json:"pv"`
+	EV               float64   `json:"ev"`
+	AC               float64   `json:"ac"`
+	BAC              float64   `json:"bac"`
+	SV               float64   `json:"sv"`
+	CV               float64   `json:"cv"`
+	SVPct            float64   `json:"sv_pct"`
+	CVPct            float64   `json:"cv_pct"`
+	SPI              float64   `json:"spi"`
+	CPI              float64   `json:"cpi"`
+	EAC              float64   `json:"eac"`
+	ETC              float64   `json:"etc"`
+	VAC              float64   `json:"vac"`
+	TCPI             float64   `json:"tcpi"`
+	MetricScope      string    `json:"metric_scope"`
+	IsCumulative     bool      `json:"is_cumulative"`
+	CalculatedAt     time.Time `json:"calculated_at"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type EVMForecast struct {
+	ID               string     `json:"id"`
+	ProjectID        string     `json:"project_id"`
+	ControlAccountID *string    `json:"control_account_id,omitempty"`
+	ForecastDate     string     `json:"forecast_date"`
+	ForecastType     string     `json:"forecast_type"`
+	Method           string     `json:"method"`
+	EACValue         *float64   `json:"eac_value,omitempty"`
+	ETCValue         *float64   `json:"etc_value,omitempty"`
+	VACValue         *float64   `json:"vac_value,omitempty"`
+	CompletionDate   *string    `json:"completion_date,omitempty"`
+	ConfidencePct    *float64   `json:"confidence_pct,omitempty"`
+	Notes            *string    `json:"notes,omitempty"`
+	CreatedBy        *string    `json:"created_by,omitempty"`
+	CreatedAt        time.Time  `json:"created_at"`
+}
+
+type EVMRule struct {
+	ID        string    `json:"id"`
+	ProjectID string    `json:"project_id"`
+	RuleName  string    `json:"rule_name"`
+	RuleType  string    `json:"rule_type"`
+	Description *string `json:"description,omitempty"`
+	WeightPct float64   `json:"weight_pct"`
+	Config    *string   `json:"config,omitempty"`
+	IsActive  bool      `json:"is_active"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type EVMProject struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	EVMEnabled       bool      `json:"evm_enabled"`
+	DefaultBaselineID *string  `json:"default_baseline_id,omitempty"`
+	ReportingFreq    string    `json:"reporting_freq"`
+	Currency         string    `json:"currency"`
+	ThresholdSPI     float64   `json:"threshold_spi"`
+	ThresholdCPI     float64   `json:"threshold_cpi"`
+	ThresholdSVPct   float64   `json:"threshold_sv_pct"`
+	ThresholdCVPct   float64   `json:"threshold_cv_pct"`
+	Config           *string   `json:"config,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+// ============================================================================
+// P6 Connector Module (V026)
+// ============================================================================
+
+type P6Project struct {
+	ID             string     `json:"id"`
+	ProjectID      string     `json:"project_id"`
+	P6ProjectID    string     `json:"p6_project_id"`
+	P6UID          *string    `json:"p6_uid,omitempty"`
+	P6ProjectCode  *string    `json:"p6_project_code,omitempty"`
+	P6ProjectName  *string    `json:"p6_project_name,omitempty"`
+	LastSyncAt     *time.Time `json:"last_sync_at,omitempty"`
+	SyncStatus     string     `json:"sync_status"`
+	SyncError      *string    `json:"sync_error,omitempty"`
+	Config         *string    `json:"config,omitempty"`
+	IsActive       bool       `json:"is_active"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
+}
+
+type P6WBS struct {
+	ID                string    `json:"id"`
+	P6ProjectID       string    `json:"p6_project_id"`
+	P6WBSID           string    `json:"p6_wbs_id"`
+	P6WBSCode         *string   `json:"p6_wbs_code,omitempty"`
+	P6WBSName         *string   `json:"p6_wbs_name,omitempty"`
+	P6ParentWBSID     *string   `json:"p6_parent_wbs_id,omitempty"`
+	Level             int       `json:"level"`
+	WBSPath           *string   `json:"wbs_path,omitempty"`
+	MappedElementType *string   `json:"mapped_element_type,omitempty"`
+	MappedElementID   *string   `json:"mapped_element_id,omitempty"`
+	IsActive          bool      `json:"is_active"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+type P6Activity struct {
+	ID                  string     `json:"id"`
+	P6ProjectID         string     `json:"p6_project_id"`
+	P6WBSID             *string    `json:"p6_wbs_id,omitempty"`
+	P6ActivityID        string     `json:"p6_activity_id"`
+	P6ActivityCode      *string    `json:"p6_activity_code,omitempty"`
+	P6ActivityName      *string    `json:"p6_activity_name,omitempty"`
+	ActivityType        *string    `json:"activity_type,omitempty"`
+	Status              *string    `json:"status,omitempty"`
+	PlannedStart        *time.Time `json:"planned_start,omitempty"`
+	PlannedFinish       *time.Time `json:"planned_finish,omitempty"`
+	ActualStart         *time.Time `json:"actual_start,omitempty"`
+	ActualFinish        *time.Time `json:"actual_finish,omitempty"`
+	RemainingDuration   *int       `json:"remaining_duration,omitempty"`
+	AtCompletionDuration *int      `json:"at_completion_duration,omitempty"`
+	PercentComplete     *float64   `json:"percent_complete,omitempty"`
+	PhysicalComplete    *float64   `json:"physical_complete,omitempty"`
+	DurationType        *string    `json:"duration_type,omitempty"`
+	MappedToType        *string    `json:"mapped_to_type,omitempty"`
+	MappedElementID     *string    `json:"mapped_element_id,omitempty"`
+	IsActive            bool       `json:"is_active"`
+	LastSyncAt          *time.Time `json:"last_sync_at,omitempty"`
+	CreatedAt           time.Time  `json:"created_at"`
+}
+
+type P6Relationship struct {
+	ID               string    `json:"id"`
+	P6ProjectID      string    `json:"p6_project_id"`
+	PredecessorID    string    `json:"predecessor_id"`
+	SuccessorID      string    `json:"successor_id"`
+	RelationshipType string    `json:"relationship_type"`
+	LagDays          int       `json:"lag_days"`
+	LagType          string    `json:"lag_type"`
+	IsActive         bool      `json:"is_active"`
+	CreatedAt        time.Time `json:"created_at"`
+}
+
+type P6Resource struct {
+	ID              string    `json:"id"`
+	P6ProjectID     string    `json:"p6_project_id"`
+	P6ResourceID    string    `json:"p6_resource_id"`
+	P6ResourceName  *string   `json:"p6_resource_name,omitempty"`
+	ResourceType    *string   `json:"resource_type,omitempty"`
+	UnitOfMeasure   *string   `json:"unit_of_measure,omitempty"`
+	UnitPrice       *float64  `json:"unit_price,omitempty"`
+	Currency        string    `json:"currency"`
+	MappedToType    *string   `json:"mapped_to_type,omitempty"`
+	MappedElementID *string   `json:"mapped_element_id,omitempty"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type P6SyncLog struct {
+	ID               string     `json:"id"`
+	ProjectID        *string    `json:"project_id,omitempty"`
+	P6ProjectID      *string    `json:"p6_project_id,omitempty"`
+	SyncType         string     `json:"sync_type"`
+	Status           string     `json:"status"`
+	StartedAt        time.Time  `json:"started_at"`
+	CompletedAt      *time.Time `json:"completed_at,omitempty"`
+	DurationSec      *int       `json:"duration_sec,omitempty"`
+	RecordsProcessed int        `json:"records_processed"`
+	RecordsCreated   int        `json:"records_created"`
+	RecordsUpdated   int        `json:"records_updated"`
+	RecordsDeleted   int        `json:"records_deleted"`
+	SyncFile         *string    `json:"sync_file,omitempty"`
+	ErrorMessage     *string    `json:"error_message,omitempty"`
+	Details          *string    `json:"details,omitempty"`
+}
+
+// ============================================================================
 // Common types
 // ============================================================================
 
