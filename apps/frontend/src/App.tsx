@@ -22,6 +22,12 @@ import ChangePage from './pages/ChangePage'
 import TBMPage from './pages/TBMPage'
 import RingBuilderPage from './pages/RingBuilderPage'
 import NATMPage from './pages/NATMPage'
+import FundingPage from './pages/FundingPage'
+import LabPage from './pages/LabPage'
+import PermitsPage from './pages/PermitsPage'
+import InsurancePage from './pages/InsurancePage'
+import FleetPage from './pages/FleetPage'
+import KnowledgeGraphPage from './pages/KnowledgeGraphPage'
 
 function App() {
   return (
@@ -50,6 +56,12 @@ function App() {
             <Route path="/tbm" element={<TBMPage />} />
             <Route path="/ringbuilder" element={<RingBuilderPage />} />
             <Route path="/natm" element={<NATMPage />} />
+            <Route path="/funding" element={<FundingPage />} />
+            <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
+            <Route path="/lab" element={<LabPage />} />
+            <Route path="/permits" element={<PermitsPage />} />
+            <Route path="/insurance" element={<InsurancePage />} />
+            <Route path="/fleet" element={<FleetPage />} />
           </Route>
         </Routes>
       </AuthGuard>

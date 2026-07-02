@@ -23,6 +23,12 @@ const navItems = [
   { path: '/tbm', label: 'TBM', icon: '🛠️' },
   { path: '/ringbuilder', label: 'Ring Builder', icon: '🔘' },
   { path: '/natm', label: 'NATM', icon: '⛰️' },
+  { path: '/funding', label: 'Funding', icon: '💰' },
+  { path: '/knowledge-graph', label: 'Knowledge Graph', icon: '🕸️' },
+  { path: '/lab', label: 'Laboratory', icon: '🔬' },
+  { path: '/permits', label: 'Permits', icon: '📋' },
+  { path: '/insurance', label: 'Insurance', icon: '🛡️' },
+  { path: '/fleet', label: 'Fleet', icon: '🚛' },
 ]
 
 export default function Layout() {

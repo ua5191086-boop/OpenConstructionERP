@@ -432,3 +432,82 @@ export const natmApi = {
   },
   getSummary: () => fetchApi<any>('/api/v1/natm/summary'),
 };
+
+// --- Funding Module (V027) ---
+export const fundingApi = {
+  listSources: (params?: { project_id?: string }) => {
+    const qs = params?.project_id ? `?project_id=${params.project_id}` : '';
+    return fetchApi<any[]>(`/api/v1/protected/funding/sources${qs}`);
+  },
+  getSource: (id: string) => fetchApi<any>(`/api/v1/protected/funding/sources/${id}`),
+  listTranches: () => fetchApi<any[]>('/api/v1/protected/funding/tranches'),
+  listDrawdowns: () => fetchApi<any[]>('/api/v1/protected/funding/drawdowns'),
+  listCovenants: () => fetchApi<any[]>('/api/v1/protected/funding/covenants'),
+  listRates: () => fetchApi<any[]>('/api/v1/protected/funding/rates'),
+  listHedges: () => fetchApi<any[]>('/api/v1/protected/funding/hedges'),
+  listGuarantees: () => fetchApi<any[]>('/api/v1/protected/funding/guarantees'),
+  listGuaranteeClaims: (id: string) => fetchApi<any[]>(`/api/v1/protected/funding/guarantees/${id}/claims`),
+};
+
+// --- Knowledge Graph + Kafka Module (V028) ---
+export const knowledgeApi = {
+  listNodes: () => fetchApi<any[]>('/api/v1/protected/knowledge/nodes'),
+  listEdges: () => fetchApi<any[]>('/api/v1/protected/knowledge/edges'),
+  getNodesByType: (type: string) => fetchApi<any[]>(`/api/v1/protected/knowledge/nodes/${type}`),
+  getFullGraph: () => fetchApi<any>('/api/v1/protected/knowledge/graph'),
+  triggerSync: () => fetchApi<any>('/api/v1/protected/knowledge/sync', { method: 'POST' }),
+};
+
+export const eventsApi = {
+  listTopics: () => fetchApi<any[]>('/api/v1/protected/events/topics'),
+  listEvents: () => fetchApi<any[]>('/api/v1/protected/events/events'),
+  listConsumers: () => fetchApi<any[]>('/api/v1/protected/events/consumers'),
+  publishEvent: (event: any) => fetchApi<any>('/api/v1/protected/events/publish', { method: 'POST', body: JSON.stringify(event) }),
+};
+
+// --- Laboratory Module (V029) ---
+export const labApi = {
+  listTests: () => fetchApi<any[]>('/api/v1/protected/lab/tests'),
+  getTest: (id: string) => fetchApi<any>(`/api/v1/protected/lab/tests/${id}`),
+  listConcreteTests: () => fetchApi<any[]>('/api/v1/protected/lab/concrete-tests'),
+  listSoilTests: () => fetchApi<any[]>('/api/v1/protected/lab/soil-tests'),
+  listSteelTests: () => fetchApi<any[]>('/api/v1/protected/lab/steel-tests'),
+  listCertificates: () => fetchApi<any[]>('/api/v1/protected/lab/certificates'),
+  listEquipment: () => fetchApi<any[]>('/api/v1/protected/lab/equipment'),
+  listSamples: () => fetchApi<any[]>('/api/v1/protected/lab/samples'),
+};
+
+// --- Permits Module (V030) ---
+export const permitsApi = {
+  listBodies: () => fetchApi<any[]>('/api/v1/protected/permits/bodies'),
+  listApplications: () => fetchApi<any[]>('/api/v1/protected/permits/applications'),
+  getApplication: (id: string) => fetchApi<any>(`/api/v1/protected/permits/applications/${id}`),
+  listDocuments: (id: string) => fetchApi<any[]>(`/api/v1/protected/permits/applications/${id}/documents`),
+  listInspections: (id: string) => fetchApi<any[]>(`/api/v1/protected/permits/applications/${id}/inspections`),
+  listRenewals: (id: string) => fetchApi<any[]>(`/api/v1/protected/permits/applications/${id}/renewals`),
+  listConditions: (id: string) => fetchApi<any[]>(`/api/v1/protected/permits/applications/${id}/conditions`),
+};
+
+// --- Insurance Module (V031) ---
+export const insuranceApi = {
+  listBrokers: () => fetchApi<any[]>('/api/v1/protected/insurance/brokers'),
+  listPolicies: () => fetchApi<any[]>('/api/v1/protected/insurance/policies'),
+  getPolicy: (id: string) => fetchApi<any>(`/api/v1/protected/insurance/policies/${id}`),
+  listClaims: () => fetchApi<any[]>('/api/v1/protected/insurance/claims'),
+  getClaim: (id: string) => fetchApi<any>(`/api/v1/protected/insurance/claims/${id}`),
+  listCoverage: (policyId: string) => fetchApi<any[]>(`/api/v1/protected/insurance/policies/${policyId}/coverage`),
+  listPremiums: (policyId: string) => fetchApi<any[]>(`/api/v1/protected/insurance/policies/${policyId}/premiums`),
+  listCertificates: (policyId: string) => fetchApi<any[]>(`/api/v1/protected/insurance/policies/${policyId}/certificates`),
+};
+
+// --- Fleet Module (V032) ---
+export const fleetApi = {
+  listVehicles: () => fetchApi<any[]>('/api/v1/protected/fleet/vehicles'),
+  getVehicle: (id: string) => fetchApi<any>(`/api/v1/protected/fleet/vehicles/${id}`),
+  listDrivers: () => fetchApi<any[]>('/api/v1/protected/fleet/drivers'),
+  listFuel: () => fetchApi<any[]>('/api/v1/protected/fleet/fuel'),
+  listMaintenance: () => fetchApi<any[]>('/api/v1/protected/fleet/maintenance'),
+  listAccidents: () => fetchApi<any[]>('/api/v1/protected/fleet/accidents'),
+  listTracking: () => fetchApi<any[]>('/api/v1/protected/fleet/tracking'),
+  listTelematics: (vehicleId: string) => fetchApi<any[]>(`/api/v1/protected/fleet/telematics/${vehicleId}`),
+};

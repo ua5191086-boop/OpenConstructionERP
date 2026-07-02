@@ -1282,3 +1282,508 @@ export interface SettlementPoint {
   alarm_triggered: boolean;
   instrument_type: string;
 }
+
+// ============================================================
+// Funding Module (V027)
+// ============================================================
+export interface FundingSource {
+  id: string;
+  project_id: string;
+  source_type: string;
+  source_name: string;
+  source_code?: string;
+  commitment_amount: number;
+  currency: string;
+  status: string;
+  is_active: boolean;
+}
+
+export interface FundingTranche {
+  id: string;
+  funding_source_id: string;
+  project_id: string;
+  tranche_name: string;
+  amount: number;
+  currency: string;
+  expected_date?: string;
+  actual_date?: string;
+  status: string;
+}
+
+export interface FundingDrawdown {
+  id: string;
+  funding_source_id: string;
+  project_id: string;
+  drawdown_number: string;
+  amount: number;
+  currency: string;
+  drawdown_date: string;
+  purpose?: string;
+  status: string;
+}
+
+export interface FundingCovenant {
+  id: string;
+  funding_source_id: string;
+  project_id: string;
+  covenant_type: string;
+  covenant_name: string;
+  required_value: number;
+  current_value: number;
+  currency?: string;
+  measurement_frequency?: string;
+  status: string;
+}
+
+export interface MultiCurrencyRate {
+  id: string;
+  base_currency: string;
+  quote_currency: string;
+  rate: number;
+  rate_date: string;
+  source?: string;
+}
+
+export interface CurrencyHedge {
+  id: string;
+  project_id: string;
+  hedge_type: string;
+  hedge_reference: string;
+  notional_amount: number;
+  currency_pair: string;
+  maturity_date: string;
+  counterparty: string;
+  status: string;
+}
+
+export interface Guarantee {
+  id: string;
+  project_id: string;
+  guarantee_number: string;
+  guarantee_type: string;
+  issuing_bank: string;
+  beneficiary: string;
+  principal_amount: number;
+  currency: string;
+  issue_date: string;
+  expiry_date: string;
+  contract_reference?: string;
+  status: string;
+}
+
+export interface GuaranteeClaim {
+  id: string;
+  guarantee_id: string;
+  claim_number: string;
+  claim_date: string;
+  claim_amount: number;
+  reason: string;
+  status: string;
+  settlement_date?: string;
+  settlement_amount?: number;
+}
+
+// ============================================================
+// Knowledge Graph + Kafka Module (V028)
+// ============================================================
+export interface KnowledgeGraphNode {
+  id: string;
+  node_type: string;
+  node_label?: string;
+  node_properties?: any;
+  neo4j_id?: number;
+  is_synced: boolean;
+  is_active: boolean;
+}
+
+export interface KnowledgeGraphEdge {
+  id: string;
+  edge_type: string;
+  source_node_id: string;
+  target_node_id: string;
+  edge_properties?: any;
+  neo4j_id?: number;
+  is_synced: boolean;
+  is_active: boolean;
+}
+
+export interface KafkaTopic {
+  id: string;
+  topic_name: string;
+  description?: string;
+  partitions: number;
+  replication_factor: number;
+  config?: any;
+  is_internal: boolean;
+  is_active: boolean;
+}
+
+export interface KafkaEvent {
+  id: string;
+  topic_id?: string;
+  topic_name: string;
+  event_type?: string;
+  event_key?: string;
+  event_value?: any;
+  headers?: any;
+  partition?: number;
+  offset?: number;
+}
+
+export interface KafkaConsumer {
+  id: string;
+  consumer_name: string;
+  consumer_group: string;
+  topic_name: string;
+  status: string;
+  last_heartbeat?: string;
+  lag_count: number;
+  config?: any;
+  is_active: boolean;
+}
+
+// ============================================================
+// Laboratory Module (V029)
+// ============================================================
+export interface MaterialTest {
+  id: string;
+  project_id: string;
+  test_number: string;
+  material_type: string;
+  test_type: string;
+  specification?: string;
+  sample_id?: string;
+  sampling_date?: string;
+  test_date?: string;
+  result?: string;
+  status: string;
+  tested_by?: string;
+  approved_by?: string;
+}
+
+export interface ConcreteTest {
+  id: string;
+  project_id: string;
+  test_number: string;
+  concrete_grade: string;
+  design_strength_mpa: number;
+  actual_strength_mpa: number;
+  slump_mm: number;
+  air_content_pct: number;
+  temperature_c: number;
+  density_kgm3: number;
+  water_cement_ratio: number;
+  curing_days: number;
+  sample_location: string;
+  status: string;
+}
+
+export interface SoilTest {
+  id: string;
+  project_id: string;
+  test_number: string;
+  soil_type: string;
+  moisture_content_pct: number;
+  dry_density_kgm3: number;
+  liquid_limit_pct: number;
+  plastic_limit_pct: number;
+  plasticity_index: number;
+  cbr_value: number;
+  internal_friction_deg: number;
+  cohesion_kpa: number;
+  permeability_m: string;
+  depth_m: number;
+  location: string;
+  status: string;
+}
+
+export interface SteelTest {
+  id: string;
+  project_id: string;
+  test_number: string;
+  steel_grade: string;
+  diameter_mm: number;
+  yield_strength_mpa: number;
+  ultimate_strength_mpa: number;
+  elongation_pct: number;
+  bend_test: string;
+  weld_test: string;
+  heat_number: string;
+  supplier: string;
+  status: string;
+}
+
+export interface LabEquipment {
+  id: string;
+  equipment_name: string;
+  equipment_code: string;
+  manufacturer: string;
+  model: string;
+  serial_number: string;
+  last_calibration_date: string;
+  next_calibration_date: string;
+  location: string;
+  status: string;
+  is_active: boolean;
+}
+
+export interface LabCertificate {
+  id: string;
+  project_id: string;
+  certificate_number: string;
+  certificate_type: string;
+  issued_by: string;
+  issue_date: string;
+  expiry_date: string;
+  scope: string;
+  status: string;
+}
+
+// ============================================================
+// Permits Module (V030)
+// ============================================================
+export interface RegulatoryBody {
+  id: string;
+  body_name: string;
+  body_code: string;
+  jurisdiction: string;
+  contact_info?: any;
+  website?: string;
+  notes?: string;
+}
+
+export interface PermitApplication {
+  id: string;
+  project_id: string;
+  body_id: string;
+  application_number: string;
+  application_type: string;
+  title: string;
+  description?: string;
+  submission_date: string;
+  decision_date?: string;
+  valid_from?: string;
+  valid_until?: string;
+  fee_amount: number;
+  fee_currency: string;
+  status: string;
+  assigned_to?: string;
+}
+
+export interface PermitDocument {
+  id: string;
+  application_id: string;
+  document_type: string;
+  document_name: string;
+  file_path?: string;
+  status: string;
+  uploaded_by: string;
+}
+
+export interface PermitInspection {
+  id: string;
+  application_id: string;
+  inspection_type: string;
+  scheduled_date: string;
+  actual_date?: string;
+  inspector_name: string;
+  findings?: string;
+  result?: string;
+  status: string;
+}
+
+export interface PermitCondition {
+  id: string;
+  application_id: string;
+  condition_type: string;
+  description: string;
+  due_date: string;
+  status: string;
+}
+
+// ============================================================
+// Insurance Module (V031)
+// ============================================================
+export interface InsuranceBroker {
+  id: string;
+  broker_name: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  license_number?: string;
+  notes?: string;
+  is_active: boolean;
+}
+
+export interface InsurancePolicy {
+  id: string;
+  broker_id: string;
+  project_id: string;
+  policy_number: string;
+  policy_type: string;
+  insurer: string;
+  insured_entity: string;
+  sum_insured: number;
+  currency: string;
+  deductible: number;
+  start_date: string;
+  end_date: string;
+  premium_amount: number;
+  premium_currency: string;
+  status: string;
+  notes?: string;
+}
+
+export interface InsuranceCoverage {
+  id: string;
+  policy_id: string;
+  coverage_type: string;
+  description: string;
+  limit_amount: number;
+  deductible: number;
+  is_active: boolean;
+}
+
+export interface InsurancePremium {
+  id: string;
+  policy_id: string;
+  installment_number: number;
+  amount_due: number;
+  amount_paid?: number;
+  due_date: string;
+  paid_date?: string;
+  payment_frequency: string;
+  status: string;
+}
+
+export interface InsuranceClaim {
+  id: string;
+  policy_id: string;
+  project_id: string;
+  claim_number: string;
+  claim_date: string;
+  incident_date: string;
+  incident_type: string;
+  description: string;
+  estimated_amount: number;
+  settled_amount?: number;
+  adjuster: string;
+  status: string;
+}
+
+export interface CertificateOfInsurance {
+  id: string;
+  policy_id: string;
+  certificate_number: string;
+  holder_name: string;
+  issue_date: string;
+  valid_until: string;
+  additional_insured: boolean;
+  status: string;
+}
+
+// ============================================================
+// Fleet Module (V032)
+// ============================================================
+export interface FleetVehicle {
+  id: string;
+  project_id: string;
+  vehicle_number: string;
+  license_plate: string;
+  vehicle_type: string;
+  make: string;
+  model: string;
+  year: number;
+  vin: string;
+  fuel_type: string;
+  fuel_capacity_l: number;
+  registration_date: string;
+  status: string;
+  location: string;
+  current_meter_km: number;
+  notes?: string;
+}
+
+export interface FleetDriver {
+  id: string;
+  full_name: string;
+  license_number: string;
+  license_category: string;
+  phone: string;
+  email: string;
+  assigned_vehicle_id?: string;
+  hire_date: string;
+  medical_expiry: string;
+  status: string;
+}
+
+export interface FleetFuel {
+  id: string;
+  vehicle_id: string;
+  refuel_date: string;
+  quantity_l: number;
+  cost_per_unit: number;
+  total_cost: number;
+  fuel_type: string;
+  operator_name: string;
+  odometer_km: number;
+  station_name: string;
+}
+
+export interface FleetMaintenance {
+  id: string;
+  vehicle_id: string;
+  maintenance_type: string;
+  description: string;
+  start_date: string;
+  end_date?: string;
+  cost: number;
+  currency: string;
+  vendor: string;
+  odometer_at_service_km: number;
+  status: string;
+}
+
+export interface FleetTracking {
+  id: string;
+  vehicle_id: string;
+  recorded_at: string;
+  latitude: number;
+  longitude: number;
+  speed_kmh: number;
+  heading_deg: number;
+  altitude_m: number;
+  is_ignition_on: boolean;
+}
+
+export interface FleetAccident {
+  id: string;
+  vehicle_id: string;
+  driver_id?: string;
+  accident_date: string;
+  accident_type: string;
+  severity: string;
+  description: string;
+  location: string;
+  property_damage_cost: number;
+  injury_count: number;
+  fatality_count: number;
+  police_report_ref?: string;
+  is_reportable: boolean;
+  status: string;
+}
+
+export interface FleetTelematics {
+  id: string;
+  vehicle_id: string;
+  recorded_at: string;
+  engine_temp_c: number;
+  oil_pressure_bar: number;
+  battery_voltage: number;
+  fuel_level_pct: number;
+  coolant_temp_c: number;
+  rpm: number;
+  engine_hours: number;
+  diagnostic_code?: string;
+}
