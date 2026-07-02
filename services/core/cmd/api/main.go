@@ -183,6 +183,10 @@ func main() {
 		// Time & Attendance Module (V034)
 		attendanceHandler := handlers.NewAttendanceHandler(database.DB)
 		attendanceHandler.RegisterRoutes(r)
+
+		// Training & Certifications Module (V035)
+		trainingHandler := handlers.NewTrainingHandler(database.DB)
+		trainingHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
