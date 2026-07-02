@@ -187,6 +187,10 @@ func main() {
 		// Training & Certifications Module (V035)
 		trainingHandler := handlers.NewTrainingHandler(database.DB)
 		trainingHandler.RegisterRoutes(r)
+
+		// Segment Factory Module (V036)
+		segFactoryHandler := handlers.NewSegmentFactoryHandler(database.DB)
+		segFactoryHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
