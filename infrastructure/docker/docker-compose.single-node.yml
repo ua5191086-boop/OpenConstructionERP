@@ -102,7 +102,7 @@ services:
       retries: 10
 
   # ============================================================
-  # AUTH
+  # AUTH — Keycloak
   # ============================================================
   oce-keycloak:
     image: quay.io/keycloak/keycloak:24.0
@@ -118,10 +118,18 @@ services:
       KC_HOSTNAME: localhost
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: oce_secret
-    command: start-dev
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ../../infrastructure/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
+    command: start-dev --import-realm
     depends_on:
       oce-postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
 
   # ============================================================
   # CORE API (Go) — build skipped for now, use pre-built

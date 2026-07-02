@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { getUsername, hasRole, logout } from '../auth/AuthGuard'
 
 const navItems = [
   { path: '/', label: 'Dashboard', icon: '📊' },
@@ -25,6 +26,9 @@ const navItems = [
 ]
 
 export default function Layout() {
+  const username = getUsername()
+  const isAdmin = hasRole('admin')
+
   return (
     <div className="flex h-screen">
       {/* Sidebar */}
@@ -59,7 +63,24 @@ export default function Layout() {
 
       {/* Main content */}
       <main className="flex-1 overflow-y-auto bg-[#0f172a]">
-        <Outlet />
+        {/* Top bar with user info */}
+        <header className="flex items-center justify-end gap-4 px-6 py-3 bg-[#1e293b] border-b border-[#334155]">
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-[#94a3b8]">
+              {username}
+              {isAdmin && <span className="ml-2 px-2 py-0.5 text-xs bg-[#3b82f6]/20 text-[#3b82f6] rounded-full">Admin</span>}
+            </span>
+            <button
+              onClick={logout}
+              className="px-3 py-1.5 text-xs font-medium text-white bg-[#ef4444]/80 hover:bg-[#ef4444] rounded-lg transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+        </header>
+        <div className="p-6">
+          <Outlet />
+        </div>
       </main>
     </div>
   )

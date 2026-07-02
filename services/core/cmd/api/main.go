@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/openconstructionerp/oce/services/core/internal/auth"
 	"github.com/openconstructionerp/oce/services/core/internal/db"
 	"github.com/openconstructionerp/oce/services/core/internal/handlers"
 )
@@ -53,8 +55,19 @@ func main() {
 		fmt.Fprintf(w, `{"status":"ok","service":"oce-core-api","version":"0.1.0","time":"%s"}`, time.Now().UTC().Format(time.RFC3339))
 	})
 
-	// API v1 routes
+	// Keycloak JWT Auth
+	keycloakCfg := auth.NewKeycloakConfig()
+
+	// Public routes (no auth required)
 	r.Route("/api/v1", func(r chi.Router) {
+		// Auth endpoint — returns current user info from JWT (public with optional auth)
+		r.With(auth.PublicAuthMiddleware(keycloakCfg)).Get("/auth/me", auth.AuthHandler())
+	})
+
+	// Protected API v1 routes (JWT required)
+	r.Route("/api/v1/protected", func(r chi.Router) {
+		r.Use(auth.JWTAuthMiddleware(keycloakCfg))
+
 		// BOQ Module
 		boqHandler := handlers.NewBOQHandler(database.DB)
 		boqHandler.RegisterRoutes(r)
@@ -134,6 +147,18 @@ func main() {
 		// Change Management Module
 		changeHandler := handlers.NewChangeHandler(database.DB)
 		changeHandler.RegisterRoutes(r)
+	})
+
+	// Legacy /api/v1 routes (backward compatible, also protected)
+	r.Route("/api/v1/legacy", func(r chi.Router) {
+		// Use the same pattern — for full migration, replace with protected routes
+		r.Use(auth.JWTAuthMiddleware(keycloakCfg))
+
+		// Admin-only routes example
+		r.With(auth.RequiredRoleMiddleware("admin")).Get("/admin/health", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]string{"status": "admin-ok"})
+		})
 	})
 
 	// Start server

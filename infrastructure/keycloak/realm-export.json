@@ -1,0 +1,162 @@
+{
+  "id": "openconstructionerp",
+  "realm": "OpenConstructionERP",
+  "displayName": "OpenConstructionERP",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 300,
+  "ssoSessionMaxLifespan": 86400,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "System administrator — full access",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "openconstructionerp"
+      },
+      {
+        "name": "project_manager",
+        "description": "Project manager — project-level management",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "openconstructionerp"
+      },
+      {
+        "name": "engineer",
+        "description": "Engineer — technical read/write",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "openconstructionerp"
+      },
+      {
+        "name": "viewer",
+        "description": "Viewer — read-only access",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "openconstructionerp"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "oce-frontend",
+      "name": "OCE Frontend",
+      "description": "OpenConstructionERP frontend (public SPA)",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:8086/*",
+        "http://94.130.51.188:8086/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8086",
+        "http://94.130.51.188:8086"
+      ],
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8086/*"
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    },
+    {
+      "clientId": "oce-api",
+      "name": "OCE API",
+      "description": "OpenConstructionERP backend API (confidential)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "oce-api-secret",
+      "redirectUris": [],
+      "webOrigins": [],
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "access.token.lifespan": 3600
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "email"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@openconstructionerp.local",
+      "firstName": "Admin",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin", "project_manager", "engineer", "viewer"]
+    },
+    {
+      "username": "pm",
+      "enabled": true,
+      "email": "pm@openconstructionerp.local",
+      "firstName": "Project",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["project_manager", "viewer"]
+    },
+    {
+      "username": "engineer",
+      "enabled": true,
+      "email": "engineer@openconstructionerp.local",
+      "firstName": "Engineer",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["engineer", "viewer"]
+    },
+    {
+      "username": "viewer",
+      "enabled": true,
+      "email": "viewer@openconstructionerp.local",
+      "firstName": "Viewer",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "password123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["viewer"]
+    }
+  ],
+  "scopeMappings": [],
+  "clientScopeMappings": {
+    "account": [
+      {
+        "client": "oce-frontend",
+        "roles": ["view-profile"]
+      }
+    ]
+  }
+}
