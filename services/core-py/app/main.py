@@ -15,7 +15,7 @@ from psycopg_pool import AsyncConnectionPool
 
 from app.auth import AuthMiddleware, startup_banner
 
-from app.routers import projects, ontology, boq, tunnel, cost, documents, reports, cde, ncr_hse, money
+from app.routers import projects, ontology, boq, tunnel, cost, documents, reports, cde, ncr_hse, money, schedule
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL", "postgresql://oce:oce_dev_only@localhost:5432/oce"
@@ -55,6 +55,7 @@ app.include_router(documents.router, prefix="/api/v1/projects", tags=["documents
 app.include_router(reports.router, prefix="/api/v1/projects", tags=["reports"])
 app.include_router(ncr_hse.router, prefix="/api/v1/projects", tags=["quality-hse"])
 app.include_router(money.router, prefix="/api/v1/projects", tags=["money"])
+app.include_router(schedule.router, prefix="/api/v1/projects", tags=["schedule"])
 app.include_router(cde.router, prefix="/api/v1/projects", tags=["cde"])
 
 

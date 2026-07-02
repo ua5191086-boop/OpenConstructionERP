@@ -29,7 +29,7 @@
 | 2 | Permit to Work: выдача/активация/закрытие, борд активных | N-01 | done (V028 + ncr_hse router) |
 | 3 | Variation Orders (V034): workflow, включение в бюджет+Commitment | G-02 | done (money router) |
 | 4 | IPC из earned value: retention/advance recovery, оплата→Actual | F-05 | done (money router) |
-| 5 | Импорт графика XER (Primavera) → activities | E-01 | todo |
+| 5 | Импорт XER (P6): TASK/TASKPRED/PROJWBS → V014, summary, critical filter | E-01 | done (schedule router) |
 | 6 | API поверх V010 Procurement (заявка→PO→приёмка→склад) | H-03, I-01 | todo |
 | 7 | Мобильный контур: offline-форма суточного рапорта (PWA до Flutter) | §2 Mobile | todo |
 | 8 | Инструментальный мониторинг: КИА, пороги, алерты | L-12/13 | todo |
