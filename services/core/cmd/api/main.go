@@ -199,6 +199,10 @@ func main() {
 		// Cross Passage + Geology Module (V038)
 		cpGeoHandler := handlers.NewCPGeoHandler(database.DB)
 		cpGeoHandler.RegisterRoutes(r)
+
+		// Settlement, Grouting, Ventilation Module (V039)
+		sgvHandler := handlers.NewSGVHandler(database.DB)
+		sgvHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
