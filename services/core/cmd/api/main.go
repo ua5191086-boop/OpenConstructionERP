@@ -227,6 +227,10 @@ func main() {
 		// Performance Benchmarking Module (V046)
 		benchmarkHandler := handlers.NewBenchmarkHandler(database.DB)
 		benchmarkHandler.RegisterRoutes(r)
+
+		// Integration Framework Module (V047)
+		integrationHandler := handlers.NewIntegrationHandler(database.DB)
+		integrationHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
