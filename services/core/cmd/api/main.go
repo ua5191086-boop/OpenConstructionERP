@@ -239,6 +239,10 @@ func main() {
 		// Mobile API, Notifications, Activity, Comments (V050)
 		mobileHandler := handlers.NewMobileHandler(database.DB)
 		mobileHandler.RegisterRoutes(r)
+
+		// Tunnel Logistics Module (V051)
+		tunnelLogisticsHandler := handlers.NewTunnelLogisticsHandler(database.DB)
+		tunnelLogisticsHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
