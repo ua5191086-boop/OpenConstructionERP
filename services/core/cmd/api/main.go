@@ -191,6 +191,10 @@ func main() {
 		// Segment Factory Module (V036)
 		segFactoryHandler := handlers.NewSegmentFactoryHandler(database.DB)
 		segFactoryHandler.RegisterRoutes(r)
+
+		// Shaft Management Module (V037)
+		shaftHandler := handlers.NewShaftHandler(database.DB)
+		shaftHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
