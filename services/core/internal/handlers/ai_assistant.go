@@ -65,6 +65,15 @@ func (h *AIHandler) RegisterRoutes(r chi.Router) {
 		r.Delete("/{id}", h.DeleteFunction)
 		r.Get("/category/{category}", h.ListFunctionsByCategory)
 	})
+	r.Route("/ai/classifications", func(r chi.Router) {
+		r.Get("/", h.ListClassifications)
+	})
+	r.Route("/ai/predictions", func(r chi.Router) {
+		r.Get("/", h.ListPredictions)
+	})
+	r.Route("/ai/cost-estimates", func(r chi.Router) {
+		r.Get("/", h.ListCostEstimates)
+	})
 }
 
 // === Providers ===
@@ -281,7 +290,10 @@ func (h *AIHandler) ListEmbeddingsByKB(w http.ResponseWriter, r *http.Request) {
 
 func (h *AIHandler) ListSessions(w http.ResponseWriter, r *http.Request) {
 	var items []map[string]interface{}
-	h.db.Select(&items, "SELECT * FROM ai_sessions ORDER BY updated_at DESC")
+	err := h.db.Select(&items, "SELECT * FROM ai_sessions ORDER BY updated_at DESC LIMIT 50")
+	if err != nil {
+		items = []map[string]interface{}{}
+	}
 	respondJSON(w, http.StatusOK, items)
 }
 
@@ -485,6 +497,36 @@ func (h *AIHandler) ListFunctionsByCategory(w http.ResponseWriter, r *http.Reque
 	cat := chi.URLParam(r, "category")
 	var items []map[string]interface{}
 	h.db.Select(&items, "SELECT * FROM ai_functions WHERE category=$1 AND is_active=TRUE ORDER BY name", cat)
+	respondJSON(w, http.StatusOK, items)
+}
+
+// === Classifications ===
+func (h *AIHandler) ListClassifications(w http.ResponseWriter, r *http.Request) {
+	var items []map[string]interface{}
+	err := h.db.Select(&items, "SELECT * FROM ai_document_classifications ORDER BY created_at DESC LIMIT 50")
+	if err != nil {
+		items = []map[string]interface{}{}
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+// === Predictions ===
+func (h *AIHandler) ListPredictions(w http.ResponseWriter, r *http.Request) {
+	var items []map[string]interface{}
+	err := h.db.Select(&items, "SELECT * FROM ai_predictions ORDER BY created_at DESC LIMIT 50")
+	if err != nil {
+		items = []map[string]interface{}{}
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+// === Cost Estimates ===
+func (h *AIHandler) ListCostEstimates(w http.ResponseWriter, r *http.Request) {
+	var items []map[string]interface{}
+	err := h.db.Select(&items, "SELECT * FROM ai_cost_estimates ORDER BY created_at DESC LIMIT 50")
+	if err != nil {
+		items = []map[string]interface{}{}
+	}
 	respondJSON(w, http.StatusOK, items)
 }
 
