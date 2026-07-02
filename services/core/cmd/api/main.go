@@ -195,6 +195,10 @@ func main() {
 		// Shaft Management Module (V037)
 		shaftHandler := handlers.NewShaftHandler(database.DB)
 		shaftHandler.RegisterRoutes(r)
+
+		// Cross Passage + Geology Module (V038)
+		cpGeoHandler := handlers.NewCPGeoHandler(database.DB)
+		cpGeoHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
