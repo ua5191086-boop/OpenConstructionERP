@@ -13,6 +13,7 @@ volumes:
   oce-minio-data:
   oce-redis-data:
   oce-kafka-data:
+  oce-prometheus-data:
 
 services:
   # ============================================================
@@ -167,19 +168,19 @@ services:
   # MONITORING
   # ============================================================
   oce-prometheus:
-    image: prom/prometheus:v2.52
-    container_name: oce-prometheus
-    restart: unless-stopped
-    networks: [oce-net]
-    ports: ["9091:9090"]
-    volumes:
-      - ../../infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-
+      image: prom/prometheus:latest
+      container_name: oce-prometheus
+      restart: unless-stopped
+      networks: [oce-net]
+      ports: ["9091:9090"]
+      volumes:
+        - oce-prometheus-data:/prometheus
+      command:
+        - '--config.file=/etc/prometheus/prometheus.yml'
+        - '--storage.tsdb.path=/prometheus'
+        - '--web.enable-lifecycle'
   oce-grafana:
-    image: grafana/grafana:11.0
+    image: grafana/grafana:latest
     container_name: oce-grafana
     restart: unless-stopped
     networks: [oce-net]
