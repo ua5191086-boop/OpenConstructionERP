@@ -1,5 +1,5 @@
 -- ============================================================================
--- V028__Neo4j_Kafka_Module.sql
+-- V033__Neo4j_Kafka_Module.sql
 -- Infrastructure: Neo4j Knowledge Graph + Kafka Event Bus
 -- Часть OpenConstructionERP — Project Operating System
 -- ============================================================================

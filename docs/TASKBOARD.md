@@ -27,8 +27,8 @@
 |---|--------|-----|--------|
 | 1 | NCR: реестр, workflow, связь с BOQ/кольцами | M-03 | done (V028 + ncr_hse router) |
 | 2 | Permit to Work: выдача/активация/закрытие, борд активных | N-01 | done (V028 + ncr_hse router) |
-| 3 | API поверх V007 Contract (VO: инициация→оценка→включение в бюджет) | G-02 | todo |
-| 4 | API поверх V009 Finance (invoices/IPC против физпрогресса) | F-05 | todo |
+| 3 | Variation Orders (V034): workflow, включение в бюджет+Commitment | G-02 | done (money router) |
+| 4 | IPC из earned value: retention/advance recovery, оплата→Actual | F-05 | done (money router) |
 | 5 | Импорт графика XER (Primavera) → activities | E-01 | todo |
 | 6 | API поверх V010 Procurement (заявка→PO→приёмка→склад) | H-03, I-01 | todo |
 | 7 | Мобильный контур: offline-форма суточного рапорта (PWA до Flutter) | §2 Mobile | todo |
