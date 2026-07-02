@@ -52,12 +52,19 @@ jobs:
       - name: API smoke test (health + project + ontology)
         env:
           DATABASE_URL: postgresql://oce:ci@localhost:5432/oce
+          AUTH_MODE: static
+          AUTH_STATIC_SECRET: ci-secret
         run: |
           cd services/core-py
           python -m uvicorn app.main:app --port 8000 &
           sleep 5
           curl -sf localhost:8000/health
+          # auth: no token must be rejected
+          test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8000/api/v1/projects)" = "401"
+          export TOKEN=$(python -c "import jwt,time;print(jwt.encode({'sub':'ci','exp':int(time.time())+600},'ci-secret',algorithm='HS256'))")
+          export AUTH_HEADER="Authorization: Bearer $TOKEN"
+          curl -sf -H "$AUTH_HEADER" localhost:8000/api/v1/projects >/dev/null
           curl -sf -X POST localhost:8000/api/v1/projects \
-            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" -H "Content-Type: application/json" \
             -d '{"code":"CI-TEST","name":"CI smoke project"}'
-          curl -sf "localhost:8000/api/v1/core/objects?type_code=project" | grep -q CI-TEST
+          curl -sf -H "$AUTH_HEADER" "localhost:8000/api/v1/core/objects?type_code=project" | grep -q CI-TEST

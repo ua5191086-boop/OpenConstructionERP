@@ -13,6 +13,8 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from psycopg_pool import AsyncConnectionPool
 
+from app.auth import AuthMiddleware, startup_banner
+
 from app.routers import projects, ontology, boq, tunnel, cost, documents, reports, cde, ncr_hse, money
 
 DATABASE_URL = os.getenv(
@@ -32,6 +34,7 @@ async def lifespan(app: FastAPI):
     global pool
     pool = AsyncConnectionPool(DATABASE_URL, min_size=1, max_size=10, open=False)
     await pool.open()
+    startup_banner()
     yield
     await pool.close()
 
@@ -41,6 +44,7 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+app.add_middleware(AuthMiddleware)
 
 app.include_router(projects.router, prefix="/api/v1/projects", tags=["projects"])
 app.include_router(ontology.router, prefix="/api/v1/core", tags=["ontology"])

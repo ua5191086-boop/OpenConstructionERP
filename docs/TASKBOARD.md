@@ -34,7 +34,7 @@
 | 7 | Мобильный контур: offline-форма суточного рапорта (PWA до Flutter) | §2 Mobile | todo |
 | 8 | Инструментальный мониторинг: КИА, пороги, алерты | L-12/13 | todo |
 | 9 | Сравнение вариантов BOQ внутри системы (дельты по секциям) | B-06 | todo |
-| 10 | Keycloak: включить auth на API (сейчас всё открыто!) | A-02 | todo |
+| 10 | Auth на API: Keycloak OIDC (JWKS) + static HS256 для dev/CI, 401 повсюду без токена | A-02 | done (auth middleware, CI проверяет 401/200) |
 | 11 | React frontend: подключить к API вертикалей (BOQ/tunnel/CDE) | §2 Frontend | todo |
 | 12 | Том 2 SAD: спецификации модулей L и F доменов | док | todo |
 

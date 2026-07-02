@@ -48,7 +48,8 @@
 | V033 | Neo4j/Kafka Module (перенумерован из дубля V028) | applied | — |
 | V034 | Variation Orders (G-02) — проект без таблицы VO жить не может | applied | core-py |
 | V035 | cost_transactions: chapter-level транзакции (boq_item_id nullable) | applied | core-py |
-| V036 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
+| V036 | Physical Progress IPC (Go lane; перенумерован из третьего дубля — V033) | applied | core-go |
+| V037 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
 
 **Инцидент 02.07:** на main лежали 6 неустанавливаемых миграций (дубль V009, дубль таблиц projects/document_revisions/hse_incidents, BIGINT-ключи против UUID, phantom-таблицы sections/hr_employees/pm_projects, expression в UNIQUE, не-IMMUTABLE индекс). Всё исправлено. CI теперь дополнительно запрещает BIGSERIAL/BIGINT в миграциях.
 

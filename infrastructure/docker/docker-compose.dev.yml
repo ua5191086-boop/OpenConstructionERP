@@ -28,6 +28,10 @@ services:
     container_name: oce-core
     environment:
       DATABASE_URL: postgresql://oce:oce_dev_only@postgres:5432/oce
+      AUTH_MODE: ${AUTH_MODE:-static}           # keycloak | static | disabled
+      AUTH_STATIC_SECRET: ${AUTH_STATIC_SECRET:-dev_change_me}
+      KEYCLOAK_URL: ${KEYCLOAK_URL:-http://oce-keycloak:8080}
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-oce}
     ports:
       - "8000:8000"
     depends_on:
