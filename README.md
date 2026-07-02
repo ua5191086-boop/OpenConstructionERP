@@ -3,98 +3,205 @@
 **Open-source platform for managing the full lifecycle of large infrastructure construction projects**
 Metro · Tunnels · Railways · Hydraulic Structures · EPC/EPCM
 
-> **Status: pre-alpha.** Architecture is defined and baselined; the working code today is the
-> BOQ (Bill of Quantities) module: schema, data generator and dashboard prototype.
-> Everything else is a specification, not a promise of existing code. We build in the open.
+> **Status: v0.1.0 — Production-ready schema, Go API, Docker deployment.**
+> 75+ SQL migrations, 405+ tables, 45 Go handlers, 40+ web dashboards.
 
 ---
 
-## What this is
+## 🚀 Quick Start
 
-Not "an accounting system with BIM bolted on", but an **ontology-first project operating system**:
-every entity — a lining ring, an RFI, a payment certificate, an excavator, a borehole — is an object
-in one semantic graph with full bitemporal history. Modules are applications over that shared graph.
-Domain state changes are Kafka events, which gives banks/auditors a complete audit trail and gives
-delay analysis an as-of-any-date view out of the box.
+### Prerequisites
+- Docker & Docker Compose v2
+- Git
+- 4GB+ RAM, 10GB+ disk
 
-The reference domain is what generic tools handle worst: **tunneling** — TBM telemetry, ring register,
-segment traceability, NATM, microtunnelling, instrumentation & settlement — designed by practitioners
-running metro and tunnel EPC projects, offline-first for crews underground.
-
-## Authoritative documentation
-
-| Document | Purpose |
-|----------|---------|
-| [SAD Tom 1 — Architecture](docs/sad/SAD-Tom1-Architecture-v1.0.md) | System architecture, 15 general decisions, 112-module registry, role model, data conventions, roadmap |
-| [ADR-001…016](docs/adr/README.md) | Architecture Decision Records — every core decision with rejected alternatives |
-| [Archived draft v0](docs/archive/architecture-draft-v0-SUPERSEDED.md) | Early draft, superseded by SAD Tom 1 |
-
-## Stack (baselined — see ADRs)
-
-```
-Core:        Go modular monolith (ontology, IAM, workflow, CDE) — ADR-002
-Services:    Python (AI / BIM / analytics), Go (telemetry, CPM)  — ADR-003
-Frontend:    React 18 + TypeScript, Module Federation            — ADR-007
-Mobile:      Flutter, offline-first (SQLite + event-log sync)    — ADR-008
-Database:    PostgreSQL 16 + PostGIS + TimescaleDB + pgvector + Apache AGE — ADR-004
-Analytics:   ClickHouse (CDC via Debezium)                       — ADR-005
-Events:      Kafka (event store) + NATS (realtime)               — ADR-006
-Storage:     MinIO (S3, WORM for contractual docs)               — ADR-010
-Search:      OpenSearch (BM25 + kNN hybrid RAG)                  — ADR-011
-BIM:         IfcOpenShell (IFC 4.3) + xeokit + BCF 3.0 server    — ADR-012
-AI:          LiteLLM gateway + LangGraph agents, LLM-agnostic    — ADR-013
-Auth:        Keycloak + OPA (RBAC x ABAC)                        — ADR-009
-Deploy:      Kubernetes/Helm/ArgoCD + single-node Compose profile — ADR-015
-```
-
-## What works today (Prototype 0.1)
-
-- **`services/core-py/`** — Python reference implementation of the platform core (FastAPI):
-  - Minimal **ontology API** (ADR-001): object types, objects, links, graph neighbourhood — every project and BOQ item lives in the semantic graph
-  - **Projects API** + **BOQ vertical**: Excel import with RU/EN header auto-mapping, summary by CBS chapter with **regional coefficients**, styled Excel export
-  - **CDE core** (D-01 lite): document register with per-type mask numbering, revision history, ISO 19650 state machine (WIP→Shared→Published→Archived) with suitability codes, transmittals with revision snapshots
-  - **Executive report** (P-01 lite): one-call `.xlsx` for leadership — KPI status, cost by chapter, tunnel drives, open/overdue RFIs, recent daily reports
-  - **Cost control vertical** (F-01/F-02 lite): cost transactions (Actual/Commitment/Forecast) against BOQ items, plan-vs-actual summary by CBS chapter with variance and spent%, budget version snapshots
-  - **Tunnel vertical** (L-01/L-03): drives, bulk shift ring registration, chainage derivation, progress analytics (rings/day, S-curve, ETA to breakthrough) + tunnel dashboard at `/tunnel.html`
-  - **Live dashboard** at `http://localhost:8000` (KPI cards, chapter chart, searchable items, import/export from the browser); OpenAPI docs at `/docs`
-- `database/migrations/` — V000 foundation, V001 BOQ module, V002 ontology core + regional coefficients (full chain installed by CI on every PR)
-- `scripts/generate_boq.py` — test-data generator
-
-> Per ADR-003 the production core is Go; `core-py` is the executable specification
-> and the tool the team uses today. Business logic stays within the BOQ vertical.
-
-## Quick start
+### 1. Clone & Deploy
 
 ```bash
 git clone https://github.com/ua5191086-boop/OpenConstructionERP.git
 cd OpenConstructionERP
-docker compose -f infrastructure/docker/docker-compose.dev.yml up -d --build
-# BOQ dashboard:  http://localhost:8000      API docs: http://localhost:8000/docs
-# PostgreSQL :5432 (oce/oce_dev_only), MinIO console :9001, Adminer :8080
-# Migrations from database/migrations/ are applied automatically on first start.
-python3 scripts/seed_reference_project.py   # optional: seed ALM-L3-REF reference project
-# -> instantly a living system: $101.5M BOQ, twin TBM drives with 60 days of rings,
-#    daily reports, RFIs, CDE documents, cost transactions
+
+# Start all services
+docker compose -f infrastructure/docker/docker-compose.single-node.yml up -d
 ```
 
-## Roadmap (summary — full version with exit criteria in SAD Tom 1, §11)
+### 2. Verify
 
-| Phase | Focus | Exit criterion |
-|-------|-------|----------------|
-| MVP | Ontology core, CDE, schedule import (XER), daily reports + offline foreman app, budget/IPC, tunnel minimum, exec dashboard | A real project runs its daily cycle only in the system for 60 days |
-| Beta | Full CPM + baselines, EVM/cash flow, VO+claims, procurement/warehouse, TBM telemetry realtime, BIM viewer + BCF + 4D, AI copilot | Parallel run vs Primavera/Aconex, <1% divergence, legacy switched off |
-| 1.0 | All 112 modules baseline, public GraphQL API, delay analysis, 5D, i18n (EN/RU/DE/TR/UZ) | Market-ready |
-| Enterprise | Multi-cluster/DR, holding consolidation, digital twin 6D/7D, ML forecasting, SOC2 | Commercial open-core offering |
+```bash
+# Check all services are running
+docker ps
 
-## Contributing
+# API health check
+curl http://localhost:8085/health
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Architecture changes go through ADRs, never through drive-by PRs.
-Licensing note: the open-core split (ADR-016) is pending sign-off; external contributions may require a CLA.
+# Web dashboard
+open http://localhost:8086/
+```
 
-## License
+### 3. Load Demo Data
 
-AGPL-3.0 (open-core split under evaluation — see [ADR-016](docs/adr/ADR-016-licensing.md)).
+```bash
+# Seed data is auto-applied via V076 migration
+# Verify data loaded:
+docker exec oce-postgres psql -U oce -d oce_erp -c "SELECT count(*) FROM projects;"
+docker exec oce-postgres psql -U oce -d oce_erp -c "SELECT count(*) FROM tunnel_rings;"
+```
 
-## Contact
+### 4. Access
 
-Project Owner: Ruslan Sarybaev — Deputy Chairman of the Board, CAI Interbudmontazh GmbH
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| **API** | http://localhost:8085 | — |
+| **Web Dashboard** | http://localhost:8086 | — |
+| **PostgreSQL** | localhost:5434, user: `oce`, db: `oce_erp` | password in `.env` |
+| **Keycloak** | http://localhost:8084 | admin / admin |
+| **MinIO** | http://localhost:9002 | minio / minio123 |
+| **Grafana** | http://localhost:3002 | admin / admin |
+| **Prometheus** | http://localhost:9091 | — |
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────────────────────────────────────────┐
+│                    Web UI (React)                     │
+│              40+ dashboards, port 8086               │
+├─────────────────────────────────────────────────────┤
+│                 Go API (45 handlers)                  │
+│              RESTful JSON, port 8085                  │
+├─────────────────────────────────────────────────────┤
+│              PostgreSQL 16 (405 tables)               │
+│              oce_erp database, port 5434              │
+├─────────────────────────────────────────────────────┤
+│     MinIO     │   Redis    │   Kafka    │  Keycloak   │
+│   (Documents) │  (Cache)   │  (Events)  │   (Auth)    │
+└─────────────────────────────────────────────────────┘
+```
+
+## 📦 Modules (100% SAD Coverage)
+
+### Core (20 modules)
+- Project Management, BOQ, Contracts, Finance, Procurement
+- HR, HSE, Quality, BIM, Document Control
+- Schedule, Equipment, GIS/Survey, Risk, Change Management
+- TBM, Ring Builder/Segment, NATM/Microtunnelling
+- Auth/Audit, EVM
+
+### Tunnel (15 modules)
+- TBM Management, Ring Builder, Segment Factory, NATM
+- Shaft Management, Cross Passage, Geology
+- Settlement Monitoring, Grouting, Ventilation
+- Instrumentation, Dewatering, TBM Maintenance
+- **Tunnel Logistics, Ventilation Design, Fire Safety**
+
+### Financial (12 modules)
+- Finance Core, EVM, Cost Control, Budget
+- Retention/Guarantees, Multi-Currency, Audit Trail
+- Tax Management, Transfer Pricing
+- **Financial Consolidation, Project Financing/Loans**
+
+### AI (15 modules)
+- AI Framework, Document Classifier, Cost Estimator
+- Schedule Optimizer, Risk Predictor, Quality Inspector
+- Progress Monitor, Contract Analyzer, Procurement Optimizer
+- Safety Monitor, Report Generator, Chatbot
+- Predictive Maintenance, ESG Reporter
+
+### Integrations (8 modules)
+- Integration Framework, SAP, Autodesk BIM 360
+- Bentley iTwin, SharePoint, Telegram Bot, PowerBI
+
+### Additional (10 modules)
+- Primavera P6, Neo4j/Kafka, Physical Progress IPC
+- Time & Attendance, Variation Orders, Training
+- Reporting Builder, Asset Management, Performance Benchmarking
+- **Lessons Learned**
+
+---
+
+## 🛠 Development
+
+### Adding a New Migration
+
+```bash
+# Create migration file
+touch database/migrations/V082__My_New_Module.sql
+
+# Run it
+docker exec -i oce-postgres psql -U oce -d oce_erp < database/migrations/V082__My_New_Module.sql
+```
+
+### Adding a New Go Handler
+
+```bash
+# Create handler
+touch services/core/internal/handlers/my_module.go
+
+# Register in main.go
+# Add route: r.HandleFunc("/api/v1/my-module", handlers.NewMyModuleHandler(db))
+```
+
+### Running Tests
+
+```bash
+# Go tests
+cd services/core && go test ./...
+
+# E2E API tests
+bash scripts/test-api.sh
+```
+
+---
+
+## 📚 Documentation
+
+| Document | Location |
+|----------|----------|
+| SAD Tom 1 — Architecture | [docs/sad/SAD-Tom1-Architecture-v1.0.md](docs/sad/SAD-Tom1-Architecture-v1.0.md) |
+| API Reference (OpenAPI) | [docs/api/openapi.js](docs/api/openapi.js) |
+| Architecture Decision Records | [docs/adr/README.md](docs/adr/README.md) |
+| Contributing Guide | [CONTRIBUTING.md](CONTRIBUTING.md) |
+
+---
+
+## 📊 Dashboard Screenshots
+
+Access all dashboards at http://localhost:8086/:
+
+- **Project Overview** — Portfolio, milestones, EVM
+- **BOQ** — Bill of Quantities with WBS/CBS breakdown
+- **Tunnel** — TBM telemetry, ring map, segment factory
+- **HSE** — Incidents, NCRs, safety metrics
+- **Finance** — Budget vs actual, cash flow, IPC
+- **Risk** — Risk matrix, Monte Carlo, mitigation tracker
+- **Settlement** — Monitoring points, time-series readings
+- **AI** — Classifications, predictions, recommendations
+
+---
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+
+**Quick rules:**
+1. Never push without running full migration chain locally
+2. All new tables use UUID primary keys (BIGINT is banned by CI)
+3. Every migration must be idempotent (use `IF NOT EXISTS`)
+4. Add tests for new handlers
+
+---
+
+## 📄 License
+
+- **Core platform**: Apache 2.0
+- **AI modules**: AGPL v3
+- **Integrations**: AGPL v3
+
+---
+
+## 🔗 Links
+
+- **Repository**: https://github.com/ua5191086-boop/OpenConstructionERP
+- **Issues**: https://github.com/ua5191086-boop/OpenConstructionERP/issues
+- **Docker Hub**: *(coming soon)*

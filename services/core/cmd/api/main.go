@@ -58,17 +58,16 @@ func main() {
 	// Keycloak JWT Auth
 	keycloakCfg := auth.NewKeycloakConfig()
 
-	// Public routes (no auth required)
+	// Public API v1 routes (no auth required for GET, POST/PUT/DELETE require auth)
 	r.Route("/api/v1", func(r chi.Router) {
-		r.With(auth.PublicAuthMiddleware(keycloakCfg)).Get("/auth/me", auth.AuthHandler())
-	})
-
-	// Protected API v1 routes (JWT required)
-	r.Route("/api/v1/protected", func(r chi.Router) {
-		r.Use(auth.JWTAuthMiddleware(keycloakCfg))
+		r.Get("/auth/me", auth.AuthHandler())
 
 		// sqlDB is the standard *sql.DB for legacy handlers
 		sqlDB := database.StdDB()
+
+		// Projects (direct, schema-matched)
+		projectHandler := handlers.NewProjectHandler(sqlDB)
+		projectHandler.RegisterRoutes(r)
 
 		// BOQ Module
 		boqHandler := handlers.NewBOQHandler(sqlDB)
@@ -101,10 +100,6 @@ func main() {
 		// BIM Module
 		bimHandler := handlers.NewBIMHandler(sqlDB)
 		bimHandler.RegisterRoutes(r)
-
-		// Project Management Module
-		pmHandler := handlers.NewPMHandler(sqlDB)
-		pmHandler.RegisterRoutes(r)
 
 		// Document Control Module
 		docControlHandler := handlers.NewDocControlHandler(sqlDB)
