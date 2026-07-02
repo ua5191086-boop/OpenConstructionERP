@@ -69,6 +69,15 @@ func (h *ScheduleHandler) RegisterRoutes(r chi.Router) {
 		r.Post("/critical-path-logs", h.CreateCriticalPathLog)
 		r.Get("/critical-path-logs/{id}", h.GetCriticalPathLog)
 
+		// CPM Calculation Engine
+		r.Post("/cpm-calculate/{scheduleId}", h.CPMCalculate)
+
+		// Gantt Chart Data
+		r.Get("/gantt/{scheduleId}", h.GanttData)
+
+		// Baseline Comparison
+		r.Get("/baseline-compare/{scheduleId}", h.BaselineCompare)
+
 		// Summary
 		r.Get("/summary", h.GetSummary)
 	})
@@ -722,4 +731,270 @@ func (h *ScheduleHandler) GetSummary(w http.ResponseWriter, r *http.Request) {
 
 func init() {
 	log.Println("Schedule Management handler initialized")
+}
+
+// =============================================================================
+// CPM Calculation Engine (Forward/Backward Pass)
+// =============================================================================
+
+func (h *ScheduleHandler) CPMCalculate(w http.ResponseWriter, r *http.Request) {
+	scheduleID := chi.URLParam(r, "scheduleId")
+
+	// 1. Get all activities
+	actRows, err := h.db.Query(`SELECT id, activity_id, original_duration, start_date, finish_date FROM schedule_activities WHERE schedule_id = $1 ORDER BY activity_id`, scheduleID)
+	if err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+	defer actRows.Close()
+
+	type activity struct {
+		ID         string
+		ActID      string
+		Duration   int
+		Predecessors []string
+		Successors   []string
+		ES, EF, LS, LF int // days from project start
+		FloatTotal int
+	}
+	activities := make(map[string]*activity)
+	actOrder := []string{}
+
+	for actRows.Next() {
+		var id, actID string
+		var dur int
+		var sd, fd sql.NullString
+		if err := actRows.Scan(&id, &actID, &dur, &sd, &fd); err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+		activities[actID] = &activity{
+			ID:       id,
+			ActID:    actID,
+			Duration: dur,
+			Predecessors: []string{},
+			Successors:   []string{},
+		}
+		actOrder = append(actOrder, actID)
+	}
+
+	// 2. Get relationships
+	relRows, err := h.db.Query(`SELECT predecessor_id, successor_id, relation_type, lag_days FROM schedule_relationships WHERE schedule_id = $1`, scheduleID)
+	if err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+	defer relRows.Close()
+
+	for relRows.Next() {
+		var predID, succID, relType string
+		var lag int
+		if err := relRows.Scan(&predID, &succID, &relType, &lag); err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+		if a, ok := activities[succID]; ok {
+			a.Predecessors = append(a.Predecessors, predID)
+		}
+		if a, ok := activities[predID]; ok {
+			a.Successors = append(a.Successors, succID)
+		}
+	}
+
+	// 3. Topological sort (Kahn's algorithm)
+	inDegree := make(map[string]int)
+	for _, id := range actOrder {
+		inDegree[id] = len(activities[id].Predecessors)
+	}
+	queue := []string{}
+	for _, id := range actOrder {
+		if inDegree[id] == 0 {
+			queue = append(queue, id)
+		}
+	}
+	sorted := []string{}
+	for len(queue) > 0 {
+		cur := queue[0]
+		queue = queue[1:]
+		sorted = append(sorted, cur)
+		for _, s := range activities[cur].Successors {
+			inDegree[s]--
+			if inDegree[s] == 0 {
+				queue = append(queue, s)
+			}
+		}
+	}
+
+	// 4. Forward Pass (ES, EF)
+	for _, id := range sorted {
+		a := activities[id]
+		a.ES = 0
+		for _, p := range a.Predecessors {
+			if pred, ok := activities[p]; ok && pred.EF > a.ES {
+				a.ES = pred.EF
+			}
+		}
+		a.EF = a.ES + a.Duration
+	}
+
+	// 5. Backward Pass (LS, LF) — project duration = max EF
+	projectDuration := 0
+	for _, a := range activities {
+		if a.EF > projectDuration {
+			projectDuration = a.EF
+		}
+	}
+	for i := len(sorted) - 1; i >= 0; i-- {
+		id := sorted[i]
+		a := activities[id]
+		a.LF = projectDuration
+		for _, s := range a.Successors {
+			if succ, ok := activities[s]; ok && succ.LS < a.LF {
+				a.LF = succ.LS
+			}
+		}
+		a.LS = a.LF - a.Duration
+		a.FloatTotal = a.LS - a.ES
+	}
+
+	// 6. Update DB with CPM results & mark critical
+	criticalCount := 0
+	criticalPath := []string{}
+	for _, a := range activities {
+		isCritical := a.FloatTotal == 0
+		if isCritical {
+			criticalCount++
+			criticalPath = append(criticalPath, a.ActID)
+		}
+		h.db.Exec(`UPDATE schedule_activities SET early_start=$1, early_finish=$2, late_start=$3, late_finish=$4, float_total=$5, is_critical=$6, updated_at=NOW() WHERE id=$7`,
+			fmt.Sprintf("DAY_%d", a.ES), fmt.Sprintf("DAY_%d", a.EF),
+			fmt.Sprintf("DAY_%d", a.LS), fmt.Sprintf("DAY_%d", a.LF),
+			a.FloatTotal, isCritical, a.ID)
+	}
+
+	// 7. Log CPM run
+	now := time.Now()
+	cpJSON, _ := json.Marshal(criticalPath)
+	h.db.Exec(`INSERT INTO critical_path_log (id, schedule_id, run_number, run_at, total_activities, critical_count, longest_path, total_float_min, total_float_max, critical_path, duration, status, created_at) VALUES ($1,$2,(SELECT COALESCE(MAX(run_number),0)+1 FROM critical_path_log WHERE schedule_id=$2),$3,$4,$5,$6,$7,$8,$9,0,'completed',$10)`,
+		uuid.New().String(), scheduleID, now, len(activities), criticalCount, projectDuration, 0, projectDuration, string(cpJSON), now)
+
+	// 8. Return result
+	actSummary := make([]map[string]interface{}, 0)
+	for _, a := range activities {
+		actSummary = append(actSummary, map[string]interface{}{
+			"activity_id": a.ActID, "duration": a.Duration,
+			"es": a.ES, "ef": a.EF, "ls": a.LS, "lf": a.LF,
+			"float_total": a.FloatTotal, "is_critical": a.FloatTotal == 0,
+		})
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"schedule_id":      scheduleID,
+		"total_activities": len(activities),
+		"project_duration": projectDuration,
+		"critical_count":   criticalCount,
+		"critical_path":    criticalPath,
+		"activities":       actSummary,
+	})
+}
+
+// =============================================================================
+// Gantt Chart Data
+// =============================================================================
+
+func (h *ScheduleHandler) GanttData(w http.ResponseWriter, r *http.Request) {
+	scheduleID := chi.URLParam(r, "scheduleId")
+
+	rows, err := h.db.Query(`
+		SELECT a.id, a.activity_id, a.activity_name, a.activity_type, a.status,
+			a.original_duration, a.percent_complete, a.early_start, a.early_finish,
+			a.late_start, a.late_finish, a.actual_start, a.actual_finish,
+			a.is_critical, a.float_total, a.wbs_code
+		FROM schedule_activities a WHERE a.schedule_id = $1
+		ORDER BY COALESCE(a.early_start, a.start_date), a.activity_id`, scheduleID)
+	if err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id, actID, name, atype, status string
+		var dur int
+		var pct sql.NullFloat64
+		var es, ef, ls, lf, ast, af sql.NullString
+		var isCritical bool
+		var floatTotal int
+		var wbs sql.NullString
+		if err := rows.Scan(&id, &actID, &name, &atype, &status, &dur, &pct, &es, &ef, &ls, &lf, &ast, &af, &isCritical, &floatTotal, &wbs); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error()); return
+		}
+		item := map[string]interface{}{
+			"id": id, "activity_id": actID, "activity_name": name, "activity_type": atype,
+			"status": status, "original_duration": dur, "is_critical": isCritical,
+			"float_total": floatTotal,
+		}
+		if pct.Valid { item["percent_complete"] = pct.Float64 }
+		if es.Valid { item["early_start"] = es.String }
+		if ef.Valid { item["early_finish"] = ef.String }
+		if ls.Valid { item["late_start"] = ls.String }
+		if lf.Valid { item["late_finish"] = lf.String }
+		if ast.Valid { item["actual_start"] = ast.String }
+		if af.Valid { item["actual_finish"] = af.String }
+		if wbs.Valid { item["wbs_code"] = wbs.String }
+		items = append(items, item)
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+// =============================================================================
+// Baseline Comparison
+// =============================================================================
+
+func (h *ScheduleHandler) BaselineCompare(w http.ResponseWriter, r *http.Request) {
+	scheduleID := chi.URLParam(r, "scheduleId")
+	baselineID := r.URL.Query().Get("baseline_id")
+
+	if baselineID == "" {
+		// Get current baseline
+		h.db.QueryRow(`SELECT id FROM schedule_baselines WHERE schedule_id = $1 AND is_current = TRUE`, scheduleID).Scan(&baselineID)
+		if baselineID == "" {
+			respondError(w, http.StatusNotFound, "no baseline found for this schedule")
+			return
+		}
+	}
+
+	// Get baseline activities (stored in a separate copy or the log)
+	// For now, compare current vs baseline plan data
+	rows, err := h.db.Query(`
+		SELECT a.activity_id, a.activity_name, a.original_duration AS baseline_dur,
+			a.remaining_duration, a.actual_duration, a.percent_complete,
+			a.start_date AS baseline_start, a.finish_date AS baseline_finish,
+			a.early_start, a.early_finish, a.float_total, a.is_critical,
+			a.status
+		FROM schedule_activities a
+		WHERE a.schedule_id = $1
+		ORDER BY a.activity_id`, scheduleID)
+	if err != nil { respondError(w, http.StatusInternalServerError, err.Error()); return }
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	var totalVariance, lateCount, criticalCount int
+	for rows.Next() {
+		var actID, name, status string
+		var baseDur, remDur, actDur, floatTotal int
+		var pct float64
+		var baseStart, baseFinish, earlyStart, earlyFinish sql.NullString
+		var isCritical bool
+		if err := rows.Scan(&actID, &name, &baseDur, &remDur, &actDur, &pct, &baseStart, &baseFinish, &earlyStart, &earlyFinish, &floatTotal, &isCritical, &status); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error()); return
+		}
+		variance := actDur - baseDur
+		totalVariance += variance
+		if variance > 0 { lateCount++ }
+		if isCritical { criticalCount++ }
+
+		items = append(items, map[string]interface{}{
+			"activity_id": actID, "activity_name": name, "status": status,
+			"baseline_duration": baseDur, "remaining_duration": remDur,
+			"actual_duration": actDur, "percent_complete": pct,
+			"variance_days": variance, "is_critical": isCritical,
+		})
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"schedule_id":        scheduleID,
+		"baseline_id":        baselineID,
+		"total_activities":   len(items),
+		"total_variance_days": totalVariance,
+		"late_activities":    lateCount,
+		"critical_activities": criticalCount,
+		"activities":         items,
+	})
 }
