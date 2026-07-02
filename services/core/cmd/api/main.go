@@ -179,6 +179,10 @@ func main() {
 		// Fleet Module (V032)
 		fleetHandler := handlers.NewFleetHandler(database.DB)
 		fleetHandler.RegisterRoutes(r)
+
+		// Time & Attendance Module (V034)
+		attendanceHandler := handlers.NewAttendanceHandler(database.DB)
+		attendanceHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)

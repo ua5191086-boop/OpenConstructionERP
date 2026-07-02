@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Time & Attendance — OpenConstructionERP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+.container{max-width:1400px;margin:0 auto;padding:20px}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);padding:20px 30px;border-radius:12px;margin-bottom:24px;border:1px solid #334155}
+.header h1{font-size:24px;color:#f1f5f9}
+.header p{color:#94a3b8;font-size:14px;margin-top:4px}
+.filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
+.filters select,.filters button{background:#1e293b;border:1px solid #334155;color:#e2e8f0;padding:10px 16px;border-radius:8px;font-size:14px}
+.filters button{background:#3b82f6;border-color:#3b82f6;cursor:pointer;font-weight:600}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.stat-card .label{font-size:12px;text-transform:uppercase;color:#94a3b8;letter-spacing:.5px}
+.stat-card .value{font-size:28px;font-weight:700;margin-top:8px;color:#f1f5f9}
+.stat-card .sub{font-size:13px;color:#64748b;margin-top:4px}
+.stat-card.info{border-left:3px solid #3b82f6}.stat-card.success{border-left:3px solid #22c55e}
+.stat-card.warning{border-left:3px solid #f59e0b}.stat-card.danger{border-left:3px solid #ef4444}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:24px}
+.chart-card h3{font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:.5px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;margin-bottom:24px;overflow-x:auto}
+.tabs{display:flex;gap:4px;margin-bottom:16px;background:#1e293b;border-radius:8px;padding:4px;border:1px solid #334155}
+.tab{padding:8px 20px;border-radius:6px;cursor:pointer;font-size:13px;color:#94a3b8}
+.tab.active{background:#3b82f6;color:#fff}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:12px 8px;font-size:12px;color:#94a3b8;text-transform:uppercase;border-bottom:1px solid #334155}
+td{padding:10px 8px;border-bottom:1px solid #1e293b;font-size:13px}
+tr:hover{background:#1e293b}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-green{background:#166534;color:#86efac}.badge-yellow{background:#854d0e;color:#fde047}
+.badge-red{background:#991b1b;color:#fca5a5}.badge-blue{background:#1e3a5f;color:#93c5fd}
+.loading{text-align:center;padding:60px;color:#64748b}
+.loading .spinner{width:40px;height:40px;border:3px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.error{text-align:center;padding:40px;color:#fca5a5}
+@media(max-width:768px){.charts-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class=container>
+  <div class=header>
+    <h1>⏱️ Time & Attendance</h1>
+    <p>Табели, биометрия, отсутствия, пропускной режим</p>
+  </div>
+  <div class="stats-grid" id=statsGrid></div>
+  <div class="chart-card" id=chartRow></div>
+  <div class=tabs>
+    <div class="tab active" onclick=switchTab('timesheets')>📋 Табели</div>
+    <div class=tab onclick=switchTab('absences')>🏖️ Отсутствия</div>
+    <div class=tab onclick=switchTab('gate')>🚧 Пропускной</div>
+  </div>
+  <div class="table-card active" id=tab-timesheets></div>
+  <div class=table-card id=tab-absences></div>
+  <div class=table-card id=tab-gate></div>
+</div>
+<script>
+async function loadData(){
+  document.getElementById('statsGrid').innerHTML='<div class=loading><div class=spinner></div></div>'
+  try{
+    const [s,ts,abs,gate]=await Promise.all([
+      fetch('/api/v1/protected/attendance/summary').then(r=>r.ok?r.json():[]),
+      fetch('/api/v1/protected/attendance/timesheets').then(r=>r.ok?r.json():[]),
+      fetch('/api/v1/protected/attendance/absences').then(r=>r.ok?r.json():[]),
+      fetch('/api/v1/protected/attendance/gate-log').then(r=>r.ok?r.json():[])
+    ])
+    render(
+      Array.isArray(s)&&s.length?s[0]:{},
+      Array.isArray(ts)?ts:[],
+      Array.isArray(abs)?abs:[],
+      Array.isArray(gate)?gate:[]
+    )
+  }catch(e){
+    document.getElementById('statsGrid').innerHTML=`<div class=error>❌ ${e.message}</div>`
+  }
+}
+function render(s,ts,abs,gate){
+  const pct=active30=>s.active_employees>0?((s.active_last_30d||0)/s.active_employees*100).toFixed(0):'—'
+  document.getElementById('statsGrid').innerHTML=`
+    <div class=stat-card info><div class=label>Сотрудников</div><div class=value>${s.active_employees||0}</div><div class=sub>${s.registered_employees||0} зарегистрировано</div></div>
+    <div class=stat-card success><div class=label>Часов за 30д</div><div class=value>${(s.total_hours_30d||0).toLocaleString()}</div><div class=sub>${s.active_last_30d||0} активных</div></div>
+    <div class=stat-card warning><div class=label>Овертайм</div><div class=value>${(s.total_overtime_30d||0).toLocaleString()}</div><div class=sub>часов сверх нормы</div></div>
+    <div class=stat-card ${(s.active_absences||0)>0?'danger':'success'}><div class=label>Отсутствия сегодня</div><div class=value>${s.active_absences||0}</div><div class=sub>${(s.total_absence_30d||0).toLocaleString()} часов за 30д</div></div>
+  `
+  document.getElementById('chartRow').innerHTML=`<h3>📊 Последние табели (${ts.length})</h3><div style=overflow-x:auto><table>
+    <thead><tr><th>Сотрудник</th><th>Дата</th><th>Пришёл</th><th>Ушёл</th><th>Часы</th><th>Регуляр</th><th>ОТ</th><th>Статус</th></tr></thead>
+    <tbody>${ts.slice(0,20).map(t=>{
+      const badge=t.status==='approved'?'badge-green':t.status==='pending'?'badge-yellow':'badge-red'
+      return `<tr><td>${t.employee_name||''}</td><td>${t.timesheet_date?new Date(t.timesheet_date).toLocaleDateString():''}</td>
+        <td><small>${t.clock_in?new Date(t.clock_in).toLocaleTimeString():'—'}</small></td>
+        <td><small>${t.clock_out?new Date(t.clock_out).toLocaleTimeString():'—'}</small></td>
+        <td>${(t.hours_worked||0).toFixed(1)}</td><td>${(t.hours_regular||0).toFixed(1)}</td>
+        <td>${(t.hours_overtime||0).toFixed(1)}</td>
+        <td><span class="badge ${badge}">${t.status||''}</span></td></tr>`
+    }).join('')}${ts.length===0?'<tr><td colspan=8 style=text-align:center;padding:40px;color:#64748b>Нет табелей</td></tr>':''}
+    </tbody></table></div>`
+
+  document.getElementById('tab-absences').innerHTML=`<h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase">🏖️ Отсутствия (${abs.length})</h3>
+    <table><thead><tr><th>Сотрудник</th><th>Тип</th><th>С</th><th>По</th><th>Дней</th><th>Причина</th><th>Статус</th></tr></thead>
+    <tbody>${abs.map(a=>`<tr><td>${a.employee_name||''}</td>
+      <td><span class="badge badge-blue">${a.absence_type||''}</span></td>
+      <td>${a.start_date?new Date(a.start_date).toLocaleDateString():''}</td>
+      <td>${a.end_date?new Date(a.end_date).toLocaleDateString():''}</td>
+      <td>${a.total_days||0}</td><td><small>${a.reason||''}</small></td>
+      <td><span class="badge ${a.status==='approved'?'badge-green':a.status==='pending'?'badge-yellow':'badge-red'}">${a.status||''}</span></td></tr>`).join('')}
+      ${abs.length===0?'<tr><td colspan=7 style=text-align:center;padding:40px;color:#64748b>Нет отсутствий</td></tr>':''}
+    </tbody></table>`
+
+  document.getElementById('tab-gate').innerHTML=`<h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase">🚧 Пропускной режим (${gate.length})</h3>
+    <table><thead><tr><th>Время</th><th>Кто</th><th>Направление</th><th>Ворота</th><th>Транспорт</th></tr></thead>
+    <tbody>${gate.map(g=>`<tr><td><small>${g.event_time?new Date(g.event_time).toLocaleString():''}</small></td>
+      <td>${g.employee_name||g.visitor_name||''} ${g.visitor_company?'<br><small>'+g.visitor_company+'</small>':''}</td>
+      <td><span class="badge ${g.direction==='entry'?'badge-green':'badge-red'}">${g.direction||''}</span></td>
+      <td>${g.gate||''}</td>
+      <td><small>${g.vehicle_plate||'—'}</small></td></tr>`).join('')}
+      ${gate.length===0?'<tr><td colspan=5 style=text-align:center;padding:40px;color:#64748b>Нет событий</td></tr>':''}
+    </tbody></table>`
+}
+function switchTab(n){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'))
+  document.querySelectorAll('.table-card').forEach(t=>t.classList.remove('active'))
+  document.querySelector(`.tab[onclick*="${n}"]`).classList.add('active')
+  document.getElementById(`tab-${n}`).classList.add('active')
+}
+loadData()
+</script>
+</body>
+</html>
