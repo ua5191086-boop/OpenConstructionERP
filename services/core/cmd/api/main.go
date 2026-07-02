@@ -215,6 +215,18 @@ func main() {
 		// Audit Trail, Tax, Stakeholders, ESG, Carbon Module (V042-V043)
 		auditHandler := handlers.NewAuditHandler(database.DB)
 		auditHandler.RegisterRoutes(r)
+
+		// Reporting Builder Module (V044)
+		reportHandler := handlers.NewReportHandler(database.DB)
+		reportHandler.RegisterRoutes(r)
+
+		// Asset Management Module (V045)
+		assetHandler := handlers.NewAssetHandler(database.DB)
+		assetHandler.RegisterRoutes(r)
+
+		// Performance Benchmarking Module (V046)
+		benchmarkHandler := handlers.NewBenchmarkHandler(database.DB)
+		benchmarkHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
