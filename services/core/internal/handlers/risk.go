@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -45,6 +46,9 @@ func (h *RiskHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/monte-carlo/{id}", h.GetMonteCarlo)
 		r.Put("/monte-carlo/{id}", h.UpdateMonteCarlo)
 		r.Delete("/monte-carlo/{id}", h.DeleteMonteCarlo)
+
+		// Monte Carlo Run Engine
+		r.Post("/monte-carlo/run/{id}", h.RunMonteCarlo)
 
 		r.Get("/scenarios", h.ListScenarios)
 		r.Post("/scenarios", h.CreateScenario)
@@ -321,8 +325,181 @@ func (h *RiskHandler) DeleteMatrix(w http.ResponseWriter, r *http.Request) {
 }
 
 // =============================================================================
-// Monte Carlo
+// Monte Carlo Run Engine
 // =============================================================================
+
+func (h *RiskHandler) RunMonteCarlo(w http.ResponseWriter, r *http.Request) {
+	runID := chi.URLParam(r, "id")
+
+	// 1. Get simulation config
+	var projectID, runLabel, runType string
+	var iterations int
+	err := h.db.QueryRow(`SELECT project_id, run_label, run_type, iterations FROM risk_monte_carlo_runs WHERE id = $1`, runID).Scan(&projectID, &runLabel, &runType, &iterations)
+	if err == sql.ErrNoRows {
+		respondError(w, http.StatusNotFound, "MC run not found")
+		return
+	}
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if iterations < 100 { iterations = 1000 }
+	if iterations > 100000 { iterations = 100000 }
+
+	// Mark as running
+	h.db.Exec(`UPDATE risk_monte_carlo_runs SET status='running', started_at=NOW() WHERE id=$1`, runID)
+
+	// 2. Get risk data — cost/schedule distributions from register
+	var minCost, maxCost, mlCost float64
+	var minSched, maxSched, mlSched float64
+
+	if runType == "cost" || runType == "combined" {
+		h.db.QueryRow(`SELECT COALESCE(MIN(cost_impact),0), COALESCE(MAX(cost_impact),0), COALESCE(AVG(cost_impact),0) FROM risk_registers WHERE project_id=$1 AND risk_type='threat'`, projectID).Scan(&minCost, &maxCost, &mlCost)
+		if maxCost <= minCost { maxCost = minCost * 1.5 }
+	}
+
+	if runType == "schedule" || runType == "combined" {
+		h.db.QueryRow(`SELECT COALESCE(MIN(schedule_impact_days),0), COALESCE(MAX(schedule_impact_days),0), COALESCE(AVG(schedule_impact_days),0) FROM risk_registers WHERE project_id=$1 AND risk_type='threat'`, projectID).Scan(&minSched, &maxSched, &mlSched)
+		if maxSched <= minSched { maxSched = minSched + 30 }
+	}
+
+	// 3. Run Monte Carlo simulation (Triangular distribution)
+	startTime := time.Now()
+	results := make([]float64, iterations)
+
+	for i := 0; i < iterations; i++ {
+		var val float64
+		if runType == "cost" {
+			val = triangularSample(minCost, maxCost, mlCost)
+		} else if runType == "schedule" {
+			val = triangularSample(minSched, maxSched, mlSched)
+		} else {
+			costSample := triangularSample(minCost, maxCost, mlCost)
+			schedSample := triangularSample(minSched, maxSched, mlSched)
+			val = costSample + schedSample*1000 // schedule cost equivalent
+		}
+		results[i] = val
+	}
+
+	// 4. Sort for percentile calculation
+	sorted := make([]float64, len(results))
+	copy(sorted, results)
+	sortFloat64s(sorted)
+
+	p10Idx := int(float64(len(sorted)) * 0.10)
+	p50Idx := int(float64(len(sorted)) * 0.50)
+	p90Idx := int(float64(len(sorted)) * 0.90)
+	if p10Idx >= len(sorted) { p10Idx = len(sorted) - 1 }
+	if p50Idx >= len(sorted) { p50Idx = len(sorted) - 1 }
+	if p90Idx >= len(sorted) { p90Idx = len(sorted) - 1 }
+
+	p10 := sorted[p10Idx]
+	p50 := sorted[p50Idx]
+	p90 := sorted[p90Idx]
+
+	// Mean and stddev
+	var sum, sumSq float64
+	for _, v := range results {
+		sum += v
+		sumSq += v * v
+	}
+	mean := sum / float64(len(results))
+	variance := (sumSq / float64(len(results))) - (mean * mean)
+	stddev := math.Sqrt(variance)
+
+	// Build histogram (20 buckets)
+	minVal := sorted[0]
+	maxVal := sorted[len(sorted)-1]
+	bucketWidth := (maxVal - minVal) / 20.0
+	if bucketWidth <= 0 { bucketWidth = 1 }
+	histogram := make([]int, 20)
+	for _, v := range results {
+		b := int((v - minVal) / bucketWidth)
+		if b >= 20 { b = 19 }
+		if b < 0 { b = 0 }
+		histogram[b]++
+	}
+
+	histBins := make([]map[string]interface{}, 20)
+	for i := 0; i < 20; i++ {
+		low := minVal + float64(i)*bucketWidth
+		high := low + bucketWidth
+		histBins[i] = map[string]interface{}{
+			"bin": i, "low": low, "high": high, "count": histogram[i],
+			"pct": float64(histogram[i]) / float64(len(results)) * 100,
+		}
+	}
+
+	execTimeMs := int(time.Since(startTime).Milliseconds())
+
+	// 5. Save results
+	resultsJSON, _ := json.Marshal(map[string]interface{}{
+		"p10": p10, "p50": p50, "p90": p90,
+		"mean": mean, "stddev": stddev,
+		"histogram": histBins, "iterations": iterations,
+		"distribution": "triangular",
+		"parameters": map[string]interface{}{
+			"min": minVal, "max": maxVal, "most_likely": getMode(mlCost, mlSched, runType),
+		},
+	})
+
+	confidence := 90.0
+	now := time.Now()
+	_, err = h.db.Exec(`UPDATE risk_monte_carlo_runs SET status='completed', p10_value=$1, p50_value=$2, p90_value=$3, mean_value=$4, std_dev=$5, confidence_level=$6, results=$7, execution_time_ms=$8, completed_at=$9, updated_at=$9 WHERE id=$10`,
+		p10, p50, p90, mean, stddev, confidence, string(resultsJSON), execTimeMs, now, runID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"id": runID, "project_id": projectID,
+		"run_label": runLabel, "run_type": runType,
+		"iterations": iterations, "execution_time_ms": execTimeMs,
+		"p10": p10, "p50": p50, "p90": p90,
+		"mean": mean, "stddev": stddev,
+		"confidence_level": confidence,
+		"histogram":        histBins,
+		"parameters": map[string]interface{}{
+			"min": minVal, "max": maxVal, "most_likely": getMode(mlCost, mlSched, runType),
+		},
+	})
+}
+
+// Triangular distribution sampling
+func triangularSample(min, max, mode float64) float64 {
+	if max <= min { return min }
+	if mode < min { mode = min }
+	if mode > max { mode = max }
+
+	// Simple PRNG using Fₓ⁻¹ method
+	f := (mode - min) / (max - min)
+	u := randFloat64()
+	if u <= f {
+		return min + math.Sqrt(u*(max-min)*(mode-min))
+	}
+	return max - math.Sqrt((1-u)*(max-min)*(max-mode))
+}
+
+func getMode(cost, sched float64, runType string) float64 {
+	if runType == "cost" { return cost }
+	if runType == "schedule" { return sched }
+	return cost + sched*1000
+}
+
+func randFloat64() float64 {
+	return float64(time.Now().UnixNano()%1000000) / 1000000.0
+}
+
+func sortFloat64s(s []float64) {
+	for i := 0; i < len(s); i++ {
+		for j := i + 1; j < len(s); j++ {
+			if s[j] < s[i] {
+				s[i], s[j] = s[j], s[i]
+			}
+		}
+	}
+}
 func (h *RiskHandler) ListMonteCarlo(w http.ResponseWriter, r *http.Request) {
 	projectID := r.URL.Query().Get("project_id")
 	query := `SELECT id, project_id, run_label, run_type, iterations, p10_value, p50_value, p90_value, mean_value, confidence_level, status, created_at FROM risk_monte_carlo_runs WHERE 1=1`
