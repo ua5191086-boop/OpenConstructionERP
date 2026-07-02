@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Permits Dashboard — V030</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{font-size:24px;margin-bottom:4px;color:#fff}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.card .label{font-size:11px;text-transform:uppercase;color:#64748b}
+.card .value{font-size:24px;font-weight:700;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#64748b;text-transform:uppercase;font-size:11px;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-approved{background:#22c55e22;color:#22c55e} .badge-pending{background:#f9731622;color:#f97316} .badge-rejected{background:#ef444422;color:#ef4444}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>📋 Permits Dashboard</h1>
+<p class="sub">Permit Applications, Inspections, Renewals — V030</p>
+<div class="grid" id="statsRow"></div>
+<div class="chart-row">
+  <div class="chart-card"><h3>Permits by Type</h3><canvas id="typeChart"></canvas></div>
+  <div class="chart-card"><h3>Permits by Status</h3><canvas id="statusChart"></canvas></div>
+</div>
+<div class="card">
+  <h3 style="margin-bottom:12px;color:#fff">Recent Inspections</h3>
+  <table><thead><tr><th>Type</th><th>Inspector</th><th>Scheduled</th><th>Result</th><th>Status</th></tr></thead><tbody id="inspectionTable"></tbody></table>
+</div>
+<script>
+async function load(){
+  try{
+    const [apps, bodies] = await Promise.all([
+      fetch('/api/v1/protected/permits/applications').then(r=>r.json()),
+      fetch('/api/v1/protected/permits/bodies').then(r=>r.json()),
+    ]);
+    document.getElementById('statsRow').innerHTML = `
+      <div class="card"><div class="label">Applications</div><div class="value" style="color:#3b82f6">${apps.length}</div></div>
+      <div class="card"><div class="label">Approved</div><div class="value" style="color:#22c55e">${apps.filter(a=>a.status==='approved').length}</div></div>
+      <div class="card"><div class="label">Pending</div><div class="value" style="color:#f97316">${apps.filter(a=>a.status==='submitted'||a.status==='under_review').length}</div></div>
+      <div class="card"><div class="label">Bodies</div><div class="value" style="color:#a855f7">${bodies.length}</div></div>
+    `;
+    const types={};apps.forEach(a=>{types[a.permit_type]=(types[a.permit_type]||0)+1});
+    new Chart(document.getElementById('typeChart'),{type:'bar',data:{labels:Object.keys(types),datasets:[{data:Object.values(types),backgroundColor:['#3b82f6','#22c55e','#a855f7','#f97316']}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+    const st={};apps.forEach(a=>{st[a.status]=(st[a.status]||0)+1});
+    new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{labels:Object.keys(st),datasets:[{data:Object.values(st),backgroundColor:['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444']}]}});
+    document.getElementById('inspectionTable').innerHTML = '<tr><td colspan="5" style="color:#64748b;text-align:center">Inspect individual permits via API</td></tr>';
+  }catch(e){document.getElementById('statsRow').innerHTML=`<div class="card"><div class="label">Error</div><div class="value" style="color:#ef4444">API unavailable</div></div>`}
+}
+load();
+</script>
+</body>
+</html>

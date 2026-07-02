@@ -155,6 +155,30 @@ func main() {
 		// P6 Connector Module (V026)
 		p6Handler := handlers.NewP6Handler(database.DB)
 		p6Handler.RegisterRoutes(r)
+
+		// Funding Module (V027)
+		fundingHandler := handlers.NewFundingHandler(database.DB)
+		fundingHandler.RegisterRoutes(r)
+
+		// Neo4j + Kafka Module (V028)
+		neo4jKafkaHandler := handlers.NewNeo4jKafkaHandler(database.DB)
+		neo4jKafkaHandler.RegisterRoutes(r)
+
+		// Laboratory Module (V029)
+		labHandler := handlers.NewLaboratoryHandler(database.DB)
+		labHandler.RegisterRoutes(r)
+
+		// Permits Module (V030)
+		permitsHandler := handlers.NewPermitsHandler(database.DB)
+		permitsHandler.RegisterRoutes(r)
+
+		// Insurance Module (V031)
+		insuranceHandler := handlers.NewInsuranceHandler(database.DB)
+		insuranceHandler.RegisterRoutes(r)
+
+		// Fleet Module (V032)
+		fleetHandler := handlers.NewFleetHandler(database.DB)
+		fleetHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)

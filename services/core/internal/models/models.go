@@ -882,6 +882,707 @@ type P6SyncLog struct {
 }
 
 // ============================================================================
+// V027 — Funding Module
+// ============================================================================
+
+type FundingSource struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	SourceType      string    `json:"source_type"`
+	SourceName      string    `json:"source_name"`
+	SourceCode      *string   `json:"source_code,omitempty"`
+	Description     *string   `json:"description,omitempty"`
+	ContactInfo     *string   `json:"contact_info,omitempty"`
+	CommitmentAmount float64  `json:"commitment_amount"`
+	Currency        string    `json:"currency"`
+	Status          string    `json:"status"`
+	IsActive        bool      `json:"is_active"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type FundingTranche struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	FundingSourceID string    `json:"funding_source_id"`
+	TrancheName     string    `json:"tranche_name"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	ExpectedDate    *string   `json:"expected_date,omitempty"`
+	ActualDate      *string   `json:"actual_date,omitempty"`
+	Status          string    `json:"status"`
+	Terms           *string   `json:"terms,omitempty"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type FundingDrawdown struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	FundingSourceID string    `json:"funding_source_id"`
+	TrancheID       *string   `json:"tranche_id,omitempty"`
+	DrawdownDate    string    `json:"drawdown_date"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	ExchangeRate    float64   `json:"exchange_rate"`
+	Reference       *string   `json:"reference,omitempty"`
+	Status          string    `json:"status"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type FundingCovenant struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	FundingSourceID string    `json:"funding_source_id"`
+	CovenantType    string    `json:"covenant_type"`
+	CovenantName    string    `json:"covenant_name"`
+	Description     *string   `json:"description,omitempty"`
+	Metric          *string   `json:"metric,omitempty"`
+	Threshold       *string   `json:"threshold,omitempty"`
+	Status          string    `json:"status"`
+	BreachDate      *string   `json:"breach_date,omitempty"`
+	BreachNotes     *string   `json:"breach_notes,omitempty"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type MultiCurrencyRate struct {
+	ID              string    `json:"id"`
+	BaseCurrency    string    `json:"base_currency"`
+	TargetCurrency  string    `json:"target_currency"`
+	Rate            float64   `json:"rate"`
+	RateDate        string    `json:"rate_date"`
+	Source          *string   `json:"source,omitempty"`
+	IsHistorical    bool      `json:"is_historical"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type CurrencyHedge struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	HedgeType       string    `json:"hedge_type"`
+	BaseCurrency    string    `json:"base_currency"`
+	HedgeCurrency   string    `json:"hedge_currency"`
+	NotionalAmount  float64   `json:"notional_amount"`
+	StrikeRate      *float64  `json:"strike_rate,omitempty"`
+	MaturityDate    *string   `json:"maturity_date,omitempty"`
+	Counterparty    *string   `json:"counterparty,omitempty"`
+	Status          string    `json:"status"`
+	IsActive        bool      `json:"is_active"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type Guarantee struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	ContractID      *string   `json:"contract_id,omitempty"`
+	GuaranteeType   string    `json:"guarantee_type"`
+	GuaranteeNumber *string   `json:"guarantee_number,omitempty"`
+	IssuingBank     *string   `json:"issuing_bank,omitempty"`
+	Beneficiary     *string   `json:"beneficiary,omitempty"`
+	Applicant       *string   `json:"applicant,omitempty"`
+	Amount          float64   `json:"amount"`
+	Currency        string    `json:"currency"`
+	IssueDate       *string   `json:"issue_date,omitempty"`
+	ExpiryDate      *string   `json:"expiry_date,omitempty"`
+	ClaimExpiryDate *string   `json:"claim_expiry_date,omitempty"`
+	Status          string    `json:"status"`
+	IsActive        bool      `json:"is_active"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type GuaranteeClaim struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	GuaranteeID      string    `json:"guarantee_id"`
+	ClaimDate        string    `json:"claim_date"`
+	ClaimAmount      float64   `json:"claim_amount"`
+	ClaimReason      *string   `json:"claim_reason,omitempty"`
+	ClaimStatus      string    `json:"claim_status"`
+	ResponseDate     *string   `json:"response_date,omitempty"`
+	SettlementAmount *float64  `json:"settlement_amount,omitempty"`
+	Notes            *string   `json:"notes,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type GuaranteeAmendment struct {
+	ID              string    `json:"id"`
+	GuaranteeID     string    `json:"guarantee_id"`
+	AmendmentNumber *string   `json:"amendment_number,omitempty"`
+	AmendmentDate   *string   `json:"amendment_date,omitempty"`
+	Description     *string   `json:"description,omitempty"`
+	NewAmount       *float64  `json:"new_amount,omitempty"`
+	NewExpiryDate   *string   `json:"new_expiry_date,omitempty"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// ============================================================================
+// V028 — Neo4j + Kafka Module
+// ============================================================================
+
+type KnowledgeGraphNode struct {
+	ID             string    `json:"id"`
+	NodeType       string    `json:"node_type"`
+	NodeLabel      *string   `json:"node_label,omitempty"`
+	NodeProperties *string   `json:"node_properties,omitempty"`
+	Neo4jID        *int64    `json:"neo4j_id,omitempty"`
+	IsSynced       bool      `json:"is_synced"`
+	IsActive       bool      `json:"is_active"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type KnowledgeGraphEdge struct {
+	ID             string    `json:"id"`
+	EdgeType       string    `json:"edge_type"`
+	SourceNodeID   string    `json:"source_node_id"`
+	TargetNodeID   string    `json:"target_node_id"`
+	EdgeProperties *string   `json:"edge_properties,omitempty"`
+	Neo4jID        *int64    `json:"neo4j_id,omitempty"`
+	IsSynced       bool      `json:"is_synced"`
+	IsActive       bool      `json:"is_active"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type GraphSyncQueue struct {
+	ID           string     `json:"id"`
+	Operation    string     `json:"operation"`
+	EntityType   string     `json:"entity_type"`
+	EntityID     string     `json:"entity_id"`
+	Payload      *string    `json:"payload,omitempty"`
+	Status       string     `json:"status"`
+	ErrorMessage *string    `json:"error_message,omitempty"`
+	RetryCount   int        `json:"retry_count"`
+	MaxRetries   int        `json:"max_retries"`
+	CreatedAt    time.Time  `json:"created_at"`
+	ProcessedAt  *time.Time `json:"processed_at,omitempty"`
+}
+
+type KafkaTopic struct {
+	ID                string    `json:"id"`
+	TopicName         string    `json:"topic_name"`
+	Description       *string   `json:"description,omitempty"`
+	Partitions        int       `json:"partitions"`
+	ReplicationFactor int       `json:"replication_factor"`
+	Config            *string   `json:"config,omitempty"`
+	IsInternal        bool      `json:"is_internal"`
+	IsActive          bool      `json:"is_active"`
+	CreatedAt         time.Time `json:"created_at"`
+}
+
+type KafkaEvent struct {
+	ID         string    `json:"id"`
+	TopicID    *string   `json:"topic_id,omitempty"`
+	TopicName  string    `json:"topic_name"`
+	EventType  *string   `json:"event_type,omitempty"`
+	EventKey   *string   `json:"event_key,omitempty"`
+	EventValue *string   `json:"event_value,omitempty"`
+	Headers    *string   `json:"headers,omitempty"`
+	Partition  *int      `json:"partition,omitempty"`
+	Offset     *int64    `json:"offset,omitempty"`
+	Producer   *string   `json:"producer,omitempty"`
+	Status     string    `json:"status"`
+	CreatedAt  time.Time `json:"created_at"`
+}
+
+type KafkaConsumer struct {
+	ID           string    `json:"id"`
+	ConsumerName string    `json:"consumer_name"`
+	GroupID      string    `json:"group_id"`
+	TopicPattern *string   `json:"topic_pattern,omitempty"`
+	Description  *string   `json:"description,omitempty"`
+	Status       string    `json:"status"`
+	Config       *string   `json:"config,omitempty"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+// ============================================================================
+// V029 — Laboratory Module
+// ============================================================================
+
+type MaterialTest struct {
+	ID           string    `json:"id"`
+	ProjectID    string    `json:"project_id"`
+	TestNumber   string    `json:"test_number"`
+	MaterialType string    `json:"material_type"`
+	TestType     string    `json:"test_type"`
+	Specification *string  `json:"specification,omitempty"`
+	SampleID     *string   `json:"sample_id,omitempty"`
+	SamplingDate *string   `json:"sampling_date,omitempty"`
+	TestDate     *string   `json:"test_date,omitempty"`
+	Result       *string   `json:"result,omitempty"`
+	Status       string    `json:"status"`
+	TestedBy     *string   `json:"tested_by,omitempty"`
+	ApprovedBy   *string   `json:"approved_by,omitempty"`
+	Notes        *string   `json:"notes,omitempty"`
+	IsActive     bool      `json:"is_active"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type ConcreteTest struct {
+	ID                    string    `json:"id"`
+	ProjectID             string    `json:"project_id"`
+	MaterialTestID        *string   `json:"material_test_id,omitempty"`
+	SampleID              *string   `json:"sample_id,omitempty"`
+	ConcreteGrade         *string   `json:"concrete_grade,omitempty"`
+	Slump                 *float64  `json:"slump,omitempty"`
+	CompressiveStrength7d *float64  `json:"compressive_strength_7d,omitempty"`
+	CompressiveStrength14d *float64 `json:"compressive_strength_14d,omitempty"`
+	CompressiveStrength28d *float64 `json:"compressive_strength_28d,omitempty"`
+	FlexuralStrength      *float64  `json:"flexural_strength,omitempty"`
+	AirContent            *float64  `json:"air_content,omitempty"`
+	Temperature           *float64  `json:"temperature,omitempty"`
+	UnitWeight            *float64  `json:"unit_weight,omitempty"`
+	CuringMethod          *string   `json:"curing_method,omitempty"`
+	TestDate              *string   `json:"test_date,omitempty"`
+	Result                *string   `json:"result,omitempty"`
+	TestedBy              *string   `json:"tested_by,omitempty"`
+	Notes                 *string   `json:"notes,omitempty"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
+type SoilTest struct {
+	ID                  string    `json:"id"`
+	ProjectID           string    `json:"project_id"`
+	MaterialTestID      *string   `json:"material_test_id,omitempty"`
+	SampleID            *string   `json:"sample_id,omitempty"`
+	SoilType            *string   `json:"soil_type,omitempty"`
+	MoistureContent     *float64  `json:"moisture_content,omitempty"`
+	DryDensity          *float64  `json:"dry_density,omitempty"`
+	AtterbergLimitLiquid *float64 `json:"atterberg_limit_liquid,omitempty"`
+	AtterbergLimitPlastic *float64 `json:"atterberg_limit_plastic,omitempty"`
+	PlasticityIndex     *float64  `json:"plasticity_index,omitempty"`
+	CompactionPct       *float64  `json:"compaction_pct,omitempty"`
+	CbrValue            *float64  `json:"cbr_value,omitempty"`
+	ShearStrength       *float64  `json:"shear_strength,omitempty"`
+	TestDate            *string   `json:"test_date,omitempty"`
+	Result              *string   `json:"result,omitempty"`
+	TestedBy            *string   `json:"tested_by,omitempty"`
+	Notes               *string   `json:"notes,omitempty"`
+	CreatedAt           time.Time `json:"created_at"`
+}
+
+type SteelTest struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	MaterialTestID  *string   `json:"material_test_id,omitempty"`
+	SampleID        *string   `json:"sample_id,omitempty"`
+	SteelGrade      *string   `json:"steel_grade,omitempty"`
+	DiameterMm      *float64  `json:"diameter_mm,omitempty"`
+	YieldStrength   *float64  `json:"yield_strength,omitempty"`
+	TensileStrength *float64  `json:"tensile_strength,omitempty"`
+	ElongationPct   *float64  `json:"elongation_pct,omitempty"`
+	BendTestResult  *string   `json:"bend_test_result,omitempty"`
+	WeldTestResult  *string   `json:"weld_test_result,omitempty"`
+	TestDate        *string   `json:"test_date,omitempty"`
+	Result          *string   `json:"result,omitempty"`
+	TestedBy        *string   `json:"tested_by,omitempty"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type LabCertificate struct {
+	ID                string    `json:"id"`
+	ProjectID         string    `json:"project_id"`
+	CertificateNumber string    `json:"certificate_number"`
+	CertificateType   string    `json:"certificate_type"`
+	IssuingBody       *string   `json:"issuing_body,omitempty"`
+	IssueDate         *string   `json:"issue_date,omitempty"`
+	ExpiryDate        *string   `json:"expiry_date,omitempty"`
+	Description       *string   `json:"description,omitempty"`
+	DocumentURL       *string   `json:"document_url,omitempty"`
+	Status            string    `json:"status"`
+	IsActive          bool      `json:"is_active"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+type LabEquipment struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	EquipmentCode   string    `json:"equipment_code"`
+	EquipmentName   string    `json:"equipment_name"`
+	EquipmentType   *string   `json:"equipment_type,omitempty"`
+	Manufacturer    *string   `json:"manufacturer,omitempty"`
+	Model           *string   `json:"model,omitempty"`
+	SerialNumber    *string   `json:"serial_number,omitempty"`
+	CalibrationDue  *string   `json:"calibration_due,omitempty"`
+	Status          string    `json:"status"`
+	Notes           *string   `json:"notes,omitempty"`
+	IsActive        bool      `json:"is_active"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type SamplingLog struct {
+	ID            string    `json:"id"`
+	ProjectID     string    `json:"project_id"`
+	SampleID      string    `json:"sample_id"`
+	SampleType    string    `json:"sample_type"`
+	Location      *string   `json:"location,omitempty"`
+	SamplingDate  string    `json:"sampling_date"`
+	SampledBy     *string   `json:"sampled_by,omitempty"`
+	MaterialTestID *string  `json:"material_test_id,omitempty"`
+	Notes         *string   `json:"notes,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+// ============================================================================
+// V030 — Permits Module
+// ============================================================================
+
+type RegulatoryBody struct {
+	ID          string    `json:"id"`
+	BodyName    string    `json:"body_name"`
+	BodyCode    *string   `json:"body_code,omitempty"`
+	Jurisdiction *string  `json:"jurisdiction,omitempty"`
+	ContactInfo *string   `json:"contact_info,omitempty"`
+	Website     *string   `json:"website,omitempty"`
+	Notes       *string   `json:"notes,omitempty"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+type PermitApplication struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	RegulatoryBodyID *string   `json:"regulatory_body_id,omitempty"`
+	PermitNumber     *string   `json:"permit_number,omitempty"`
+	PermitType       string    `json:"permit_type"`
+	Description      *string   `json:"description,omitempty"`
+	ApplicationDate  *string   `json:"application_date,omitempty"`
+	DecisionDate     *string   `json:"decision_date,omitempty"`
+	Status           string    `json:"status"`
+	ApprovedBy       *string   `json:"approved_by,omitempty"`
+	ExpiryDate       *string   `json:"expiry_date,omitempty"`
+	Notes            *string   `json:"notes,omitempty"`
+	IsActive         bool      `json:"is_active"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type PermitDocument struct {
+	ID                  string    `json:"id"`
+	PermitApplicationID string    `json:"permit_application_id"`
+	DocumentType        string    `json:"document_type"`
+	DocumentName        *string   `json:"document_name,omitempty"`
+	DocumentURL         *string   `json:"document_url,omitempty"`
+	Version             *string   `json:"version,omitempty"`
+	SubmittedDate       *string   `json:"submitted_date,omitempty"`
+	Status              string    `json:"status"`
+	Notes               *string   `json:"notes,omitempty"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type PermitInspection struct {
+	ID                  string    `json:"id"`
+	PermitApplicationID string    `json:"permit_application_id"`
+	InspectionType      string    `json:"inspection_type"`
+	InspectionDate      *string   `json:"inspection_date,omitempty"`
+	InspectorName       *string   `json:"inspector_name,omitempty"`
+	InspectorAgency     *string   `json:"inspector_agency,omitempty"`
+	Result              *string   `json:"result,omitempty"`
+	Findings            *string   `json:"findings,omitempty"`
+	CorrectiveActions   *string   `json:"corrective_actions,omitempty"`
+	ScheduledDate       *string   `json:"scheduled_date,omitempty"`
+	CompletedDate       *string   `json:"completed_date,omitempty"`
+	Status              string    `json:"status"`
+	IsActive            bool      `json:"is_active"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type PermitRenewal struct {
+	ID                  string    `json:"id"`
+	PermitApplicationID string    `json:"permit_application_id"`
+	RenewalNumber       *string   `json:"renewal_number,omitempty"`
+	RenewalDate         *string   `json:"renewal_date,omitempty"`
+	ExpiryDate          *string   `json:"expiry_date,omitempty"`
+	FeeAmount           *float64  `json:"fee_amount,omitempty"`
+	FeeCurrency         string    `json:"fee_currency"`
+	Status              string    `json:"status"`
+	Notes               *string   `json:"notes,omitempty"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+type PermitCondition struct {
+	ID                  string    `json:"id"`
+	PermitApplicationID string    `json:"permit_application_id"`
+	ConditionNumber     *string   `json:"condition_number,omitempty"`
+	Description         string    `json:"description"`
+	ConditionType       *string   `json:"condition_type,omitempty"`
+	DueDate             *string   `json:"due_date,omitempty"`
+	Status              string    `json:"status"`
+	SatisfiedDate       *string   `json:"satisfied_date,omitempty"`
+	VerifiedBy          *string   `json:"verified_by,omitempty"`
+	CreatedAt           time.Time `json:"created_at"`
+	UpdatedAt           time.Time `json:"updated_at"`
+}
+
+// ============================================================================
+// V031 — Insurance Module
+// ============================================================================
+
+type InsuranceBroker struct {
+	ID            string    `json:"id"`
+	BrokerName    string    `json:"broker_name"`
+	ContactPerson *string   `json:"contact_person,omitempty"`
+	Email         *string   `json:"email,omitempty"`
+	Phone         *string   `json:"phone,omitempty"`
+	Address       *string   `json:"address,omitempty"`
+	LicenseNumber *string   `json:"license_number,omitempty"`
+	Notes         *string   `json:"notes,omitempty"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type InsurancePolicy struct {
+	ID            string    `json:"id"`
+	ProjectID     *string   `json:"project_id,omitempty"`
+	PolicyNumber  string    `json:"policy_number"`
+	PolicyType    string    `json:"policy_type"`
+	Insurer       string    `json:"insurer"`
+	BrokerID      *string   `json:"broker_id,omitempty"`
+	InsuredParty  *string   `json:"insured_party,omitempty"`
+	SumInsured    float64   `json:"sum_insured"`
+	Currency      string    `json:"currency"`
+	PremiumAmount *float64  `json:"premium_amount,omitempty"`
+	Deductible    *float64  `json:"deductible,omitempty"`
+	Excess        *float64  `json:"excess,omitempty"`
+	StartDate     string    `json:"start_date"`
+	EndDate       string    `json:"end_date"`
+	RenewalDate   *string   `json:"renewal_date,omitempty"`
+	Territory     *string   `json:"territory,omitempty"`
+	Status        string    `json:"status"`
+	Description   *string   `json:"description,omitempty"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type InsuranceCoverage struct {
+	ID            string    `json:"id"`
+	PolicyID      string    `json:"policy_id"`
+	CoverageType  string    `json:"coverage_type"`
+	CoverageLimit *float64  `json:"coverage_limit,omitempty"`
+	Currency      string    `json:"currency"`
+	Deductible    *float64  `json:"deductible,omitempty"`
+	Sublimit      *float64  `json:"sublimit,omitempty"`
+	Description   *string   `json:"description,omitempty"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+}
+
+type InsurancePremium struct {
+	ID            string    `json:"id"`
+	PolicyID      string    `json:"policy_id"`
+	PremiumNumber *string   `json:"premium_number,omitempty"`
+	Amount        float64   `json:"amount"`
+	Currency      string    `json:"currency"`
+	DueDate       *string   `json:"due_date,omitempty"`
+	PaidDate      *string   `json:"paid_date,omitempty"`
+	PaymentMethod *string   `json:"payment_method,omitempty"`
+	Status        string    `json:"status"`
+	Notes         *string   `json:"notes,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type InsuranceClaim struct {
+	ID            string    `json:"id"`
+	ProjectID     *string   `json:"project_id,omitempty"`
+	PolicyID      string    `json:"policy_id"`
+	ClaimNumber   string    `json:"claim_number"`
+	ClaimDate     string    `json:"claim_date"`
+	IncidentDate  *string   `json:"incident_date,omitempty"`
+	IncidentType  *string   `json:"incident_type,omitempty"`
+	Cause         *string   `json:"cause,omitempty"`
+	Description   *string   `json:"description,omitempty"`
+	ClaimedAmount *float64  `json:"claimed_amount,omitempty"`
+	Currency      string    `json:"currency"`
+	SettledAmount *float64  `json:"settled_amount,omitempty"`
+	Status        string    `json:"status"`
+	AdjusterName  *string   `json:"adjuster_name,omitempty"`
+	DecisionDate  *string   `json:"decision_date,omitempty"`
+	Notes         *string   `json:"notes,omitempty"`
+	IsActive      bool      `json:"is_active"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+}
+
+type CertificateOfInsurance struct {
+	ID                string    `json:"id"`
+	PolicyID          string    `json:"policy_id"`
+	CertificateNumber string    `json:"certificate_number"`
+	CertificateHolder *string   `json:"certificate_holder,omitempty"`
+	IssueDate         *string   `json:"issue_date,omitempty"`
+	ExpiryDate        *string   `json:"expiry_date,omitempty"`
+	Description       *string   `json:"description,omitempty"`
+	DocumentURL       *string   `json:"document_url,omitempty"`
+	Status            string    `json:"status"`
+	IsActive          bool      `json:"is_active"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
+}
+
+// ============================================================================
+// V032 — Fleet Module
+// ============================================================================
+
+type FleetVehicle struct {
+	ID               string    `json:"id"`
+	ProjectID        string    `json:"project_id"`
+	EquipmentID      *string   `json:"equipment_id,omitempty"`
+	VehicleType      string    `json:"vehicle_type"`
+	Make             *string   `json:"make,omitempty"`
+	Model            *string   `json:"model,omitempty"`
+	Year             *int      `json:"year,omitempty"`
+	VIN              *string   `json:"vin,omitempty"`
+	LicensePlate     *string   `json:"license_plate,omitempty"`
+	RegistrationNum  *string   `json:"registration_number,omitempty"`
+	FuelType         *string   `json:"fuel_type,omitempty"`
+	EngineCapacity   *float64  `json:"engine_capacity,omitempty"`
+	Horsepower       *int      `json:"horsepower,omitempty"`
+	WeightKg         *float64  `json:"weight_kg,omitempty"`
+	LoadCapacityKg   *float64  `json:"load_capacity_kg,omitempty"`
+	Status           string    `json:"status"`
+	AssignedDriver   *string   `json:"assigned_driver,omitempty"`
+	Location         *string   `json:"location,omitempty"`
+	MileageKm        float64   `json:"mileage_km"`
+	IsActive         bool      `json:"is_active"`
+	Notes            *string   `json:"notes,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type VehicleDriver struct {
+	ID             string    `json:"id"`
+	ProjectID      string    `json:"project_id"`
+	DriverName     string    `json:"driver_name"`
+	LicenseNumber  *string   `json:"license_number,omitempty"`
+	LicenseType    *string   `json:"license_type,omitempty"`
+	LicenseExpiry  *string   `json:"license_expiry,omitempty"`
+	ContactPhone   *string   `json:"contact_phone,omitempty"`
+	Email          *string   `json:"email,omitempty"`
+	Certifications *string   `json:"certifications,omitempty"`
+	Status         string    `json:"status"`
+	IsActive       bool      `json:"is_active"`
+	Notes          *string   `json:"notes,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
+}
+
+type VehicleFuel struct {
+	ID             string    `json:"id"`
+	ProjectID      string    `json:"project_id"`
+	VehicleID      string    `json:"vehicle_id"`
+	DriverID       *string   `json:"driver_id,omitempty"`
+	FuelDate       string    `json:"fuel_date"`
+	FuelType       *string   `json:"fuel_type,omitempty"`
+	QuantityLiters float64  `json:"quantity_liters"`
+	UnitPrice      float64  `json:"unit_price"`
+	TotalCost      float64  `json:"total_cost"`
+	Currency       string   `json:"currency"`
+	OdometerKm     *float64 `json:"odometer_km,omitempty"`
+	StationName    *string  `json:"station_name,omitempty"`
+	ReceiptNumber  *string  `json:"receipt_number,omitempty"`
+	Notes          *string  `json:"notes,omitempty"`
+	CreatedAt      time.Time `json:"created_at"`
+}
+
+type VehicleMaintenance struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	VehicleID       string    `json:"vehicle_id"`
+	MaintenanceType string    `json:"maintenance_type"`
+	Description     *string   `json:"description,omitempty"`
+	ScheduledDate   *string   `json:"scheduled_date,omitempty"`
+	CompletedDate   *string   `json:"completed_date,omitempty"`
+	OdometerKm      *float64  `json:"odometer_km,omitempty"`
+	CostAmount      *float64  `json:"cost_amount,omitempty"`
+	Currency        string    `json:"currency"`
+	Vendor          *string   `json:"vendor,omitempty"`
+	InvoiceNumber   *string   `json:"invoice_number,omitempty"`
+	Status          string    `json:"status"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type VehicleAccident struct {
+	ID              string    `json:"id"`
+	ProjectID       string    `json:"project_id"`
+	VehicleID       string    `json:"vehicle_id"`
+	DriverID        *string   `json:"driver_id,omitempty"`
+	AccidentDate    string    `json:"accident_date"`
+	Location        *string   `json:"location,omitempty"`
+	Description     *string   `json:"description,omitempty"`
+	Severity        *string   `json:"severity,omitempty"`
+	Damages         *string   `json:"damages,omitempty"`
+	Injuries        int       `json:"injuries"`
+	Fatalities      int       `json:"fatalities"`
+	PoliceReport    *string   `json:"police_report,omitempty"`
+	InsuranceClaimID *string  `json:"insurance_claim_id,omitempty"`
+	CostEstimate    *float64  `json:"cost_estimate,omitempty"`
+	Status          string    `json:"status"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
+}
+
+type VehicleTracking struct {
+	ID              string    `json:"id"`
+	VehicleID       string    `json:"vehicle_id"`
+	DriverID        *string   `json:"driver_id,omitempty"`
+	TrackDate       string    `json:"track_date"`
+	StartTime       *string   `json:"start_time,omitempty"`
+	EndTime         *string   `json:"end_time,omitempty"`
+	StartLocation   *string   `json:"start_location,omitempty"`
+	EndLocation     *string   `json:"end_location,omitempty"`
+	DistanceKm      *float64  `json:"distance_km,omitempty"`
+	DurationMinutes *int      `json:"duration_minutes,omitempty"`
+	Purpose         *string   `json:"purpose,omitempty"`
+	Notes           *string   `json:"notes,omitempty"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+type VehicleTelematics struct {
+	ID            string    `json:"id"`
+	VehicleID     string    `json:"vehicle_id"`
+	RecordedAt    time.Time `json:"recorded_at"`
+	Latitude      *float64  `json:"latitude,omitempty"`
+	Longitude     *float64  `json:"longitude,omitempty"`
+	SpeedKph      *float64  `json:"speed_kph,omitempty"`
+	Heading       *float64  `json:"heading,omitempty"`
+	AltitudeM     *float64  `json:"altitude_m,omitempty"`
+	EngineTemp    *float64  `json:"engine_temp,omitempty"`
+	FuelLevelPct  *float64  `json:"fuel_level_pct,omitempty"`
+	BatteryVoltage *float64 `json:"battery_voltage,omitempty"`
+	TirePressure  *string   `json:"tire_pressure,omitempty"`
+	EngineRPM     *int      `json:"engine_rpm,omitempty"`
+	OdometerKm    *float64  `json:"odometer_km,omitempty"`
+	Diagnostics   *string   `json:"diagnostics,omitempty"`
+}
+
+// ============================================================================
 // Common types
 // ============================================================================
 

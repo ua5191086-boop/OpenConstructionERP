@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Knowledge Graph Dashboard — V028</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{font-size:24px;margin-bottom:4px;color:#fff}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.card .label{font-size:11px;text-transform:uppercase;color:#64748b}
+.card .value{font-size:24px;font-weight:700;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#64748b;text-transform:uppercase;font-size:11px;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>🔗 Knowledge Graph Dashboard</h1>
+<p class="sub">Neo4j Knowledge Graph + Kafka Event Bus — V028</p>
+<div class="grid" id="statsRow"></div>
+<div class="chart-row">
+  <div class="chart-card"><h3>Nodes by Type</h3><canvas id="nodeChart"></canvas></div>
+  <div class="chart-card"><h3>Sync Queue Status</h3><canvas id="syncChart"></canvas></div>
+</div>
+<div class="card" style="margin-bottom:16px">
+  <h3 style="margin-bottom:12px;color:#fff">Recent Events</h3>
+  <table><thead><tr><th>Topic</th><th>Type</th><th>Key</th><th>Status</th><th>Time</th></tr></thead><tbody id="eventTable"></tbody></table>
+</div>
+<script>
+async function load(){
+  try{
+    const [graph, topics, events] = await Promise.all([
+      fetch('/api/v1/protected/knowledge/graph').then(r=>r.json()),
+      fetch('/api/v1/protected/events/topics').then(r=>r.json()),
+      fetch('/api/v1/protected/events/events').then(r=>r.json()),
+    ]);
+    const nodes = graph.nodes||[];
+    const edges = graph.edges||[];
+    document.getElementById('statsRow').innerHTML = `
+      <div class="card"><div class="label">Total Nodes</div><div class="value" style="color:#3b82f6">${nodes.length}</div></div>
+      <div class="card"><div class="label">Total Edges</div><div class="value" style="color:#22c55e">${edges.length}</div></div>
+      <div class="card"><div class="label">Kafka Topics</div><div class="value" style="color:#a855f7">${topics.length}</div></div>
+      <div class="card"><div class="label">Sync Pending</div><div class="value" style="color:#f97316">${nodes.filter(n=>!n.is_synced).length}</div></div>
+    `;
+    const nodeTypes = {};
+    nodes.forEach(n=>{nodeTypes[n.node_type]=(nodeTypes[n.node_type]||0)+1});
+    new Chart(document.getElementById('nodeChart'),{type:'bar',data:{labels:Object.keys(nodeTypes),datasets:[{data:Object.values(nodeTypes),backgroundColor:'#3b82f6'}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+    new Chart(document.getElementById('syncChart'),{type:'doughnut',data:{labels:['Synced','Pending'],datasets:[{data:[nodes.filter(n=>n.is_synced).length,nodes.filter(n=>!n.is_synced).length],backgroundColor:['#22c55e','#f97316']}]}});
+    document.getElementById('eventTable').innerHTML = (events||[]).slice(0,15).map(e=>
+      `<tr><td style="font-family:monospace;font-size:11px">${e.topic_name}</td><td>${e.event_type||'—'}</td><td>${e.event_key||'—'}</td><td><span class="badge badge-active">${e.status}</span></td><td style="font-size:11px;color:#64748b">${new Date(e.created_at).toLocaleString()}</td></tr>`
+    ).join('');
+  }catch(e){document.getElementById('statsRow').innerHTML=`<div class="card"><div class="label">Error</div><div class="value" style="color:#ef4444">API unavailable</div></div>`}
+}
+load();
+</script>
+</body>
+</html>

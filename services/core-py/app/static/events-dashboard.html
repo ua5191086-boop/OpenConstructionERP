@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Events Dashboard — V028</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{font-size:24px;margin-bottom:4px;color:#fff}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.card .label{font-size:11px;text-transform:uppercase;color:#64748b}
+.card .value{font-size:24px;font-weight:700;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#64748b;text-transform:uppercase;font-size:11px;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+pre{background:#0f172a;padding:8px;border-radius:6px;font-size:11px;overflow-x:auto}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>📡 Events Dashboard</h1>
+<p class="sub">Kafka Event Bus — Topics, Consumers & Event Log — V028</p>
+<div class="grid" id="statsRow"></div>
+<div class="chart-row">
+  <div class="chart-card"><h3>Topics</h3><div style="max-height:300px;overflow-y:auto"><table><thead><tr><th>Topic</th><th>Partitions</th><th>Internal</th></tr></thead><tbody id="topicTable"></tbody></table></div></div>
+  <div class="chart-card"><h3>Consumers</h3><div style="max-height:300px;overflow-y:auto"><table><thead><tr><th>Name</th><th>Group ID</th><th>Status</th></tr></thead><tbody id="consumerTable"></tbody></table></div></div>
+</div>
+<div class="card">
+  <h3 style="margin-bottom:12px;color:#fff">Recent Events</h3>
+  <table><thead><tr><th>Topic</th><th>Type</th><th>Key</th><th>Status</th><th>Time</th></tr></thead><tbody id="eventTable"></tbody></table>
+</div>
+<script>
+async function load(){
+  try{
+    const [topics, events, consumers] = await Promise.all([
+      fetch('/api/v1/protected/events/topics').then(r=>r.json()),
+      fetch('/api/v1/protected/events/events').then(r=>r.json()),
+      fetch('/api/v1/protected/events/consumers').then(r=>r.json()),
+    ]);
+    document.getElementById('statsRow').innerHTML = `
+      <div class="card"><div class="label">Topics</div><div class="value" style="color:#3b82f6">${topics.length}</div></div>
+      <div class="card"><div class="label">Events</div><div class="value" style="color:#22c55e">${events.length}</div></div>
+      <div class="card"><div class="label">Consumers</div><div class="value" style="color:#a855f7">${consumers.length}</div></div>
+      <div class="card"><div class="label">Failed Events</div><div class="value" style="color:#ef4444">${events.filter(e=>e.status==='failed').length}</div></div>
+    `;
+    document.getElementById('topicTable').innerHTML = topics.map(t=>
+      `<tr><td style="font-family:monospace;font-size:11px">${t.topic_name}</td><td>${t.partitions}</td><td>${t.is_internal?'✅':'❌'}</td></tr>`
+    ).join('');
+    document.getElementById('consumerTable').innerHTML = consumers.map(c=>
+      `<tr><td>${c.consumer_name}</td><td style="font-family:monospace;font-size:11px">${c.group_id}</td><td>${c.status}</td></tr>`
+    ).join('');
+    document.getElementById('eventTable').innerHTML = events.slice(0,20).map(e=>
+      `<tr><td style="font-family:monospace;font-size:11px">${e.topic_name}</td><td>${e.event_type||'—'}</td><td>${e.event_key||'—'}</td><td>${e.status}</td><td style="font-size:11px;color:#64748b">${new Date(e.created_at).toLocaleString()}</td></tr>`
+    ).join('');
+  }catch(e){document.getElementById('statsRow').innerHTML=`<div class="card"><div class="label">Error</div><div class="value" style="color:#ef4444">API unavailable</div></div>`}
+}
+load();
+</script>
+</body>
+</html>

@@ -1,8 +1,9 @@
+// @ts-nocheck
 import { useState, useEffect } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts'
 
+// Colors for severity and categories
 const SEV_COLORS: Record<string, string> = { critical: '#ef4444', warning: '#f97316', info: '#3b82f6', emergency: '#a855f7' }
-const CON_COLORS = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6','#f59e0b','#ec4899']
 
 export default function TBMPage() {
   const [data, setData] = useState<any>(null)

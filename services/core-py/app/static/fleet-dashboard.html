@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Dashboard — V032</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{font-size:24px;margin-bottom:4px;color:#fff}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.card .label{font-size:11px;text-transform:uppercase;color:#64748b}
+.card .value{font-size:24px;font-weight:700;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#64748b;text-transform:uppercase;font-size:11px;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-ok{background:#22c55e22;color:#22c55e} .badge-warn{background:#f9731622;color:#f97316}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>🚛 Fleet Dashboard</h1>
+<p class="sub">Vehicles, Drivers, Fuel, Maintenance & Tracking — V032</p>
+<div class="grid" id="statsRow"></div>
+<div class="chart-row">
+  <div class="chart-card"><h3>Vehicles by Type</h3><canvas id="vtypeChart"></canvas></div>
+  <div class="chart-card"><h3>Vehicle Status</h3><canvas id="vstatusChart"></canvas></div>
+</div>
+<div class="card">
+  <h3 style="margin-bottom:12px;color:#fff">Recent Maintenance</h3>
+  <table><thead><tr><th>Vehicle</th><th>Type</th><th>Scheduled</th><th>Status</th><th>Cost</th></tr></thead><tbody id="maintTable"></tbody></table>
+</div>
+<script>
+async function load(){
+  try{
+    const [vehicles, drivers, maintenance] = await Promise.all([
+      fetch('/api/v1/protected/fleet/vehicles').then(r=>r.json()),
+      fetch('/api/v1/protected/fleet/drivers').then(r=>r.json()),
+      fetch('/api/v1/protected/fleet/maintenance').then(r=>r.json()),
+    ]);
+    const totalFuel = 0;
+    document.getElementById('statsRow').innerHTML = `
+      <div class="card"><div class="label">Vehicles</div><div class="value" style="color:#3b82f6">${vehicles.length}</div></div>
+      <div class="card"><div class="label">Operational</div><div class="value" style="color:#22c55e">${vehicles.filter(v=>v.status==='operational').length}</div></div>
+      <div class="card"><div class="label">Drivers</div><div class="value" style="color:#a855f7">${drivers.length}</div></div>
+      <div class="card"><div class="label">Maintenance</div><div class="value" style="color:#f97316">${maintenance.length}</div></div>
+    `;
+    const vtypes={};vehicles.forEach(v=>{vtypes[v.vehicle_type]=(vtypes[v.vehicle_type]||0)+1});
+    new Chart(document.getElementById('vtypeChart'),{type:'bar',data:{labels:Object.keys(vtypes),datasets:[{data:Object.values(vtypes),backgroundColor:['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#14b8a6']}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+    const vst={};vehicles.forEach(v=>{vst[v.status]=(vst[v.status]||0)+1});
+    new Chart(document.getElementById('vstatusChart'),{type:'doughnut',data:{labels:Object.keys(vst),datasets:[{data:Object.values(vst),backgroundColor:['#22c55e','#f97316','#ef4444']}]}});
+    document.getElementById('maintTable').innerHTML = maintenance.slice(0,10).map(m=>
+      `<tr><td>${m.vehicle_id?.substring(0,8)}</td><td>${m.maintenance_type}</td><td>${m.scheduled_date||'—'}</td><td><span class="badge badge-${m.status==='completed'?'ok':'warn'}">${m.status}</span></td><td>${m.cost_amount?`$${Number(m.cost_amount).toLocaleString()}`:'—'}</td></tr>`
+    ).join('');
+  }catch(e){document.getElementById('statsRow').innerHTML=`<div class="card"><div class="label">Error</div><div class="value" style="color:#ef4444">API unavailable</div></div>`}
+}
+load();
+</script>
+</body>
+</html>

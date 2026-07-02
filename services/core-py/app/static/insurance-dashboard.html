@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insurance Dashboard — V031</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0f172a;color:#e2e8f0;padding:24px}
+h1{font-size:24px;margin-bottom:4px;color:#fff}
+.sub{color:#94a3b8;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:24px}
+.card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.card .label{font-size:11px;text-transform:uppercase;color:#64748b}
+.card .value{font-size:24px;font-weight:700;margin-top:4px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px}
+.chart-card h3{font-size:14px;font-weight:600;margin-bottom:12px;color:#fff}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:#64748b;text-transform:uppercase;font-size:11px;border-bottom:1px solid #334155}
+td{padding:8px 12px;border-bottom:1px solid #1e293b}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge-active{background:#22c55e22;color:#22c55e} .badge-expired{background:#ef444422;color:#ef4444}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<h1>🛡️ Insurance Dashboard</h1>
+<p class="sub">Policies, Claims, Coverage & Certificates — V031</p>
+<div class="grid" id="statsRow"></div>
+<div class="chart-row">
+  <div class="chart-card"><h3>Policies by Type</h3><canvas id="policyChart"></canvas></div>
+  <div class="chart-card"><h3>Claims by Status</h3><canvas id="claimChart"></canvas></div>
+</div>
+<div class="card">
+  <h3 style="margin-bottom:12px;color:#fff">Active Policies</h3>
+  <table><thead><tr><th>Policy #</th><th>Type</th><th>Insurer</th><th>Sum Insured</th><th>End Date</th></tr></thead><tbody id="policyTable"></tbody></table>
+</div>
+<script>
+async function load(){
+  try{
+    const [policies, claims, brokers] = await Promise.all([
+      fetch('/api/v1/protected/insurance/policies').then(r=>r.json()),
+      fetch('/api/v1/protected/insurance/claims').then(r=>r.json()),
+      fetch('/api/v1/protected/insurance/brokers').then(r=>r.json()),
+    ]);
+    const active = policies.filter(p=>p.status==='active');
+    const totalInsured = active.reduce((s,x)=>s+(x.sum_insured||0),0);
+    document.getElementById('statsRow').innerHTML = `
+      <div class="card"><div class="label">Active Policies</div><div class="value" style="color:#3b82f6">${active.length}</div></div>
+      <div class="card"><div class="label">Total Insured</div><div class="value" style="color:#22c55e">$${(totalInsured/1e6).toFixed(1)}M</div></div>
+      <div class="card"><div class="label">Claims</div><div class="value" style="color:#f97316">${claims.length}</div></div>
+      <div class="card"><div class="label">Brokers</div><div class="value" style="color:#a855f7">${brokers.length}</div></div>
+    `;
+    const ptypes={};policies.forEach(p=>{ptypes[p.policy_type]=(ptypes[p.policy_type]||0)+1});
+    new Chart(document.getElementById('policyChart'),{type:'bar',data:{labels:Object.keys(ptypes),datasets:[{data:Object.values(ptypes),backgroundColor:['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444']}]},options:{responsive:true,plugins:{legend:{display:false}}}});
+    const cst={};claims.forEach(c=>{cst[c.status]=(cst[c.status]||0)+1});
+    new Chart(document.getElementById('claimChart'),{type:'pie',data:{labels:Object.keys(cst),datasets:[{data:Object.values(cst),backgroundColor:['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444']}]}});
+    document.getElementById('policyTable').innerHTML = active.slice(0,10).map(p=>
+      `<tr><td style="font-family:monospace;font-size:11px">${p.policy_number}</td><td>${p.policy_type}</td><td>${p.insurer}</td><td>$${Number(p.sum_insured||0).toLocaleString()}</td><td>${p.end_date}</td></tr>`
+    ).join('');
+  }catch(e){document.getElementById('statsRow').innerHTML=`<div class="card"><div class="label">Error</div><div class="value" style="color:#ef4444">API unavailable</div></div>`}
+}
+load();
+</script>
+</body>
+</html>
