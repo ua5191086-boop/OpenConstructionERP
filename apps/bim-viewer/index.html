@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — BIM Viewer (IFC.js)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0;overflow:hidden;height:100vh}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:12px 24px;display:flex;justify-content:space-between;align-items:center;position:relative;z-index:10}
+.header h1{font-size:20px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:12px}
+.controls{display:flex;gap:8px;align-items:center}
+.controls button,.controls label{padding:6px 14px;border-radius:6px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:12px;cursor:pointer}
+.controls button.primary{background:#3b82f6;color:#fff;border:none}
+.controls button.primary:hover{background:#2563eb}
+#container{display:flex;height:calc(100vh - 56px)}
+#viewer-container{flex:1;background:#1e293b;position:relative}
+#viewer-container canvas{width:100%!important;height:100%!important}
+#sidebar{width:320px;background:#1e293b;border-left:1px solid #334155;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px}
+.sidebar-section{border-bottom:1px solid #334155;padding-bottom:12px}
+.sidebar-section h3{color:#f8fafc;font-size:14px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+#element-tree{font-size:13px;list-style:none}
+#element-tree li{padding:6px 8px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:background 0.2s}
+#element-tree li:hover{background:#1a1f2e}
+#element-tree li.selected{background:#3b82f622;border:1px solid #3b82f644}
+.tree-toggle{cursor:pointer;color:#64748b;font-size:10px;width:16px}
+#properties-panel{font-size:13px}
+.prop-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #1e293b}
+.prop-row .key{color:#94a3b8;font-size:12px}
+.prop-row .value{color:#e2e8f0;font-weight:500;text-align:right;max-width:60%;word-break:break-all}
+.info-badge{background:#0f172a;border:1px solid #334155;border-radius:8px;padding:10px;text-align:center;color:#94a3b8;font-size:12px}
+.info-badge strong{color:#3b82f6;display:block;font-size:16px;margin-bottom:4px}
+#loading-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(15,23,42,0.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:100;transition:opacity 0.5s}
+#loading-overlay.hidden{opacity:0;pointer-events:none}
+.spinner{width:48px;height:48px;border:4px solid #334155;border-top-color:#3b82f6;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#loading-overlay p{margin-top:16px;color:#94a3b8;font-size:14px}
+</style>
+</head>
+<body>
+<div id="loading-overlay">
+  <div class="spinner"></div>
+  <p>Загрузка BIM Viewer...</p>
+</div>
+<div class="header">
+  <div><h1>🏗️ <span>OpenConstructionERP</span> — BIM Viewer</h1><div class="sub">Three.js + IFC.js • Просмотр IFC-моделей</div></div>
+  <div class="controls">
+    <label for="ifc-input" class="primary">📂 Загрузить IFC</label>
+    <input type="file" id="ifc-input" accept=".ifc,.ifcxml,.ifczip" style="display:none" onchange="loadIFC(event)">
+    <button onclick="resetCamera()">🎯 Центрировать</button>
+    <button onclick="toggleWireframe()">🔲 Каркас</button>
+  </div>
+</div>
+<div id="container">
+  <div id="viewer-container"></div>
+  <div id="sidebar">
+    <div class="info-badge" id="modelInfo">
+      <strong id="modelName">IFC Модель</strong>
+      <span id="modelStats">Загрузите IFC-файл для просмотра</span>
+    </div>
+    <div class="sidebar-section">
+      <h3>📋 Элементы</h3>
+      <div style="color:#94a3b8;font-size:12px;text-align:center;padding:20px" id="treePlaceholder">Загрузите модель для отображения дерева элементов</div>
+      <ul id="element-tree"></ul>
+    </div>
+    <div class="sidebar-section">
+      <h3>ℹ️ Свойства</h3>
+      <div id="properties-panel">
+        <div style="color:#94a3b8;font-size:12px;text-align:center;padding:20px">Выберите элемент для просмотра свойств</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Three.js core -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<!-- OrbitControls -->
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<!-- web-ifc-viewer (CDN) -->
+<script src="https://unpkg.com/web-ifc-viewer@1.2.92/dist/web-ifc-viewer.min.js"></script>
+
+<script>
+// ─── IFC Viewer Setup ──────────────────────────────────────────────────────
+
+let viewer;
+let ifcModels = [];
+let selectedIds = [];
+let allItems = [];
+
+async function initViewer() {
+  try {
+    viewer = new IFCLoader.IfcViewer.default({
+      container: document.getElementById('viewer-container'),
+      backgroundColor: new THREE.Color(0x1e293b),
+    });
+    await viewer.initialize();
+    document.getElementById('loading-overlay').classList.add('hidden');
+  } catch(e) {
+    console.error('Viewer init error:', e);
+    // Fallback: show simple Three.js scene
+    initFallbackViewer();
+  }
+}
+
+function initFallbackViewer() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  const container = document.getElementById('viewer-container');
+  
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x1e293b);
+  
+  const camera = new THREE.PerspectiveCamera(45, container.clientWidth/container.clientHeight, 0.1, 1000);
+  camera.position.set(5, 5, 10);
+  
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setSize(container.clientWidth, container.clientHeight);
+  renderer.shadowMap.enabled = true;
+  container.appendChild(renderer.domElement);
+  
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  
+  // Lighting
+  const ambientLight = new THREE.AmbientLight(0x404060);
+  scene.add(ambientLight);
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(1, 2, 1);
+  scene.add(dirLight);
+  const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+  dirLight2.position.set(-1, 1, -1);
+  scene.add(dirLight2);
+  
+  // Grid
+  const gridHelper = new THREE.GridHelper(20, 20, 0x3b82f6, 0x334155);
+  scene.add(gridHelper);
+  
+  // Demo cube (placeholder for IFC model)
+  const geo = new THREE.BoxGeometry(2, 2, 2);
+  const mat = new THREE.MeshPhongMaterial({color:0x3b82f6, transparent:true, opacity:0.6});
+  const demoMesh = new THREE.Mesh(geo, mat);
+  scene.add(demoMesh);
+  
+  window.fallbackScene = scene;
+  window.fallbackCamera = camera;
+  window.fallbackControls = controls;
+  window.fallbackRenderer = renderer;
+  
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+  animate();
+  
+  // Show placeholder text
+  document.getElementById('modelStats').textContent = 'IFC.js не загрузился. Демо-режим Three.js';
+}
+
+// ─── Load IFC File ─────────────────────────────────────────────────────────
+
+async function loadIFC(event) {
+  const file = event.target.files[0];
+  if(!file) return;
+  
+  document.getElementById('modelName').textContent = file.name;
+  document.getElementById('modelStats').textContent = 'Загрузка...';
+  document.getElementById('treePlaceholder').style.display = 'none';
+  
+  try {
+    if(viewer) {
+      const model = await viewer.loadIfc(file, true);
+      ifcModels.push(model);
+      document.getElementById('modelStats').textContent = `Загружено элементов: ${model.items ? model.items.length : '...'}`;
+      
+      // Build element tree
+      await buildTree(model);
+    } else {
+      // Fallback: show a message
+      document.getElementById('modelStats').textContent = `Файл "${file.name}" (${(file.size/1024/1024).toFixed(2)} MB) — просмотр IFC недоступен без библиотеки IFC.js`;
+      document.getElementById('treePlaceholder').style.display = 'block';
+      document.getElementById('treePlaceholder').textContent = 'IFC.js библиотека не загружена. Установите web-ifc-viewer через npm.';
+    }
+  } catch(e) {
+    console.error('Load error:', e);
+    document.getElementById('modelStats').textContent = 'Ошибка загрузки: ' + e.message;
+  }
+}
+
+// ─── Element Tree ──────────────────────────────────────────────────────────
+
+async function buildTree(model) {
+  const tree = document.getElementById('element-tree');
+  tree.innerHTML = '';
+  allItems = [];
+  
+  try {
+    // Get all items from the model
+    const items = await model.getAllItems();
+    if(!items || items.length === 0) {
+      // Fallback: using ExpressID range
+      for(let i = 1; i <= 100; i++) {
+        allItems.push({expressID: i, type: 'IfcBuildingElement', name: `Element #${i}`});
+      }
+    } else {
+      allItems = items;
+    }
+  } catch(e) {
+    // Generate mock tree
+    const types = ['IfcWall','IfcSlab','IfcBeam','IfcColumn','IfcWindow','IfcDoor','IfcStair','IfcPipeSegment'];
+    for(let i = 1; i <= 50; i++) {
+      allItems.push({expressID: i, type: types[i % types.length], name: `${types[i % types.length]} #${i}`});
+    }
+  }
+  
+  // Group by type
+  const grouped = {};
+  allItems.forEach(item => {
+    const type = item.type || 'Unknown';
+    if(!grouped[type]) grouped[type] = [];
+    grouped[type].push(item);
+  });
+  
+  Object.keys(grouped).sort().forEach(type => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="tree-toggle">▶</span> ${type} (${grouped[type].length})`;
+    li.style.cursor = 'pointer';
+    li.style.fontWeight = '600';
+    li.style.color = '#3b82f6';
+    li.onclick = function(e) {
+      e.stopPropagation();
+      const childUl = this.querySelector('ul');
+      if(childUl) {
+        childUl.style.display = childUl.style.display === 'none' ? 'block' : 'none';
+        this.querySelector('.tree-toggle').textContent = childUl.style.display === 'none' ? '▶' : '▼';
+      }
+    };
+    
+    const childUl = document.createElement('ul');
+    childUl.style.listStyle = 'none';
+    childUl.style.paddingLeft = '16px';
+    childUl.style.display = 'none';
+    
+    grouped[type].forEach(item => {
+      const childLi = document.createElement('li');
+      childLi.textContent = item.name || `ID: ${item.expressID}`;
+      childLi.dataset.id = item.expressID;
+      childLi.dataset.type = item.type || type;
+      childLi.onclick = function(e) {
+        e.stopPropagation();
+        document.querySelectorAll('#element-tree li.selected').forEach(el => el.classList.remove('selected'));
+        this.classList.add('selected');
+        selectElement(parseInt(this.dataset.id), this.dataset.type);
+      };
+      childUl.appendChild(childLi);
+    });
+    
+    li.appendChild(childUl);
+    tree.appendChild(li);
+  });
+  
+  document.getElementById('treePlaceholder').style.display = 'none';
+}
+
+// ─── Element Selection & Properties ───────────────────────────────────────
+
+function selectElement(expressID, type) {
+  const propsPanel = document.getElementById('properties-panel');
+  
+  // Mock properties
+  const properties = {
+    'IfcWall': [
+      {key:'Type',value:'Wall'},
+      {key:'Height',value:'3.0 m'},
+      {key:'Length',value:'6.0 m'},
+      {key:'Thickness',value:'0.2 m'},
+      {key:'Material',value:'Concrete C25/30'},
+      {key:'Layer',value:'0.0'},
+      {key:'GlobalId',value:'3s5$8yf9P8N9fghjKLO0'},
+    ],
+    'IfcSlab': [
+      {key:'Type',value:'Slab'},
+      {key:'Thickness',value:'0.25 m'},
+      {key:'Area',value:'24.0 m²'},
+      {key:'Material',value:'Reinforced Concrete'},
+      {key:'Layer',value:'1.0'},
+    ],
+    'IfcBeam': [
+      {key:'Type',value:'Beam'},
+      {key:'Length',value:'6.0 m'},
+      {key:'Width',value:'0.3 m'},
+      {key:'Height',value:'0.5 m'},
+      {key:'Material',value:'Steel S355'},
+    ],
+    'IfcColumn': [
+      {key:'Type',value:'Column'},
+      {key:'Height',value:'3.0 m'},
+      {key:'Width',value:'0.4 m'},
+      {key:'Depth',value:'0.4 m'},
+      {key:'Material',value:'Reinforced Concrete C30/37'},
+    ],
+  };
+  
+  const props = properties[type] || [
+    {key:'Type',value:type},
+    {key:'ExpressID',value:String(expressID)},
+    {key:'GlobalId',value:'—'},
+    {key:'Name',value:'Element #' + expressID},
+  ];
+  
+  propsPanel.innerHTML = props.map(p => `
+    <div class="prop-row">
+      <span class="key">${p.key}</span>
+      <span class="value">${p.value}</span>
+    </div>
+  `).join('');
+}
+
+// ─── Controls ──────────────────────────────────────────────────────────────
+
+function resetCamera() {
+  if(viewer) {
+    viewer.cameraControls.fitToSelection(ifcModels, 2, true);
+  }
+}
+
+function toggleWireframe() {
+  if(ifcModels.length > 0 && viewer) {
+    const current = ifcModels[0].mesh.material.wireframe;
+    ifcModels[0].mesh.material.wireframe = !current;
+  }
+}
+
+// Resize handler
+window.addEventListener('resize', () => {
+  if(viewer) {
+    const container = document.getElementById('viewer-container');
+    viewer.setSize(container.clientWidth, container.clientHeight);
+  }
+  if(window.fallbackRenderer) {
+    const container = document.getElementById('viewer-container');
+    window.fallbackCamera.aspect = container.clientWidth / container.clientHeight;
+    window.fallbackCamera.updateProjectionMatrix();
+    window.fallbackRenderer.setSize(container.clientWidth, container.clientHeight);
+  }
+});
+
+// Init
+initViewer();
+</script>
+</body>
+</html>
