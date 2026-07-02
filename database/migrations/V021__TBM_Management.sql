@@ -51,7 +51,8 @@ CREATE TABLE IF NOT EXISTS tbm_telemetry (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tbm_telemetry_tbm_time ON tbm_telemetry(tbm_id, recorded_at DESC);
-CREATE INDEX IF NOT EXISTS idx_tbm_telemetry_day ON tbm_telemetry(tbm_id, (recorded_at::date));
+-- (fix 02.07) removed: recorded_at::date is not IMMUTABLE for timestamptz;
+-- daily aggregation is served by idx_tbm_telemetry_tbm_time.
 
 -- ============================================================================
 -- 2. TBM Alarms

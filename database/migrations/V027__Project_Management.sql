@@ -1,5 +1,5 @@
 -- ============================================================================
--- V009__Project_Management.sql
+-- V027__Project_Management.sql
 -- Модуль управления проектами (Project Management)
 -- Часть OpenConstructionERP — Project Operating System
 -- ============================================================================
@@ -7,74 +7,20 @@
 -- ============================================================================
 -- 1. Проекты (расширение базовой таблицы)
 -- ============================================================================
-CREATE TABLE projects (
-    id              BIGSERIAL PRIMARY KEY,
-    code            VARCHAR(50) NOT NULL UNIQUE,          -- P-2026-001
-    name            VARCHAR(500) NOT NULL,
-    description     TEXT,
-    project_type    VARCHAR(100) NOT NULL,                 -- metro, tunnel, bridge, road, building, industrial, water
-    status          VARCHAR(50) NOT NULL DEFAULT 'lead',   -- lead, tender, planning, design, construction, commissioning, operation, closed
-    phase           VARCHAR(50) DEFAULT 'feasibility',     -- feasibility, design, tender, construction, handover
-    
-    -- Заказчик / владелец
-    client_id       BIGINT REFERENCES contractors(id),
-    owner_id        BIGINT REFERENCES contractors(id),
-    
-    -- Локация
-    country         VARCHAR(100),
-    city            VARCHAR(200),
-    region          VARCHAR(200),
-    address         TEXT,
-    coordinates     POINT,                                  -- широта, долгота
-    
-    -- Сроки
-    start_date      DATE,
-    end_date        DATE,
-    duration_days   INTEGER,
-    
-    -- Бюджет
-    budget_total    NUMERIC(18,2),
-    budget_currency VARCHAR(3) NOT NULL DEFAULT 'USD',
-    contingency     NUMERIC(18,2),
-    contingency_pct NUMERIC(5,2),
-    
-    -- Метрики
-    total_length_km NUMERIC(10,3),                         -- для линейных объектов
-    total_area_m2   NUMERIC(14,2),
-    total_volume_m3 NUMERIC(14,2),
-    
-    -- Команда
-    project_manager_id BIGINT REFERENCES employees(id),
-    sponsor_id      BIGINT REFERENCES employees(id),
-    
-    -- Классификация
-    risk_class      VARCHAR(20),                            -- A, B, C, D
-    complexity      VARCHAR(20),                            -- low, medium, high, mega
-    confidentiality VARCHAR(50) DEFAULT 'internal',         -- public, internal, confidential, secret
-    
-    -- Документы
-    logo_path       VARCHAR(500),
-    contract_path   VARCHAR(500),
-    
-    notes           TEXT,
-    created_by      VARCHAR(100),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX idx_projects_status ON projects(status);
-CREATE INDEX idx_projects_type ON projects(project_type);
-CREATE INDEX idx_projects_client ON projects(client_id);
-CREATE INDEX idx_projects_dates ON projects(start_date, end_date);
-CREATE INDEX idx_projects_pm ON projects(project_manager_id);
+-- NOTE (fix 02.07): duplicate CREATE TABLE projects removed — the canonical
+-- projects table lives in V000. Columns this module needs are added below.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS project_manager_id UUID REFERENCES users(id);
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS end_date DATE;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS priority VARCHAR(10) DEFAULT 'medium';
+CREATE INDEX IF NOT EXISTS idx_projects_pm ON projects(project_manager_id);
 
 -- ============================================================================
 -- 2. WBS (Work Breakdown Structure)
 -- ============================================================================
 CREATE TABLE wbs_items (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    parent_id       BIGINT REFERENCES wbs_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    parent_id       UUID REFERENCES wbs_items(id),
     wbs_code        VARCHAR(100) NOT NULL,                  -- 1.1.1, 1.1.2, etc
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -97,14 +43,14 @@ CREATE TABLE wbs_items (
     progress_pct    NUMERIC(5,2) DEFAULT 0,                 -- % выполнения
     
     -- Ответственный
-    responsible_id  BIGINT REFERENCES employees(id),
+    responsible_id  UUID REFERENCES employees(id),
     
     -- Статус
     status          VARCHAR(50) NOT NULL DEFAULT 'planned',  -- planned, in_progress, completed, delayed, cancelled
     
     -- Привязки
-    boq_section_id  BIGINT REFERENCES sections(id),
-    contract_id     BIGINT REFERENCES contracts(id),
+    boq_section_id  UUID REFERENCES boq_sections(id),
+    contract_id     UUID REFERENCES contracts(id),
     
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -121,9 +67,9 @@ CREATE INDEX idx_wbs_dates ON wbs_items(planned_start, planned_end);
 -- 3. Milestones / вехи
 -- ============================================================================
 CREATE TABLE project_milestones (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    wbs_item_id     BIGINT REFERENCES wbs_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    wbs_item_id     UUID REFERENCES wbs_items(id),
     milestone_code  VARCHAR(50) NOT NULL,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -148,7 +94,7 @@ CREATE TABLE project_milestones (
     amount_currency VARCHAR(3) DEFAULT 'USD',
     
     -- Ответственный
-    responsible_id  BIGINT REFERENCES employees(id),
+    responsible_id  UUID REFERENCES employees(id),
     
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -163,8 +109,8 @@ CREATE INDEX idx_milestones_status ON project_milestones(status);
 -- 4. Фазы проекта
 -- ============================================================================
 CREATE TABLE project_phases (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     phase_code      VARCHAR(50) NOT NULL,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -196,9 +142,9 @@ CREATE TABLE project_phases (
 -- 5. Команда проекта
 -- ============================================================================
 CREATE TABLE project_team (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    employee_id     BIGINT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    employee_id     UUID NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
     role            VARCHAR(200) NOT NULL,
     role_category   VARCHAR(50) NOT NULL,                   -- management, engineering, supervision, admin, support
     start_date      DATE NOT NULL,
@@ -218,13 +164,13 @@ CREATE INDEX idx_team_employee ON project_team(employee_id);
 -- 6. Портфель проектов
 -- ============================================================================
 CREATE TABLE project_portfolio (
-    id              BIGSERIAL PRIMARY KEY,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     code            VARCHAR(50) NOT NULL UNIQUE,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
     portfolio_type  VARCHAR(50) NOT NULL DEFAULT 'program',  -- program, portfolio, framework
-    parent_id       BIGINT REFERENCES project_portfolio(id),
-    owner_id        BIGINT REFERENCES employees(id),
+    parent_id       UUID REFERENCES project_portfolio(id),
+    owner_id        UUID REFERENCES employees(id),
     budget_total    NUMERIC(18,2),
     budget_currency VARCHAR(3) DEFAULT 'USD',
     status          VARCHAR(50) NOT NULL DEFAULT 'active',
@@ -238,9 +184,9 @@ CREATE TABLE project_portfolio (
 -- 7. Проекты в портфеле
 -- ============================================================================
 CREATE TABLE portfolio_projects (
-    id              BIGSERIAL PRIMARY KEY,
-    portfolio_id    BIGINT NOT NULL REFERENCES project_portfolio(id) ON DELETE CASCADE,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    portfolio_id    UUID NOT NULL REFERENCES project_portfolio(id) ON DELETE CASCADE,
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     sort_order      INTEGER DEFAULT 0,
     notes           TEXT,
     UNIQUE(portfolio_id, project_id)
@@ -250,9 +196,9 @@ CREATE TABLE portfolio_projects (
 -- 8. Риски проекта (базовый risk register)
 -- ============================================================================
 CREATE TABLE project_risks (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    wbs_item_id     BIGINT REFERENCES wbs_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    wbs_item_id     UUID REFERENCES wbs_items(id),
     risk_code       VARCHAR(50) NOT NULL,
     name            VARCHAR(500) NOT NULL,
     description     TEXT,
@@ -278,7 +224,7 @@ CREATE TABLE project_risks (
     
     -- Статус
     status          VARCHAR(50) NOT NULL DEFAULT 'identified', -- identified, assessed, mitigation_planned, mitigation_in_progress, closed, realized
-    owner_id        BIGINT REFERENCES employees(id),
+    owner_id        UUID REFERENCES employees(id),
     target_date     DATE,
     closed_date     DATE,
     
@@ -296,8 +242,8 @@ CREATE INDEX idx_risks_status ON project_risks(status);
 -- 9. Изменения / Variations
 -- ============================================================================
 CREATE TABLE project_changes (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     change_number   VARCHAR(50) NOT NULL,
     change_type     VARCHAR(50) NOT NULL,                   -- variation, change_order, scope_change, design_change
     source          VARCHAR(50) NOT NULL,                   -- client, contractor, design, regulatory, unforeseen
@@ -311,9 +257,9 @@ CREATE TABLE project_changes (
     
     -- Статус
     status          VARCHAR(50) NOT NULL DEFAULT 'submitted', -- submitted, review, approved, rejected, implemented
-    submitted_by    BIGINT REFERENCES employees(id),
+    submitted_by    UUID REFERENCES employees(id),
     submitted_at    TIMESTAMPTZ,
-    approved_by     BIGINT REFERENCES employees(id),
+    approved_by     UUID REFERENCES employees(id),
     approved_at     TIMESTAMPTZ,
     
     -- Документы
@@ -331,9 +277,9 @@ CREATE INDEX idx_changes_status ON project_changes(status);
 -- 10. Уроки / Lessons Learned
 -- ============================================================================
 CREATE TABLE project_lessons (
-    id              BIGSERIAL PRIMARY KEY,
-    project_id      BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    wbs_item_id     BIGINT REFERENCES wbs_items(id),
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+    wbs_item_id     UUID REFERENCES wbs_items(id),
     category        VARCHAR(100) NOT NULL,                  -- technical, management, financial, HSE, quality
     title           VARCHAR(500) NOT NULL,
     description     TEXT NOT NULL,
@@ -343,7 +289,7 @@ CREATE TABLE project_lessons (
     is_positive     BOOLEAN DEFAULT FALSE,                  -- TRUE = success story, FALSE = lesson from problem
     severity        VARCHAR(20) DEFAULT 'medium',
     status          VARCHAR(50) DEFAULT 'draft',            -- draft, reviewed, published
-    author_id       BIGINT REFERENCES employees(id),
+    author_id       UUID REFERENCES employees(id),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

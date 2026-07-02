@@ -8,59 +8,52 @@
 -- ============================================================================
 -- 1. HSE Incidents (расширенная таблица инцидентов)
 -- ============================================================================
-CREATE TABLE hse_incidents (
-    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    incident_number INTEGER NOT NULL,
-    incident_code   VARCHAR(30) NOT NULL,                    -- 'INC-0001'
-    title           VARCHAR(500) NOT NULL,
-    description     TEXT NOT NULL,
-    incident_type   VARCHAR(50) NOT NULL DEFAULT 'near_miss'
-        CHECK (incident_type IN ('near_miss','first_aid','medical_treatment','lost_time_injury','restricted_work','fatality','property_damage','environmental','fire','explosion','chemical_spill','vehicle','other')),
-    severity        VARCHAR(15) NOT NULL DEFAULT 'minor'
-        CHECK (severity IN ('minor','moderate','major','critical','catastrophic')),
-    incident_date   DATE NOT NULL,
-    incident_time   TIME,
-    location        VARCHAR(300),
-    area            VARCHAR(200),
-    activity_at_time VARCHAR(300),
-    reported_by     VARCHAR(200),
-    reported_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    affected_person VARCHAR(300),
-    affected_part   VARCHAR(100),                            -- body part injured
-    lost_days       INTEGER DEFAULT 0,
-    restricted_days INTEGER DEFAULT 0,
-    medical_cost    NUMERIC(12,2),
-    property_cost   NUMERIC(12,2),
-    total_cost      NUMERIC(12,2),
-    root_cause      TEXT,
-    direct_cause    TEXT,
-    contributing_factors TEXT,
-    corrective_action TEXT,
-    preventive_action TEXT,
-    investigation_status VARCHAR(30) NOT NULL DEFAULT 'open'
-        CHECK (investigation_status IN ('open','investigating','report_draft','report_approved','closed','void')),
-    investigation_lead VARCHAR(200),
-    investigation_team TEXT,
-    investigation_findings TEXT,
-    lessons_learned TEXT,
-    is_reportable   BOOLEAN DEFAULT FALSE,
-    authority_notified BOOLEAN DEFAULT FALSE,
-    authority_ref   VARCHAR(100),
-    status          VARCHAR(20) NOT NULL DEFAULT 'open'
-        CHECK (status IN ('open','closed','void')),         -- overall incident status
-    closed_at       TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (project_id, incident_number),
-    UNIQUE (project_id, incident_code)
-);
+-- NOTE (fix 02.07): hse_incidents is created in V008; V016 extends it.
+-- V008's table lacks project_id — add it first (module boundary bug in V008).
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES projects(id) ON DELETE CASCADE;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS incident_number INTEGER;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS incident_code VARCHAR(30);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS title VARCHAR(500);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS description TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS incident_type VARCHAR(50);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS severity VARCHAR(15);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS incident_date DATE;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS incident_time TIME;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS location VARCHAR(300);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS area VARCHAR(200);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS activity_at_time VARCHAR(300);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS reported_by VARCHAR(200);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS reported_at TIMESTAMPTZ;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS affected_person VARCHAR(300);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS affected_part VARCHAR(100);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS lost_days INTEGER DEFAULT 0;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS restricted_days INTEGER DEFAULT 0;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS medical_cost NUMERIC(12,2);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS property_cost NUMERIC(12,2);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS total_cost NUMERIC(12,2);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS root_cause TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS direct_cause TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS contributing_factors TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS corrective_action TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS preventive_action TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS investigation_status VARCHAR(30);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS investigation_lead VARCHAR(200);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS investigation_team TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS investigation_findings TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS lessons_learned TEXT;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS is_reportable BOOLEAN DEFAULT FALSE;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS authority_notified BOOLEAN DEFAULT FALSE;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS authority_ref VARCHAR(100);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS status VARCHAR(20);
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS closed_at TIMESTAMPTZ;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ;
+ALTER TABLE hse_incidents ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ;
 
-CREATE INDEX idx_hsi_project ON hse_incidents(project_id);
-CREATE INDEX idx_hsi_type ON hse_incidents(project_id, incident_type);
-CREATE INDEX idx_hsi_severity ON hse_incidents(project_id, severity);
-CREATE INDEX idx_hsi_investigation ON hse_incidents(project_id, investigation_status);
-CREATE INDEX idx_hsi_date ON hse_incidents(project_id, incident_date DESC);
+CREATE INDEX IF NOT EXISTS idx_hsi_project ON hse_incidents(project_id);
+CREATE INDEX IF NOT EXISTS idx_hsi_type ON hse_incidents(project_id, incident_type);
+CREATE INDEX IF NOT EXISTS idx_hsi_severity ON hse_incidents(project_id, severity);
+CREATE INDEX IF NOT EXISTS idx_hsi_investigation ON hse_incidents(project_id, investigation_status);
+CREATE INDEX IF NOT EXISTS idx_hsi_date ON hse_incidents(project_id, incident_date DESC);
 
 COMMENT ON TABLE hse_incidents IS 'HSE Incidents — регистрация происшествий (расширенная)';
 

@@ -216,8 +216,11 @@ CREATE TABLE equipment_operators (
     is_primary      BOOLEAN DEFAULT FALSE,
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (equipment_id, employee_id, COALESCE(end_date, '9999-12-31'))
+    -- uniqueness enforced by expression index below (constraints can't hold expressions)
+    CONSTRAINT eq_op_valid CHECK (end_date IS NULL OR end_date >= assigned_date)
 );
+CREATE UNIQUE INDEX uq_equipment_operator_period
+    ON equipment_operators (equipment_id, employee_id, COALESCE(end_date, '9999-12-31'::date));
 
 CREATE INDEX idx_eo_equipment ON equipment_operators(equipment_id);
 CREATE INDEX idx_eo_employee ON equipment_operators(employee_id);

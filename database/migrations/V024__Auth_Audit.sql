@@ -98,15 +98,15 @@ CREATE TRIGGER trg_audit_contracts
     FOR EACH ROW EXECUTE FUNCTION fn_audit_log_change();
 
 -- Example: HR employees audit
-DROP TRIGGER IF EXISTS trg_audit_hr_employees ON hr_employees;
+DROP TRIGGER IF EXISTS trg_audit_hr_employees ON employees;
 CREATE TRIGGER trg_audit_hr_employees
-    AFTER INSERT OR UPDATE OR DELETE ON hr_employees
+    AFTER INSERT OR UPDATE OR DELETE ON employees
     FOR EACH ROW EXECUTE FUNCTION fn_audit_log_change();
 
 -- Example: PM Projects audit
-DROP TRIGGER IF EXISTS trg_audit_pm_projects ON pm_projects;
+DROP TRIGGER IF EXISTS trg_audit_pm_projects ON projects;
 CREATE TRIGGER trg_audit_pm_projects
-    AFTER INSERT OR UPDATE OR DELETE ON pm_projects
+    AFTER INSERT OR UPDATE OR DELETE ON projects
     FOR EACH ROW EXECUTE FUNCTION fn_audit_log_change();
 
 -- -----------------------------------------------------------

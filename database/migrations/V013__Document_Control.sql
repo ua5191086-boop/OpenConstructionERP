@@ -309,7 +309,7 @@ COMMENT ON TABLE document_transmittals IS 'Document Transmittals — сопро�
 -- ============================================================================
 -- 10. Document Revisions (история версий документов)
 -- ============================================================================
-CREATE TABLE document_revisions (
+CREATE TABLE doc_control_revisions (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     document_type   VARCHAR(50) NOT NULL,                  -- rfi, ncr, submittal, ms, sd, correspondence, mom, transmittal
@@ -325,11 +325,11 @@ CREATE TABLE document_revisions (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_drev_project ON document_revisions(project_id);
-CREATE INDEX idx_drev_document ON document_revisions(document_type, document_id);
-CREATE INDEX idx_drev_status ON document_revisions(project_id, status);
+CREATE INDEX idx_dcrev_project ON doc_control_revisions(project_id);
+CREATE INDEX idx_dcrev_document ON doc_control_revisions(document_type, document_id);
+CREATE INDEX idx_dcrev_status ON doc_control_revisions(project_id, status);
 
-COMMENT ON TABLE document_revisions IS 'Document Revisions — история версий документов';
+COMMENT ON TABLE doc_control_revisions IS 'Document Revisions — история версий документов';
 
 -- ============================================================================
 -- Register module in object_types
@@ -352,7 +352,7 @@ ON CONFLICT (code) DO NOTHING;
 -- ============================================================================
 CREATE VIEW doc_control_summary AS
 SELECT
-    project_id,
+    p.id AS project_id,
     (SELECT COUNT(*) FROM rfi_documents WHERE project_id = p.id) AS total_rfi,
     (SELECT COUNT(*) FROM rfi_documents WHERE project_id = p.id AND status = 'open') AS open_rfi,
     (SELECT COUNT(*) FROM ncr_documents WHERE project_id = p.id) AS total_ncr,
