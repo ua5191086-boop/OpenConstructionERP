@@ -141,13 +141,15 @@ services:
     restart: unless-stopped
     networks: [oce-net]
     ports: ["8085:8081"]
+    volumes:
+      - ./oce-core.bin:/usr/local/bin/oce-core:ro
     environment:
       DB_HOST: oce-postgres
       DB_PORT: "5432"
       DB_USER: oce
       DB_PASSWORD: oce_secret
       DB_NAME: oce_erp
-    command: sh -c "echo 'Core API placeholder — build Go binary to enable' && sleep infinity"
+    command: sh -c "apk add --no-cache ca-certificates tzdata && oce-core"
     depends_on:
       oce-postgres:
         condition: service_healthy

@@ -472,18 +472,4 @@ func nullableString(s *string) interface{} {
 	return *s
 }
 
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, msg string) {
-	log.Printf("[RetentionHandler] Error %d: %s", status, msg)
-	respondJSON(w, status, map[string]string{"error": msg})
-}
-
-func init() {
-	// Ensure time import is used
-	_ = time.Now
-}
+func init() { log.SetFlags(log.LstdFlags); _ = time.Now }

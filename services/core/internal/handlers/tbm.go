@@ -472,13 +472,13 @@ func (h *TBMHandler) GetSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := h.db.Query(`SELECT COUNT(*) FROM tbm_telemetry WHERE 1=1` + mapCond(tbmID, "tbm_id"))
-	if err == nil && rows.Next() { rows.Scan(&summary["total_telemetry"]); rows.Close() }
+	if err == nil && rows.Next() { var v int; rows.Scan(&v); summary["total_telemetry"] = v; rows.Close() }
 
 	rows2, err := h.db.Query(`SELECT COUNT(*) FROM tbm_alarms WHERE is_active=TRUE` + mapCond(tbmID, "tbm_id"))
-	if err == nil && rows2.Next() { rows2.Scan(&summary["active_alarms"]); rows2.Close() }
+	if err == nil && rows2.Next() { var v int; rows2.Scan(&v); summary["active_alarms"] = v; rows2.Close() }
 
 	rows3, err := h.db.Query(`SELECT COALESCE(SUM(rings_built),0), COALESCE(SUM(advance_mm),0), COALESCE(AVG(utilisation_pct),0) FROM tbm_performance_metrics WHERE 1=1` + mapCond(tbmID, "tbm_id"))
-	if err == nil && rows3.Next() { rows3.Scan(&summary["total_rings"], &summary["total_advance_mm"], &summary["avg_utilisation_pct"]); rows3.Close() }
+	if err == nil && rows3.Next() { var r, a int; var u float64; rows3.Scan(&r, &a, &u); summary["total_rings"] = r; summary["total_advance_mm"] = a; summary["avg_utilisation_pct"] = u; rows3.Close() }
 
 	respondJSON(w, http.StatusOK, summary)
 }

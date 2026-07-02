@@ -280,12 +280,12 @@ func (h *P6Handler) ListWBS(w http.ResponseWriter, r *http.Request) {
 
 	items := make([]models.P6WBS, 0)
 	for rows.Next() {
-		var w models.P6WBS
-		if err := rows.Scan(&w.ID, &w.P6ProjectID, &w.P6WBSID, &w.P6WBSCode, &w.P6WBSName, &w.P6ParentWBSID, &w.Level, &w.WBSPath, &w.MappedElementType, &w.MappedElementID, &w.IsActive, &w.CreatedAt); err != nil {
+		var p6wbs models.P6WBS
+		if err := rows.Scan(&p6wbs.ID, &p6wbs.P6ProjectID, &p6wbs.P6WBSID, &p6wbs.P6WBSCode, &p6wbs.P6WBSName, &p6wbs.P6ParentWBSID, &p6wbs.Level, &p6wbs.WBSPath, &p6wbs.MappedElementType, &p6wbs.MappedElementID, &p6wbs.IsActive, &p6wbs.CreatedAt); err != nil {
 			respondError(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		items = append(items, w)
+		items = append(items, p6wbs)
 	}
 	respondJSON(w, http.StatusOK, items)
 }
@@ -318,11 +318,11 @@ func (h *P6Handler) CreateWBS(w http.ResponseWriter, r *http.Request) {
 
 func (h *P6Handler) GetWBS(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	var w models.P6WBS
+	var p6wbs_item models.P6WBS
 	err := h.db.QueryRow(`
 		SELECT id, p6_project_id, p6_wbs_id, p6_wbs_code, p6_wbs_name, p6_parent_wbs_id, level, wbs_path, mapped_element_type, mapped_element_id, is_active, created_at
 		FROM p6_wbs WHERE id = $1`, id).Scan(
-		&w.ID, &w.P6ProjectID, &w.P6WBSID, &w.P6WBSCode, &w.P6WBSName, &w.P6ParentWBSID, &w.Level, &w.WBSPath, &w.MappedElementType, &w.MappedElementID, &w.IsActive, &w.CreatedAt)
+		&p6wbs_item.ID, &p6wbs_item.P6ProjectID, &p6wbs_item.P6WBSID, &p6wbs_item.P6WBSCode, &p6wbs_item.P6WBSName, &p6wbs_item.P6ParentWBSID, &p6wbs_item.Level, &p6wbs_item.WBSPath, &p6wbs_item.MappedElementType, &p6wbs_item.MappedElementID, &p6wbs_item.IsActive, &p6wbs_item.CreatedAt)
 	if err == sql.ErrNoRows {
 		respondError(w, http.StatusNotFound, "not found")
 		return
@@ -331,7 +331,7 @@ func (h *P6Handler) GetWBS(w http.ResponseWriter, r *http.Request) {
 		respondError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	respondJSON(w, http.StatusOK, w)
+	respondJSON(w, http.StatusOK, p6wbs_item)
 }
 
 // --- Activities ---

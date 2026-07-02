@@ -839,7 +839,7 @@ func (h *ProcurementHandler) ListStockAlerts(w http.ResponseWriter, r *http.Requ
 // =============================================================================
 
 func (h *ProcurementHandler) InventorySummary(w http.ResponseWriter, r *http.Request) {
-	projectID := r.URL.Query().Get("project_id")
+	_ = r.URL.Query().Get("project_id") // projectID filter placeholder
 
 	rows, err := h.db.Query(`
 		SELECT

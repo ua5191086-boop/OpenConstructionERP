@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/openconstructionerp/oce/services/core/internal/models"
 )
 
 // EquipmentHandler handles Equipment Management module endpoints

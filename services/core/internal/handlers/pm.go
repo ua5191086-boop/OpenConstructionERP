@@ -10,7 +10,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/openconstructionerp/oce/services/core/internal/models"
 )
 
 // PMHandler handles Project Management module endpoints
@@ -92,20 +91,6 @@ func (h *PMHandler) RegisterRoutes(r chi.Router) {
 		// Dashboard summary
 		r.Get("/dashboard", h.GetDashboardSummary)
 	})
-}
-
-// ============================================================================
-// Helper: respondJSON / respondError
-// ============================================================================
-
-func respondJSON(w http.ResponseWriter, status int, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(data)
-}
-
-func respondError(w http.ResponseWriter, status int, message string) {
-	respondJSON(w, status, map[string]string{"error": message})
 }
 
 // ============================================================================
@@ -869,11 +854,17 @@ func (h *PMHandler) GetDashboardSummary(w http.ResponseWriter, r *http.Request) 
 		"total_milestones": 0,
 	}
 
-	h.db.QueryRow(`SELECT COUNT(*) FROM projects`).Scan(&summary["total_projects"])
-	h.db.QueryRow(`SELECT COALESCE(SUM(budget_total), 0) FROM projects`).Scan(&summary["total_budget"])
-	h.db.QueryRow(`SELECT COUNT(*) FROM projects WHERE status NOT IN ('closed','lead')`).Scan(&summary["active_projects"])
-	h.db.QueryRow(`SELECT COUNT(*) FROM project_risks`).Scan(&summary["total_risks"])
-	h.db.QueryRow(`SELECT COUNT(*) FROM project_milestones`).Scan(&summary["total_milestones"])
+	var totalProjects, totalBudget, activeProjects, totalRisks, totalMilestones int
+	h.db.QueryRow(`SELECT COUNT(*) FROM projects`).Scan(&totalProjects)
+	h.db.QueryRow(`SELECT COALESCE(SUM(budget_total), 0) FROM projects`).Scan(&totalBudget)
+	h.db.QueryRow(`SELECT COUNT(*) FROM projects WHERE status NOT IN ('closed','lead')`).Scan(&activeProjects)
+	h.db.QueryRow(`SELECT COUNT(*) FROM project_risks`).Scan(&totalRisks)
+	h.db.QueryRow(`SELECT COUNT(*) FROM project_milestones`).Scan(&totalMilestones)
+	summary["total_projects"] = totalProjects
+	summary["total_budget"] = totalBudget
+	summary["active_projects"] = activeProjects
+	summary["total_risks"] = totalRisks
+	summary["total_milestones"] = totalMilestones
 
 	respondJSON(w, http.StatusOK, summary)
 }

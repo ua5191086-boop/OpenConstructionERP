@@ -60,7 +60,6 @@ func main() {
 
 	// Public routes (no auth required)
 	r.Route("/api/v1", func(r chi.Router) {
-		// Auth endpoint — returns current user info from JWT (public with optional auth)
 		r.With(auth.PublicAuthMiddleware(keycloakCfg)).Get("/auth/me", auth.AuthHandler())
 	})
 
@@ -68,24 +67,27 @@ func main() {
 	r.Route("/api/v1/protected", func(r chi.Router) {
 		r.Use(auth.JWTAuthMiddleware(keycloakCfg))
 
+		// sqlDB is the standard *sql.DB for legacy handlers
+		sqlDB := database.StdDB()
+
 		// BOQ Module
-		boqHandler := handlers.NewBOQHandler(database.DB)
+		boqHandler := handlers.NewBOQHandler(sqlDB)
 		boqHandler.RegisterRoutes(r)
 
 		// Tenders Module
-		tendersHandler := handlers.NewTendersHandler(database.DB)
+		tendersHandler := handlers.NewTendersHandler(sqlDB)
 		tendersHandler.RegisterRoutes(r)
 
 		// Contracts Module
-		contractsHandler := handlers.NewContractsHandler(database.DB)
+		contractsHandler := handlers.NewContractsHandler(sqlDB)
 		contractsHandler.RegisterRoutes(r)
 
 		// HR Module
-		hrHandler := handlers.NewHRHandler(database.DB)
+		hrHandler := handlers.NewHRHandler(sqlDB)
 		hrHandler.RegisterRoutes(r)
 
 		// Finance Module
-		financeHandler := handlers.NewFinanceHandler(database.DB)
+		financeHandler := handlers.NewFinanceHandler(sqlDB)
 		financeHandler.RegisterRoutes(r)
 
 		// Financial Consolidation & Loans (V054-V055)
@@ -93,124 +95,128 @@ func main() {
 		financialExtHandler.RegisterRoutes(r)
 
 		// Procurement Module
-		procurementHandler := handlers.NewProcurementHandler(database.DB)
+		procurementHandler := handlers.NewProcurementHandler(sqlDB)
 		procurementHandler.RegisterRoutes(r)
 
 		// BIM Module
-		bimHandler := handlers.NewBIMHandler(database.DB)
+		bimHandler := handlers.NewBIMHandler(sqlDB)
 		bimHandler.RegisterRoutes(r)
+
+		// Project Management Module
+		pmHandler := handlers.NewPMHandler(sqlDB)
+		pmHandler.RegisterRoutes(r)
+
+		// Document Control Module
+		docControlHandler := handlers.NewDocControlHandler(sqlDB)
+		docControlHandler.RegisterRoutes(r)
+
+		// Schedule Management Module
+		scheduleHandler := handlers.NewScheduleHandler(sqlDB)
+		scheduleHandler.RegisterRoutes(r)
+
+		// Equipment Management Module
+		equipmentHandler := handlers.NewEquipmentHandler(sqlDB)
+		equipmentHandler.RegisterRoutes(r)
+
+		// HSE Module
+		hseHandler := handlers.NewHSEHandler(sqlDB)
+		hseHandler.RegisterRoutes(r)
+
+		// Quality Module
+		qualityHandler := handlers.NewQualityHandler(sqlDB)
+		qualityHandler.RegisterRoutes(r)
+
+		// GIS & Survey Module
+		gisHandler := handlers.NewGISHandler(sqlDB)
+		gisHandler.RegisterRoutes(r)
+
+		// Risk Management Module
+		riskHandler := handlers.NewRiskHandler(sqlDB)
+		riskHandler.RegisterRoutes(r)
+
+		// TBM Management Module
+		tbmHandler := handlers.NewTBMHandler(sqlDB)
+		tbmHandler.RegisterRoutes(r)
+
+		// Ring Builder & Segment Tracking Module
+		ringBuilderHandler := handlers.NewRingBuilderHandler(sqlDB)
+		ringBuilderHandler.RegisterRoutes(r)
+
+		// NATM & Microtunnelling Module
+		natmHandler := handlers.NewNATMHandler(sqlDB)
+		natmHandler.RegisterRoutes(r)
+
+		// Change Management Module
+		changeHandler := handlers.NewChangeHandler(sqlDB)
+		changeHandler.RegisterRoutes(r)
+
+		// EVM Module (V025)
+		evmHandler := handlers.NewEVMHandler(sqlDB)
+		evmHandler.RegisterRoutes(r)
+
+		// P6 Connector Module (V026)
+		p6Handler := handlers.NewP6Handler(sqlDB)
+		p6Handler.RegisterRoutes(r)
+
+		// Funding Module (V027)
+		fundingHandler := handlers.NewFundingHandler(sqlDB)
+		fundingHandler.RegisterRoutes(r)
+
+		// Neo4j + Kafka Module (V028)
+		neo4jKafkaHandler := handlers.NewNeo4jKafkaHandler(sqlDB)
+		neo4jKafkaHandler.RegisterRoutes(r)
+
+		// Laboratory Module (V029)
+		labHandler := handlers.NewLaboratoryHandler(sqlDB)
+		labHandler.RegisterRoutes(r)
+
+		// Permits Module (V030)
+		permitsHandler := handlers.NewPermitsHandler(sqlDB)
+		permitsHandler.RegisterRoutes(r)
+
+		// Insurance Module (V031)
+		insuranceHandler := handlers.NewInsuranceHandler(sqlDB)
+		insuranceHandler.RegisterRoutes(r)
+
+		// Fleet Module (V032)
+		fleetHandler := handlers.NewFleetHandler(sqlDB)
+		fleetHandler.RegisterRoutes(r)
+
+		// Time & Attendance Module (V034)
+		attendanceHandler := handlers.NewAttendanceHandler(sqlDB)
+		attendanceHandler.RegisterRoutes(r)
+
+		// Training & Certifications Module (V035)
+		trainingHandler := handlers.NewTrainingHandler(sqlDB)
+		trainingHandler.RegisterRoutes(r)
+
+		// Segment Factory Module (V036)
+		segFactoryHandler := handlers.NewSegmentFactoryHandler(sqlDB)
+		segFactoryHandler.RegisterRoutes(r)
+
+		// Shaft Management Module (V037)
+		shaftHandler := handlers.NewShaftHandler(sqlDB)
+		shaftHandler.RegisterRoutes(r)
+
+		// Cross Passage + Geology Module (V038)
+		cpGeoHandler := handlers.NewCPGeoHandler(sqlDB)
+		cpGeoHandler.RegisterRoutes(r)
+
+		// Settlement, Grouting, Ventilation Module (V039)
+		sgvHandler := handlers.NewSGVHandler(sqlDB)
+		sgvHandler.RegisterRoutes(r)
+
+		// Instrumentation, Dewatering, TBM Maintenance Module (V040)
+		tunnelSvcHandler := handlers.NewTBMServiceHandler(sqlDB)
+		tunnelSvcHandler.RegisterRoutes(r)
+
+		// Tunnel Logistics Module (V051-V053)
+		tunnelLogisticsHandler := handlers.NewTunnelLogisticsHandler(database.DB)
+		tunnelLogisticsHandler.RegisterRoutes(r)
 
 		// AI Assistant Framework Module (V048)
 		aiAssistantHandler := handlers.NewAIHandler(database.DB)
 		aiAssistantHandler.RegisterRoutes(r)
-
-		// Project Management Module
-		pmHandler := handlers.NewPMHandler(database.DB)
-		pmHandler.RegisterRoutes(r)
-
-		// Document Control Module
-		docControlHandler := handlers.NewDocControlHandler(database.DB)
-		docControlHandler.RegisterRoutes(r)
-
-		// Schedule Management Module
-		scheduleHandler := handlers.NewScheduleHandler(database.DB)
-		scheduleHandler.RegisterRoutes(r)
-
-		// Equipment Management Module
-		equipmentHandler := handlers.NewEquipmentHandler(database.DB)
-		equipmentHandler.RegisterRoutes(r)
-
-		// HSE Module
-		hseHandler := handlers.NewHSEHandler(database.DB)
-		hseHandler.RegisterRoutes(r)
-
-		// Quality Module
-		qualityHandler := handlers.NewQualityHandler(database.DB)
-		qualityHandler.RegisterRoutes(r)
-
-		// GIS & Survey Module
-		gisHandler := handlers.NewGISHandler(database.DB)
-		gisHandler.RegisterRoutes(r)
-
-		// Risk Management Module
-		riskHandler := handlers.NewRiskHandler(database.DB)
-		riskHandler.RegisterRoutes(r)
-
-		// TBM Management Module
-		tbmHandler := handlers.NewTBMHandler(database.DB)
-		tbmHandler.RegisterRoutes(r)
-
-		// Ring Builder & Segment Tracking Module
-		ringBuilderHandler := handlers.NewRingBuilderHandler(database.DB)
-		ringBuilderHandler.RegisterRoutes(r)
-
-		// NATM & Microtunnelling Module
-		natmHandler := handlers.NewNATMHandler(database.DB)
-		natmHandler.RegisterRoutes(r)
-
-		// Change Management Module
-		changeHandler := handlers.NewChangeHandler(database.DB)
-		changeHandler.RegisterRoutes(r)
-
-		// EVM Module (V025)
-		evmHandler := handlers.NewEVMHandler(database.DB)
-		evmHandler.RegisterRoutes(r)
-
-		// P6 Connector Module (V026)
-		p6Handler := handlers.NewP6Handler(database.DB)
-		p6Handler.RegisterRoutes(r)
-
-		// Funding Module (V027)
-		fundingHandler := handlers.NewFundingHandler(database.DB)
-		fundingHandler.RegisterRoutes(r)
-
-		// Neo4j + Kafka Module (V028)
-		neo4jKafkaHandler := handlers.NewNeo4jKafkaHandler(database.DB)
-		neo4jKafkaHandler.RegisterRoutes(r)
-
-		// Laboratory Module (V029)
-		labHandler := handlers.NewLaboratoryHandler(database.DB)
-		labHandler.RegisterRoutes(r)
-
-		// Permits Module (V030)
-		permitsHandler := handlers.NewPermitsHandler(database.DB)
-		permitsHandler.RegisterRoutes(r)
-
-		// Insurance Module (V031)
-		insuranceHandler := handlers.NewInsuranceHandler(database.DB)
-		insuranceHandler.RegisterRoutes(r)
-
-		// Fleet Module (V032)
-		fleetHandler := handlers.NewFleetHandler(database.DB)
-		fleetHandler.RegisterRoutes(r)
-
-		// Time & Attendance Module (V034)
-		attendanceHandler := handlers.NewAttendanceHandler(database.DB)
-		attendanceHandler.RegisterRoutes(r)
-
-		// Training & Certifications Module (V035)
-		trainingHandler := handlers.NewTrainingHandler(database.DB)
-		trainingHandler.RegisterRoutes(r)
-
-		// Segment Factory Module (V036)
-		segFactoryHandler := handlers.NewSegmentFactoryHandler(database.DB)
-		segFactoryHandler.RegisterRoutes(r)
-
-		// Shaft Management Module (V037)
-		shaftHandler := handlers.NewShaftHandler(database.DB)
-		shaftHandler.RegisterRoutes(r)
-
-		// Cross Passage + Geology Module (V038)
-		cpGeoHandler := handlers.NewCPGeoHandler(database.DB)
-		cpGeoHandler.RegisterRoutes(r)
-
-		// Settlement, Grouting, Ventilation Module (V039)
-		sgvHandler := handlers.NewSGVHandler(database.DB)
-		sgvHandler.RegisterRoutes(r)
-
-		// Instrumentation, Dewatering, TBM Maintenance Module (V040)
-		tunnelSvcHandler := handlers.NewTBMServiceHandler(database.DB)
-		tunnelSvcHandler.RegisterRoutes(r)
 
 		// Retention, Guarantees, Multi-Currency Module (V041)
 		retentionHandler := handlers.NewRetentionHandler(database.DB)
@@ -243,18 +249,11 @@ func main() {
 		// Mobile API, Notifications, Activity, Comments (V050)
 		mobileHandler := handlers.NewMobileHandler(database.DB)
 		mobileHandler.RegisterRoutes(r)
-
-		// Tunnel Logistics Module (V051)
-		tunnelLogisticsHandler := handlers.NewTunnelLogisticsHandler(database.DB)
-		tunnelLogisticsHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
 	r.Route("/api/v1/legacy", func(r chi.Router) {
-		// Use the same pattern — for full migration, replace with protected routes
 		r.Use(auth.JWTAuthMiddleware(keycloakCfg))
-
-		// Admin-only routes example
 		r.With(auth.RequiredRoleMiddleware("admin")).Get("/admin/health", func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{"status": "admin-ok"})

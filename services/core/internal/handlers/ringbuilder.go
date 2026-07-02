@@ -504,19 +504,19 @@ func (h *RingBuilderHandler) GetSummary(w http.ResponseWriter, r *http.Request) 
 	}
 
 	rows, err := h.db.Query(`SELECT COUNT(*) FROM ring_designs WHERE status='active'`+mapCondRB(projectID, "project_id"))
-	if err == nil && rows.Next() { rows.Scan(&summary["total_designs"]); rows.Close() }
+	if err == nil && rows.Next() { var v int; rows.Scan(&v); summary["total_designs"] = v; rows.Close() }
 
 	rows2, err := h.db.Query(`SELECT COUNT(*) FROM segment_production WHERE 1=1`+mapCondRB(projectID, "project_id"))
-	if err == nil && rows2.Next() { rows2.Scan(&summary["total_produced"]); rows2.Close() }
+	if err == nil && rows2.Next() { var v int; rows2.Scan(&v); summary["total_produced"] = v; rows2.Close() }
 
 	rows3, err := h.db.Query(`SELECT COUNT(*) FROM segment_production WHERE qc_status='passed'`+mapCondRB(projectID, "project_id"))
-	if err == nil && rows3.Next() { rows3.Scan(&summary["total_passed_qc"]); rows3.Close() }
+	if err == nil && rows3.Next() { var v int; rows3.Scan(&v); summary["total_passed_qc"] = v; rows3.Close() }
 
 	rows4, err := h.db.Query(`SELECT COUNT(*) FROM segment_production WHERE status='installed'`+mapCondRB(projectID, "project_id"))
-	if err == nil && rows4.Next() { rows4.Scan(&summary["total_installed"]); rows4.Close() }
+	if err == nil && rows4.Next() { var v int; rows4.Scan(&v); summary["total_installed"] = v; rows4.Close() }
 
 	rows5, err := h.db.Query(`SELECT COALESCE(SUM(quantity_defective),0) FROM segment_inventory WHERE 1=1`+mapCondRB(projectID, "project_id"))
-	if err == nil && rows5.Next() { rows5.Scan(&summary["total_defective"]); rows5.Close() }
+	if err == nil && rows5.Next() { var v int; rows5.Scan(&v); summary["total_defective"] = v; rows5.Close() }
 
 	respondJSON(w, http.StatusOK, summary)
 }
