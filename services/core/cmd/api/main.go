@@ -96,9 +96,9 @@ func main() {
 		bimHandler := handlers.NewBIMHandler(database.DB)
 		bimHandler.RegisterRoutes(r)
 
-		// AI Module
-		aiHandler := handlers.NewAIHandler(database.DB)
-		aiHandler.RegisterRoutes(r)
+		// AI Assistant Framework Module (V048)
+		aiAssistantHandler := handlers.NewAIHandler(database.DB)
+		aiAssistantHandler.RegisterRoutes(r)
 
 		// Project Management Module
 		pmHandler := handlers.NewPMHandler(database.DB)
