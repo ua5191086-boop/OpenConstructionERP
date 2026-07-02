@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Funding & Guarantees</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:14px}
+.controls{padding:16px 30px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1e293b;border-bottom:1px solid #334155}
+.controls select,.controls button{padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:14px;cursor:pointer}
+.controls button{background:#3b82f6;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#2563eb}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;text-align:center}
+.stat-card .label{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.stat-card .value.purple{color:#a855f7}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:15px;margin-bottom:14px}
+.chart-card canvas{max-height:280px;width:100%!important}
+.tables{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 30px 30px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;overflow-x:auto}
+.table-card h3{color:#f8fafc;font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;font-size:11px;text-transform:uppercase}
+td{padding:8px 6px;border-bottom:1px solid #1e293b}
+tr:hover td{background:#1a1f2e}
+.badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px}
+.badge-green{background:#1a3a2a;color:#4ade80}
+.badge-red{background:#3a1a1a;color:#f87171}
+.badge-yellow{background:#3a2a1a;color:#fbbf24}
+.badge-blue{background:#1a2a3a;color:#60a5fa}
+@media(max-width:768px){.charts,.tables{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>💰 <span>OpenConstructionERP</span> — Funding</h1><div class="sub">V027 • Funding Sources, Tranches, Multi-Currency, Guarantees</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="controls">
+  <label style="color:#94a3b8;font-size:13px">Project:</label>
+  <select id="projectSelect"><option value="">— All —</option></select>
+  <button onclick="loadData()">Refresh</button>
+</div>
+<div class="stats" id="statsKpi"></div>
+<div class="charts">
+  <div class="chart-card"><h3>💰 Funding by Source Type</h3><canvas id="srcTypeChart"></canvas></div>
+  <div class="chart-card"><h3>🎯 Covenant Compliance</h3><canvas id="covenantChart"></canvas></div>
+  <div class="chart-card"><h3>🛡️ Guarantee Status</h3><canvas id="guaranteeChart"></canvas></div>
+  <div class="chart-card"><h3>📈 Drawdown Timeline</h3><canvas id="drawdownChart"></canvas></div>
+</div>
+<div class="tables">
+  <div class="table-card"><h3>📋 Funding Sources</h3><table><thead><tr><th>Source</th><th>Type</th><th>Commitment</th><th>Currency</th><th>Status</th></tr></thead><tbody id="srcTable"></tbody></table></div>
+  <div class="table-card"><h3>🏦 Guarantees</h3><table><thead><tr><th>Number</th><th>Type</th><th>Amount</th><th>Bank</th><th>Status</th></tr></thead><tbody id="guaranteeTable"></tbody></table></div>
+</div>
+<script>
+const API_BASE = '/api/v1/protected/funding';
+let CHART_INSTANCES = {};
+const COLORS = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#eab308','#06b6d4','#ec4899','#84cc16','#6366f1'];
+
+async function loadData() {
+  try {
+    const [resp1, resp2, resp3, resp4, resp5, resp6] = await Promise.all([
+      fetch(`${API_BASE}/sources`),
+      fetch(`${API_BASE}/tranches`),
+      fetch(`${API_BASE}/drawdowns`),
+      fetch(`${API_BASE}/covenants`),
+      fetch(`${API_BASE}/guarantees`),
+      fetch(`${API_BASE}/rates`),
+    ]);
+    const sources = resp1.ok ? await resp1.json() : [];
+    const tranches = resp2.ok ? await resp2.json() : [];
+    const drawdowns = resp3.ok ? await resp3.json() : [];
+    const covenants = resp4.ok ? await resp4.json() : [];
+    const guarantees = resp5.ok ? await resp5.json() : [];
+    const rates = resp6.ok ? await resp6.json() : [];
+    renderDashboard(sources, tranches, drawdowns, covenants, guarantees, rates);
+  } catch(e) {
+    // Fallback mock data
+    const mock = genMock();
+    renderDashboard(mock.sources, mock.tranches, mock.drawdowns, mock.covenants, mock.guarantees, mock.rates);
+  }
+}
+function genMock() {
+  const types=['bank','eca','investor','grant','internal'];
+  const currencies=['USD','EUR','KZT','CNY'];
+  const s=Array.from({length:8},(_,i)=>({id:`f${i}`,source_type:types[i%5],source_name:`Source ${i+1}`,commitment_amount:(i+1)*5000000,currency:currencies[i%4],status:i%3===0?'active':'planned'}));
+  const t=s.flatMap(src=>[{id:`tr${src.id}`,funding_source_id:src.id,amount:src.commitment_amount*0.3,currency:src.currency,status:'disbursed'}]);
+  const d=s.flatMap(src=>[{id:`dw${src.id}`,funding_source_id:src.id,amount:src.commitment_amount*0.15,currency:src.currency,drawdown_date:'2025-0'+(Math.floor(Math.random()*6)+1)+'-15'}]);
+  const cov=s.flatMap(src=>[{id:`cv${src.id}`,covenant_type:'debt_service_coverage',required_value:1.5,current_value:Math.random()*2+1,status:'compliant'}]);
+  const g=Array.from({length:5},(_,i)=>({id:`gt${i}`,guarantee_number:`BG-${1001+i}`,guarantee_type:['bid_bond','performance','advance_payment'][i%3],principal_amount:(i+1)*2000000,currency:'USD',issuing_bank:['EBRD','Citi','Deutsche','Halifax'][i%4],status:'active'}));
+  const r=currencies.map(b=>({base_currency:b,quote_currency:'USD',rate:Math.random()*2+0.5}));
+  return {sources:s,tranches:t,drawdowns:d,covenants:cov,guarantees:g,rates:r};
+}
+function renderDashboard(sources, tranches, drawdowns, covenants, guarantees, rates) {
+  document.getElementById('updateTime').textContent = new Date().toISOString().slice(0,19).replace('T',' ');
+  const totalCommit = sources.reduce((s,x)=>s+(x.commitment_amount||0),0);
+  const totalGuarantee = guarantees.reduce((s,x)=>s+(x.principal_amount||0),0);
+  const activeSrc = sources.filter(x=>x.status==='active').length;
+  const compliantCov = covenants.filter(x=>x.status==='compliant').length;
+  document.getElementById('statsKpi').innerHTML = `
+    <div class="stat-card"><div class="label">Funding Sources</div><div class="value blue">${sources.length}</div></div>
+    <div class="stat-card"><div class="label">Total Commitment</div><div class="value green">$${(totalCommit/1e6).toFixed(1)}M</div></div>
+    <div class="stat-card"><div class="label">Active Sources</div><div class="value purple">${activeSrc}</div></div>
+    <div class="stat-card"><div class="label">Covenants Compliant</div><div class="value yellow">${compliantCov}/${covenants.length}</div></div>
+    <div class="stat-card"><div class="label">Active Guarantees</div><div class="value blue">${guarantees.filter(x=>x.status==='active').length}</div></div>
+    <div class="stat-card"><div class="label">Guarantee Total</div><div class="value green">$${(totalGuarantee/1e6).toFixed(1)}M</div></div>`;
+  renderSrcTypeChart(sources);
+  renderCovenantChart(covenants);
+  renderGuaranteeChart(guarantees);
+  renderDrawdownChart(drawdowns);
+  renderSrcTable(sources);
+  renderGuaranteeTable(guarantees);
+}
+function renderSrcTypeChart(sources) {
+  const grouped = {};
+  sources.forEach(s => { const k = s.source_type||'other'; grouped[k] = (grouped[k]||0) + (s.commitment_amount||0); });
+  const labels = Object.keys(grouped), data = Object.values(grouped);
+  renderChart('srcTypeChart', 'doughnut', labels, data, COLORS.slice(0,labels.length), 'Commitment Amount');
+}
+function renderCovenantChart(covenants) {
+  const g = {}; covenants.forEach(c => { g[c.status||'unknown'] = (g[c.status||'unknown']||0)+1; });
+  const labels = Object.keys(g), data = Object.values(g);
+  renderChart('covenantChart', 'pie', labels, data, ['#22c55e','#f97316','#eab308','#ef4444','#3b82f6'], 'Covenants');
+}
+function renderGuaranteeChart(guarantees) {
+  const g = {}; guarantees.forEach(g2 => { g2.status ? (g[g2.status]=(g[g2.status]||0)+1) : 0; });
+  const labels=Object.keys(g), data=Object.values(g);
+  renderChart('guaranteeChart', 'doughnut', labels, data, ['#22c55e','#f97316','#eab308','#ef4444','#a855f7'], 'Guarantees');
+}
+function renderDrawdownChart(drawdowns) {
+  const g = {}; drawdowns.forEach(d => { const m = (d.drawdown_date||'').slice(0,7); if(m) g[m]=(g[m]||0)+(d.amount||0); });
+  const labels=Object.keys(g).sort(), data=labels.map(l=>g[l]);
+  renderChart('drawdownChart', 'bar', labels, data, '#3b82f6', 'Drawdown Amount');
+}
+function renderChart(id, type, labels, data, colors, label) {
+  if(CHART_INSTANCES[id]) { CHART_INSTANCES[id].destroy(); }
+  const ctx = document.getElementById(id).getContext('2d');
+  const isBar = type === 'bar';
+  CHART_INSTANCES[id] = new Chart(ctx, {
+    type, data: { labels, datasets: [{ label: label||'', data, backgroundColor: isBar ? colors : (Array.isArray(colors)?colors:[colors]), borderColor: isBar ? (Array.isArray(colors)?colors:[colors]) : '#1e293b', borderWidth: 1 }]},
+    options: { responsive:true, maintainAspectRatio:true, plugins: { legend: { labels: { color:'#94a3b8', font:{size:11} } } },
+      scales: isBar ? { y: { beginAtZero:true, ticks: { color:'#64748b', font:{size:10}, callback:v=>'$'+(v/1e6).toFixed(1)+'M' }, grid: { color:'#1e293b' } }, x: { ticks: { color:'#64748b', font:{size:10} } } } : {} }
+  });
+}
+function renderSrcTable(sources) {
+  document.getElementById('srcTable').innerHTML = sources.map(s => `
+    <tr><td>${s.source_name||''}</td><td>${(s.source_type||'').replace(/_/g,' ')}</td>
+    <td>$${((s.commitment_amount||0)/1e6).toFixed(2)}M</td><td>${s.currency||''}</td>
+    <td><span class="badge badge-${s.status==='active'?'green':s.status==='planned'?'blue':'yellow'}">${s.status||''}</span></td></tr>
+  `).join('');
+}
+function renderGuaranteeTable(guarantees) {
+  document.getElementById('guaranteeTable').innerHTML = guarantees.map(g => `
+    <tr><td>${g.guarantee_number||''}</td><td>${(g.guarantee_type||'').replace(/_/g,' ')}</td>
+    <td>$${((g.principal_amount||0)/1e6).toFixed(2)}M</td><td>${g.issuing_bank||''}</td>
+    <td><span class="badge badge-${g.status==='active'?'green':g.status==='expired'?'red':'yellow'}">${g.status||''}</span></td></tr>
+  `).join('');
+}
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
