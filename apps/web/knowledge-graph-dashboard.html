@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenConstructionERP — Knowledge Graph</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0f172a;color:#e2e8f0}
+.header{background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%);border-bottom:1px solid #334155;padding:20px 30px;display:flex;justify-content:space-between;align-items:center}
+.header h1{font-size:24px;font-weight:700;color:#f8fafc}
+.header h1 span{color:#3b82f6}
+.header .sub{color:#94a3b8;font-size:14px}
+.controls{padding:16px 30px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:#1e293b;border-bottom:1px solid #334155}
+.controls select,.controls button{padding:8px 16px;border-radius:8px;border:1px solid #334155;background:#0f172a;color:#e2e8f0;font-size:14px;cursor:pointer}
+.controls button{background:#3b82f6;color:#fff;border:none;font-weight:600}
+.controls button:hover{background:#2563eb}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;padding:20px 30px}
+.stat-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:16px;text-align:center}
+.stat-card .label{color:#94a3b8;font-size:11px;text-transform:uppercase;letter-spacing:0.5px}
+.stat-card .value{font-size:22px;font-weight:700;margin-top:6px}
+.stat-card .value.green{color:#22c55e}
+.stat-card .value.blue{color:#3b82f6}
+.stat-card .value.yellow{color:#eab308}
+.stat-card .value.red{color:#ef4444}
+.stat-card .value.purple{color:#a855f7}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(450px,1fr));gap:20px;padding:0 30px 20px}
+.chart-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px}
+.chart-card h3{color:#f8fafc;font-size:15px;margin-bottom:14px}
+.chart-card canvas{max-height:280px;width:100%!important}
+.tables{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:0 30px 30px}
+.table-card{background:#1e293b;border:1px solid #334155;border-radius:12px;padding:20px;overflow-x:auto}
+.table-card h3{color:#f8fafc;font-size:15px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 6px;border-bottom:2px solid #334155;color:#94a3b8;font-size:11px;text-transform:uppercase}
+td{padding:8px 12px;border-bottom:1px solid #1e2a3d;color:#e2e8f0;font-size:13px;white-space: nowrap;overflow:hidden;text-overflow: ellipsis;max-width:0px;width:150px;display:inline-block}
+.badge{display:inline;padding:2px 8px;border-radius:10px;font-size:11px;white-space: nowrap}
+.badge-green{background:#1a3a2a;color:#4ade80}
+.badge-red{background:#3a1a1a;color:#f87171}
+.badge-yellow{background:#3a2a1a;color:#fbbf24}
+.badge-blue{background:#1a2a3a;color:#60a5fa}
+@media(max-width:768px){.charts,.tables{grid-template-columns:1fr}.stats{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🕸️ <span>OpenConstructionERP</span> — Knowledge Graph</h1><div class="sub">V028 • Neo4j + Kafka Event Bus | Knowledge Graph &amp; Event Streaming</div></div>
+  <div style="text-align:right;font-size:12px;color:#64748b" id="updateTime"></div>
+</div>
+<div class="controls">
+  <button onclick="loadData()">Refresh</button>
+</div>
+<div class="stats" id="statsKpi"></div>
+<div class="charts">
+  <div class="chart-card"><h3>📊 Nodes by Type</h3><canvas id="nodeTypeChart"></canvas></div>
+  <div class="chart-card"><h3>🔗 Edges by Type</h3><canvas id="edgeTypeChart"></canvas></div>
+  <div class="chart-card"><h3>📨 Kafka Events (Last 20)</h3><canvas id="eventsChart"></canvas></div>
+  <div class="chart-card"><h3>⚙️ Sync Queue Status</h3><canvas id="syncChart"></canvas></div>
+</div>
+<div class="tables">
+  <div class="table-card"><h3>🧠 Knowledge Graph Nodes</h3><table><thead><tr><th>Type</th><th>Label</th><th>Synced</th><th>Active</th></tr></thead><tbody id="nodesTable"></tbody></table></div>
+  <div class="table-card" style="grid-column:1/3"><h3>📨 Kafka Events</h3><table><thead><tr><th>Topic</th><th>Type</th><th>Key</th><th>Partition</th><th>Offset</th></tr></thead><tbody id="eventsTable"></tbody></table></div>
+</div>
+<script>
+const API_BASE = '/api/v1/protected/knowledge';
+const EVENTS_API = '/api/v1/protected/events';
+let CHART_INSTANCES = {};
+const COLORS = ['#3b82f6','#22c55e','#a855f7','#f97316','#ef4444','#eab308','#06b6d4','#ec4899','#84cc16','#6366f1'];
+
+async function loadData() {
+  try {
+    const [nodes, edges, events, topics, sync, consumers] = await Promise.all([
+      fetch(`${API_BASE}/nodes`).then(r => r.ok ? r.json() : []),
+      fetch(`${API_BASE}/edges`).then(r => r.ok ? r.json() : []),
+      fetch(`${EVENTS_API}/events`).then(r => r.ok ? r.json() : []),
+      fetch(`${EVENTS_API}/topics`).then(r => r.ok ? r.json() : []),
+      fetch(`${API_BASE}/sync`).catch(() => []),
+      fetch(`${EVENTS_API}/consumers`).then(r => r.ok ? r.json() : []),
+    ]);
+    renderDashboard(nodes, edges, events, topics, sync, consumers);
+  } catch(e) {
+    const m = genMock();
+    renderDashboard(m.nodes, m.edges, m.events, m.topics, m.sync, m.consumers);
+  }
+}
+function genMock() {
+  const nodeTypes = ['project','contract','document','equipment','employee','risk'];
+  const edgeTypes = ['belongs_to','references','depends_on','assigned_to','contains','impacts'];
+  const eventTypes = ['project.created','contract.signed','payment.processed','incident.reported','change.approved'];
+  const nodes = Array.from({length:30},(_,i)=>({id:`kg${i}`,node_type:nodeTypes[i%6],node_label:`${nodeTypes[i%6]} ${i+1}`,is_synced:Math.random()<0.85,is_active:true}));
+  const edges = Array.from({length:45},(_,i)=>({id:`ke${i}`,edge_type:edgeTypes[i%6],source_node_id:`kg${i%30}`,target_node_id:`kg${(i+10)%30}`,is_synced:Math.random()<0.85}));
+  const events = Array.from({length:20},(_,i)=>({id:`ev${i}`,topic_name:`oce.${['project','finance','hse'][i%3]}.event`,event_type:eventTypes[i%5],event_key:`key-${i}`,partition:i%3,offset:i+100}));
+  const topics = Array.from({length:6},(_,i)=>({topic_name:`oce.${['project','finance','hse','quality','contract','change'][i]}.event`,partitions:[1,3,6][i%3],status:'active'}));
+  const sync = Array.from({length:12},(_,i)=>({status:['pending','processing','completed','failed'][i%4]}));
+  const consumers = Array.from({length:4},(_,i)=>({consumer_name:['funding-sync','notification-svc','analytics-pipeline','audit-logger'][i],status:['running','stopped','lagging'][i%3],lag_count:i*10}));
+  return {nodes, edges, events, topics, sync, consumers};
+}
+function renderDashboard(nodes, edges, events, topics, sync, consumers) {
+  document.getElementById('updateTime').textContent = new Date().toISOString().slice(0,19).replace('T',' ');
+  const synced = nodes.filter(n=>n.is_synced).length;
+  const activeNodes = nodes.filter(n=>n.is_active!==false).length;
+  document.getElementById('statsKpi').innerHTML = `
+    <div class="stat-card"><div class="label">Graph Nodes</div><div class="value blue">${nodes.length}</div></div>
+    <div class="stat-card"><div class="label">Edges</div><div class="value green">${edges.length}</div></div>
+    <div class="stat-card"><div class="label">Synced</div><div class="value purple">${synced}</div></div>
+    <div class="stat-card"><div class="label">Topics</div><div class="value yellow">${topics.length}</div></div>
+    <div class="stat-card"><div class="label">Events</div><div class="value blue">${events.length}</div></div>
+    <div class="stat-card"><div class="label">Active Consumers</div><div class="value green">${consumers.filter(c=>c.status==='running').length}</div></div>`;
+  renderNodeTypeChart(nodes);
+  renderEdgeTypeChart(edges);
+  renderEventsChart(events);
+  renderSyncChart(sync);
+  renderNodesTable(nodes);
+  renderEventsTable(events);
+}
+function renderNodeTypeChart(nodes) {
+  const g = {}; nodes.forEach(n => { g[n.node_type] = (g[n.node_type]||0)+1; });
+  renderChart('nodeTypeChart', 'doughnut', Object.keys(g), Object.values(g), COLORS, 'Nodes');
+}
+function renderEdgeTypeChart(edges) {
+  const g = {}; edges.forEach(e => { g[e.edge_type] = (g[e.edge_type]||0)+1; });
+  renderChart('edgeTypeChart', 'doughnut', Object.keys(g), Object.values(g), COLORS.slice(2), 'Edges');
+}
+function renderEventsChart(events) {
+  const g = {}; events.forEach(e => { const t = (e.event_type||'unknown').split('.')[0]; g[t] = (g[t]||0)+1; });
+  renderChart('eventsChart', 'bar', Object.keys(g), Object.values(g), '#3b82f6', 'Events');
+}
+function renderSyncChart(sync) {
+  const g = {}; sync.forEach(s => { g[s.status||'unknown'] = (g[s.status||'unknown']||0)+1; });
+  renderChart('syncChart', 'pie', Object.keys(g), Object.values(g), ['#22c55e','#f97316','#3b82f6','#ef4444'], 'Sync Queue');
+}
+function renderChart(id, type, labels, data, colors, label) {
+  if(CHART_INSTANCES[id]) CHART_INSTANCES[id].destroy();
+  const ctx = document.getElementById(id).getContext('2d');
+  const isArray = Array.isArray(colors);
+  CHART_INSTANCES[id] = new Chart(ctx, {
+    type, data: { labels, datasets: [{ label: label||'', data, backgroundColor: isArray ? colors : [colors], borderColor: isArray ? colors : '#1e293b', borderWidth: 1 }]},
+    options: { responsive:true, maintainAspectRatio:true, plugins: { legend: { labels: { color:'#94a3b8', font:{size:11} } } },
+      scales: type==='bar' ? { y: { beginAtZero:true, ticks: { color:'#64748b', font:{size:10} }, grid: { color:'#1e293b' } }, x: { ticks: { color:'#64748b', font:{size:10} } } } : {} }
+  });
+}
+function renderNodesTable(nodes) {
+  document.getElementById('nodesTable').innerHTML = nodes.slice(0,20).map(n => `
+    <tr><td><span class="badge badge-${n.is_synced?'green':'yellow'}">${n.node_type||''}</span></td>
+    <td>${n.node_label||''}</td>
+    <td>${n.is_synced?'✅':'❌'}</td>
+    <td>${n.is_active!==false?'✅':'❌'}</td></tr>
+  `).join('');
+}
+function renderEventsTable(events) {
+  document.getElementById('eventsTable').innerHTML = events.slice(0,20).map(e => `
+    <tr><td style="max-width:200px">${e.topic_name||''}</td>
+    <td>${e.event_type||''}</td>
+    <td>${e.event_key||''}</td>
+    <td>${e.partition??''}</td>
+    <td>${e.offset??''}</td></tr>
+  `).join('');
+}
+document.addEventListener('DOMContentLoaded', loadData);
+</script>
+</body>
+</html>
