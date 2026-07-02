@@ -244,6 +244,10 @@ func main() {
 		// Mobile API, Notifications, Activity, Comments (V050)
 		mobileHandler := handlers.NewMobileHandler(database.DB)
 		mobileHandler.RegisterRoutes(r)
+
+		// Telegram Bot Integration (V082)
+		telegramBotHandler := handlers.NewTelegramBotHandler(sqlDB)
+		telegramBotHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
