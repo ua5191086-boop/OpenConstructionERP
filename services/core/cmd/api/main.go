@@ -231,6 +231,14 @@ func main() {
 		// Integration Framework Module (V047)
 		integrationHandler := handlers.NewIntegrationHandler(database.DB)
 		integrationHandler.RegisterRoutes(r)
+
+		// Audit & Compliance Module (V049)
+		auditComplianceHandler := handlers.NewAuditComplianceHandler(database.DB)
+		auditComplianceHandler.RegisterRoutes(r)
+
+		// Mobile API, Notifications, Activity, Comments (V050)
+		mobileHandler := handlers.NewMobileHandler(database.DB)
+		mobileHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
