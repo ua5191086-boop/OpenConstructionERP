@@ -147,6 +147,14 @@ func main() {
 		// Change Management Module
 		changeHandler := handlers.NewChangeHandler(database.DB)
 		changeHandler.RegisterRoutes(r)
+
+		// EVM Module (V025)
+		evmHandler := handlers.NewEVMHandler(database.DB)
+		evmHandler.RegisterRoutes(r)
+
+		// P6 Connector Module (V026)
+		p6Handler := handlers.NewP6Handler(database.DB)
+		p6Handler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
