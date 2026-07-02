@@ -203,6 +203,10 @@ func main() {
 		// Settlement, Grouting, Ventilation Module (V039)
 		sgvHandler := handlers.NewSGVHandler(database.DB)
 		sgvHandler.RegisterRoutes(r)
+
+		// Instrumentation, Dewatering, TBM Maintenance Module (V040)
+		tunnelSvcHandler := handlers.NewTBMServiceHandler(database.DB)
+		tunnelSvcHandler.RegisterRoutes(r)
 	})
 
 	// Legacy /api/v1 routes (backward compatible, also protected)
