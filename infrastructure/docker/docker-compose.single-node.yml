@@ -141,6 +141,12 @@ services:
     restart: unless-stopped
     networks: [oce-net]
     ports: ["8085:8081"]
+    environment:
+      DB_HOST: oce-postgres
+      DB_PORT: "5432"
+      DB_USER: oce
+      DB_PASSWORD: oce_secret
+      DB_NAME: oce_erp
     command: sh -c "echo 'Core API placeholder — build Go binary to enable' && sleep infinity"
     depends_on:
       oce-postgres:

@@ -41,6 +41,35 @@ func (h *ContractsHandler) RegisterRoutes(r chi.Router) {
 		r.Get("/{contractId}/payments/{paymentId}", h.GetPayment)
 		r.Put("/{contractId}/payments/{paymentId}", h.UpdatePayment)
 		r.Delete("/{contractId}/payments/{paymentId}", h.DeletePayment)
+
+		// Variation Orders (Addendums)
+		r.Get("/{contractId}/vo", h.ListVOs)
+		r.Post("/{contractId}/vo", h.CreateVO)
+		r.Get("/{contractId}/vo/{voId}", h.GetVO)
+		r.Put("/{contractId}/vo/{voId}", h.UpdateVO)
+		r.Delete("/{contractId}/vo/{voId}", h.DeleteVO)
+
+		// Work Acceptances (КС-2 / КС-3)
+		r.Get("/{contractId}/acceptances", h.ListAcceptances)
+		r.Post("/{contractId}/acceptances", h.CreateAcceptance)
+		r.Get("/{contractId}/acceptances/{accId}", h.GetAcceptance)
+		r.Put("/{contractId}/acceptances/{accId}", h.UpdateAcceptance)
+		r.Delete("/{contractId}/acceptances/{accId}", h.DeleteAcceptance)
+		r.Get("/{contractId}/acceptances/{accId}/items", h.ListAcceptanceItems)
+		r.Post("/{contractId}/acceptances/{accId}/items", h.CreateAcceptanceItem)
+
+		// Claims
+		r.Get("/{contractId}/claims", h.ListClaims)
+		r.Post("/{contractId}/claims", h.CreateClaim)
+		r.Get("/{contractId}/claims/{claimId}", h.GetClaim)
+		r.Put("/{contractId}/claims/{claimId}", h.UpdateClaim)
+		r.Delete("/{contractId}/claims/{claimId}", h.DeleteClaim)
+
+		// Contract Summary
+		r.Get("/{contractId}/summary", h.GetContractSummary)
+
+		// IPC Integration — returns IPC amounts per acceptance for finance
+		r.Get("/{contractId}/ipc", h.ListIPC)
 	})
 }
 
@@ -390,4 +419,497 @@ func (h *ContractsHandler) DeletePayment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// =============================================================================
+// Variation Orders (Addendums / Дополнительные соглашения — VO)
+// =============================================================================
+
+func (h *ContractsHandler) ListVOs(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	rows, err := h.db.Query(`SELECT id, contract_id, addendum_number, name, description, addendum_type, amount_change, days_change, new_end_date, status, signed_at, document_path, notes, created_at FROM contract_addendums WHERE contract_id = $1 ORDER BY addendum_number`, contractID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id, cid, name, desc, atype, st, docPath, notes string
+		var num int
+		var amountChange float64
+		var daysChange int
+		var newEndDate, signedAt, createdAt sql.NullString
+		if err := rows.Scan(&id, &cid, &num, &name, &desc, &atype, &amountChange, &daysChange, &newEndDate, &st, &signedAt, &docPath, &notes, &createdAt); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		item := map[string]interface{}{
+			"id": id, "contract_id": cid, "addendum_number": num, "name": name,
+			"description": desc, "addendum_type": atype, "amount_change": amountChange,
+			"days_change": daysChange, "status": st, "document_path": docPath, "notes": notes,
+		}
+		if newEndDate.Valid { item["new_end_date"] = newEndDate.String }
+		if signedAt.Valid { item["signed_at"] = signedAt.String }
+		if createdAt.Valid { item["created_at"] = createdAt.String }
+		items = append(items, item)
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+func (h *ContractsHandler) CreateVO(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	var input struct {
+		Name        string   `json:"name"`
+		Description *string  `json:"description"`
+		AddendumType string  `json:"addendum_type"`
+		AmountChange float64 `json:"amount_change"`
+		DaysChange   int     `json:"days_change"`
+		NewEndDate   *string `json:"new_end_date"`
+		DocumentPath *string `json:"document_path"`
+		Notes        *string `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	id := uuid.New().String()
+	now := time.Now()
+	_, err := h.db.Exec(`INSERT INTO contract_addendums (id, contract_id, addendum_number, name, description, addendum_type, amount_change, days_change, new_end_date, status, document_path, notes, created_at) VALUES ($1,$2,(SELECT COALESCE(MAX(addendum_number),0)+1 FROM contract_addendums WHERE contract_id=$2),$3,$4,$5,$6,$7,$8,'draft',$9,$10,$11)`,
+		id, contractID, input.Name, input.Description, input.AddendumType, input.AmountChange, input.DaysChange, input.NewEndDate, input.DocumentPath, input.Notes, now)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusCreated, map[string]string{"id": id})
+}
+
+func (h *ContractsHandler) GetVO(w http.ResponseWriter, r *http.Request) {
+	voID := chi.URLParam(r, "voId")
+	var id, cid, name, st string
+	var num int
+	err := h.db.QueryRow(`SELECT id, contract_id, addendum_number, name, status FROM contract_addendums WHERE id = $1`, voID).Scan(&id, &cid, &num, &name, &st)
+	if err == sql.ErrNoRows {
+		respondError(w, http.StatusNotFound, "VO not found")
+		return
+	}
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]interface{}{"id": id, "contract_id": cid, "addendum_number": num, "name": name, "status": st})
+}
+
+func (h *ContractsHandler) UpdateVO(w http.ResponseWriter, r *http.Request) {
+	voID := chi.URLParam(r, "voId")
+	var input struct {
+		Status *string `json:"status"`
+		Notes  *string `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	_, err := h.db.Exec(`UPDATE contract_addendums SET status=COALESCE($1,status), notes=COALESCE($2,notes), signed_at=CASE WHEN $1='signed' THEN NOW() ELSE signed_at END WHERE id=$3`,
+		input.Status, input.Notes, voID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+func (h *ContractsHandler) DeleteVO(w http.ResponseWriter, r *http.Request) {
+	voID := chi.URLParam(r, "voId")
+	_, err := h.db.Exec(`DELETE FROM contract_addendums WHERE id = $1`, voID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// =============================================================================
+// Work Acceptances (КС-2 / КС-3 / IPC)
+// =============================================================================
+
+func (h *ContractsHandler) ListAcceptances(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	rows, err := h.db.Query(`SELECT id, contract_id, milestone_id, acceptance_number, acceptance_date, period_from, period_to, amount, currency, status, approved_by, approved_at, paid_at, payment_ref, notes, created_at FROM contract_work_acceptances WHERE contract_id = $1 ORDER BY acceptance_date DESC`, contractID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id, cid, mid, accNum, currency, st, approvedBy, paymentRef, notes string
+		var accDate, periodFrom, periodTo sql.NullString
+		var amount float64
+		var approvedAt, paidAt, createdAt sql.NullString
+		if err := rows.Scan(&id, &cid, &mid, &accNum, &accDate, &periodFrom, &periodTo, &amount, &currency, &st, &approvedBy, &approvedAt, &paidAt, &paymentRef, &notes, &createdAt); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		item := map[string]interface{}{
+			"id": id, "contract_id": cid, "milestone_id": mid, "acceptance_number": accNum,
+			"acceptance_date": accDate, "amount": amount, "currency": currency,
+			"status": st, "approved_by": approvedBy, "payment_ref": paymentRef, "notes": notes,
+		}
+		if periodFrom.Valid { item["period_from"] = periodFrom.String }
+		if periodTo.Valid { item["period_to"] = periodTo.String }
+		if approvedAt.Valid { item["approved_at"] = approvedAt.String }
+		if paidAt.Valid { item["paid_at"] = paidAt.String }
+		if createdAt.Valid { item["created_at"] = createdAt.String }
+		items = append(items, item)
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+func (h *ContractsHandler) CreateAcceptance(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	var input struct {
+		AcceptanceNumber string  `json:"acceptance_number"`
+		AcceptanceDate   string  `json:"acceptance_date"`
+		PeriodFrom       *string `json:"period_from"`
+		PeriodTo         *string `json:"period_to"`
+		Amount           float64 `json:"amount"`
+		Currency         string  `json:"currency"`
+		Notes            *string `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	id := uuid.New().String()
+	now := time.Now()
+	_, err := h.db.Exec(`INSERT INTO contract_work_acceptances (id, contract_id, acceptance_number, acceptance_date, period_from, period_to, amount, currency, status, notes, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'draft',$9,$10)`,
+		id, contractID, input.AcceptanceNumber, input.AcceptanceDate, input.PeriodFrom, input.PeriodTo, input.Amount, input.Currency, input.Notes, now)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusCreated, map[string]string{"id": id})
+}
+
+func (h *ContractsHandler) GetAcceptance(w http.ResponseWriter, r *http.Request) {
+	accID := chi.URLParam(r, "accId")
+	var id, cid, accNum, st string
+	var amount float64
+	err := h.db.QueryRow(`SELECT id, contract_id, acceptance_number, amount, status FROM contract_work_acceptances WHERE id = $1`, accID).Scan(&id, &cid, &accNum, &amount, &st)
+	if err == sql.ErrNoRows {
+		respondError(w, http.StatusNotFound, "acceptance not found")
+		return
+	}
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]interface{}{"id": id, "contract_id": cid, "acceptance_number": accNum, "amount": amount, "status": st})
+}
+
+func (h *ContractsHandler) UpdateAcceptance(w http.ResponseWriter, r *http.Request) {
+	accID := chi.URLParam(r, "accId")
+	var input struct {
+		Status      *string  `json:"status"`
+		ApprovedBy  *string  `json:"approved_by"`
+		PaymentRef  *string  `json:"payment_ref"`
+		Notes       *string  `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	_, err := h.db.Exec(`UPDATE contract_work_acceptances SET status=COALESCE($1,status), approved_by=COALESCE($2,approved_by), payment_ref=COALESCE($3,payment_ref), notes=COALESCE($4,notes), approved_at=CASE WHEN $1='approved' THEN NOW() ELSE approved_at END, paid_at=CASE WHEN $1='paid' THEN NOW() ELSE paid_at END WHERE id=$5`,
+		input.Status, input.ApprovedBy, input.PaymentRef, input.Notes, accID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+func (h *ContractsHandler) DeleteAcceptance(w http.ResponseWriter, r *http.Request) {
+	accID := chi.URLParam(r, "accId")
+	_, err := h.db.Exec(`DELETE FROM contract_work_acceptances WHERE id = $1`, accID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// --- Acceptance Items (привязка к BOQ) ---
+
+func (h *ContractsHandler) ListAcceptanceItems(w http.ResponseWriter, r *http.Request) {
+	accID := chi.URLParam(r, "accId")
+	rows, err := h.db.Query(`SELECT id, acceptance_id, boq_item_id, item_code, description, unit, contract_quantity, prev_quantity, current_quantity, total_quantity, unit_price, current_amount, total_amount, sort_order, created_at FROM contract_acceptance_items WHERE acceptance_id = $1 ORDER BY sort_order`, accID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id, accID2, boqID, itemCode, desc, unit string
+		var cq, pq, curq, tq, up, ca, ta float64
+		var so int
+		var createdAt time.Time
+		if err := rows.Scan(&id, &accID2, &boqID, &itemCode, &desc, &unit, &cq, &pq, &curq, &tq, &up, &ca, &ta, &so, &createdAt); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		items = append(items, map[string]interface{}{
+			"id": id, "acceptance_id": accID2, "boq_item_id": boqID, "item_code": itemCode,
+			"description": desc, "unit": unit, "contract_quantity": cq, "prev_quantity": pq,
+			"current_quantity": curq, "total_quantity": tq, "unit_price": up,
+			"current_amount": ca, "total_amount": ta, "sort_order": so,
+			"created_at": createdAt,
+		})
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+func (h *ContractsHandler) CreateAcceptanceItem(w http.ResponseWriter, r *http.Request) {
+	accID := chi.URLParam(r, "accId")
+	var input struct {
+		BOQItemID        *string  `json:"boq_item_id"`
+		ItemCode         string   `json:"item_code"`
+		Description      *string  `json:"description"`
+		Unit             string   `json:"unit"`
+		ContractQuantity float64  `json:"contract_quantity"`
+		PrevQuantity     float64  `json:"prev_quantity"`
+		CurrentQuantity  float64  `json:"current_quantity"`
+		UnitPrice        float64  `json:"unit_price"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	id := uuid.New().String()
+	totalQuantity := input.PrevQuantity + input.CurrentQuantity
+	currentAmount := input.CurrentQuantity * input.UnitPrice
+	totalAmount := totalQuantity * input.UnitPrice
+	now := time.Now()
+	_, err := h.db.Exec(`INSERT INTO contract_acceptance_items (id, acceptance_id, boq_item_id, item_code, description, unit, contract_quantity, prev_quantity, current_quantity, total_quantity, unit_price, current_amount, total_amount, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
+		id, accID, input.BOQItemID, input.ItemCode, input.Description, input.Unit, input.ContractQuantity, input.PrevQuantity, input.CurrentQuantity, totalQuantity, input.UnitPrice, currentAmount, totalAmount, now)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusCreated, map[string]string{"id": id})
+}
+
+// =============================================================================
+// Claims (Претензии)
+// =============================================================================
+
+func (h *ContractsHandler) ListClaims(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	rows, err := h.db.Query(`SELECT id, contract_id, claim_number, claim_type, description, amount_claimed, amount_approved, currency, status, submitted_by, submitted_at, resolved_at, resolution, document_path, created_at FROM contract_claims WHERE contract_id = $1 ORDER BY claim_number`, contractID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var id, cid, cnum, ctype, desc, currency, st, submittedBy, resolution, docPath string
+		var amountClaimed, amountApproved float64
+		var submittedAt, resolvedAt, createdAt sql.NullString
+		if err := rows.Scan(&id, &cid, &cnum, &ctype, &desc, &amountClaimed, &amountApproved, &currency, &st, &submittedBy, &submittedAt, &resolvedAt, &resolution, &docPath, &createdAt); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		item := map[string]interface{}{
+			"id": id, "contract_id": cid, "claim_number": cnum, "claim_type": ctype,
+			"description": desc, "amount_claimed": amountClaimed, "amount_approved": amountApproved,
+			"currency": currency, "status": st, "submitted_by": submittedBy,
+			"resolution": resolution, "document_path": docPath,
+		}
+		if submittedAt.Valid { item["submitted_at"] = submittedAt.String }
+		if resolvedAt.Valid { item["resolved_at"] = resolvedAt.String }
+		if createdAt.Valid { item["created_at"] = createdAt.String }
+		items = append(items, item)
+	}
+	respondJSON(w, http.StatusOK, items)
+}
+
+func (h *ContractsHandler) CreateClaim(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	var input struct {
+		ClaimType     string   `json:"claim_type"`
+		Description   string   `json:"description"`
+		AmountClaimed float64  `json:"amount_claimed"`
+		Currency      string   `json:"currency"`
+		SubmittedBy   *string  `json:"submitted_by"`
+		DocumentPath  *string  `json:"document_path"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	id := uuid.New().String()
+	now := time.Now()
+	_, err := h.db.Exec(`INSERT INTO contract_claims (id, contract_id, claim_number, claim_type, description, amount_claimed, currency, status, submitted_by, submitted_at, document_path, created_at) VALUES ($1,$2,(SELECT COALESCE(MAX(claim_number),0)+1 FROM contract_claims WHERE contract_id=$2),$3,$4,$5,$6,'submitted',$7,$8,$9,$10)`,
+		id, contractID, input.ClaimType, input.Description, input.AmountClaimed, input.Currency, input.SubmittedBy, now, input.DocumentPath, now)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusCreated, map[string]string{"id": id})
+}
+
+func (h *ContractsHandler) GetClaim(w http.ResponseWriter, r *http.Request) {
+	claimID := chi.URLParam(r, "claimId")
+	var id, cid, ctype, st string
+	var amount float64
+	err := h.db.QueryRow(`SELECT id, contract_id, claim_type, amount_claimed, status FROM contract_claims WHERE id = $1`, claimID).Scan(&id, &cid, &ctype, &amount, &st)
+	if err == sql.ErrNoRows {
+		respondError(w, http.StatusNotFound, "claim not found")
+		return
+	}
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]interface{}{"id": id, "contract_id": cid, "claim_type": ctype, "amount_claimed": amount, "status": st})
+}
+
+func (h *ContractsHandler) UpdateClaim(w http.ResponseWriter, r *http.Request) {
+	claimID := chi.URLParam(r, "claimId")
+	var input struct {
+		Status          *string  `json:"status"`
+		AmountApproved  *float64 `json:"amount_approved"`
+		Resolution      *string  `json:"resolution"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+		respondError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	_, err := h.db.Exec(`UPDATE contract_claims SET status=COALESCE($1,status), amount_approved=COALESCE($2,amount_approved), resolution=COALESCE($3,resolution), resolved_at=CASE WHEN $1 IN ('approved','rejected','withdrawn') THEN NOW() ELSE resolved_at END WHERE id=$4`,
+		input.Status, input.AmountApproved, input.Resolution, claimID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "updated"})
+}
+
+func (h *ContractsHandler) DeleteClaim(w http.ResponseWriter, r *http.Request) {
+	claimID := chi.URLParam(r, "claimId")
+	_, err := h.db.Exec(`DELETE FROM contract_claims WHERE id = $1`, claimID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	respondJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+}
+
+// =============================================================================
+// Contract Summary
+// =============================================================================
+
+func (h *ContractsHandler) GetContractSummary(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+
+	// Contract details
+	contractInfo := struct {
+		ID, Code, Name, Status string
+		Amount                  float64
+	}{}
+	err := h.db.QueryRow(`SELECT id, code, name, status, contract_amount FROM contracts WHERE id = $1`, contractID).Scan(&contractInfo.ID, &contractInfo.Code, &contractInfo.Name, &contractInfo.Status, &contractInfo.Amount)
+	if err == sql.ErrNoRows {
+		respondError(w, http.StatusNotFound, "contract not found")
+		return
+	}
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	var voCount, voTotal float64
+	h.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(amount_change),0) FROM contract_addendums WHERE contract_id = $1 AND status='signed'`, contractID).Scan(&voCount, &voTotal)
+
+	var accCount, accApproved, accAmount sql.NullFloat64
+	h.db.QueryRow(`SELECT COUNT(*), COUNT(*) FILTER (WHERE status='approved' OR status='paid'), COALESCE(SUM(amount),0) FROM contract_work_acceptances WHERE contract_id = $1`, contractID).Scan(&accCount, &accApproved, &accAmount)
+
+	var claimCount, claimApproved float64
+	h.db.QueryRow(`SELECT COUNT(*), COALESCE(SUM(amount_approved),0) FROM contract_claims WHERE contract_id = $1`, contractID).Scan(&claimCount, &claimApproved)
+
+	totalVO := contractInfo.Amount + voTotal
+
+	respondJSON(w, http.StatusOK, map[string]interface{}{
+		"contract_id":           contractInfo.ID,
+		"code":                  contractInfo.Code,
+		"name":                  contractInfo.Name,
+		"status":                contractInfo.Status,
+		"original_amount":       contractInfo.Amount,
+		"vo_count":              voCount,
+		"vo_total_change":       voTotal,
+		"current_contract_value": totalVO,
+		"acceptance_count":      accCount,
+		"acceptance_approved":   accApproved,
+		"accepted_total":        accAmount,
+		"claim_count":           claimCount,
+		"claim_approved_total":  claimApproved,
+	})
+}
+
+// =============================================================================
+// IPC — amounts per acceptance for Finance integration
+// =============================================================================
+
+func (h *ContractsHandler) ListIPC(w http.ResponseWriter, r *http.Request) {
+	contractID := chi.URLParam(r, "contractId")
+	rows, err := h.db.Query(`
+		SELECT
+			a.id AS acceptance_id,
+			a.acceptance_number,
+			a.acceptance_date,
+			a.period_from,
+			a.period_to,
+			a.amount AS acceptance_amount,
+			a.status,
+			COALESCE(ai.item_count, 0) AS item_count,
+			COALESCE(ai.total_quantity, 0) AS total_quantity
+		FROM contract_work_acceptances a
+		LEFT JOIN (
+			SELECT acceptance_id,
+				COUNT(*) AS item_count,
+				SUM(current_quantity) AS total_quantity
+			FROM contract_acceptance_items
+			GROUP BY acceptance_id
+		) ai ON ai.acceptance_id = a.id
+		WHERE a.contract_id = $1
+		ORDER BY a.acceptance_date DESC`, contractID)
+	if err != nil {
+		respondError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	defer rows.Close()
+
+	items := make([]map[string]interface{}, 0)
+	for rows.Next() {
+		var accID, accNum, st string
+		var accDate, periodFrom, periodTo sql.NullString
+		var amount, itemCount, totalQty float64
+		if err := rows.Scan(&accID, &accNum, &accDate, &periodFrom, &periodTo, &amount, &st, &itemCount, &totalQty); err != nil {
+			respondError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+		item := map[string]interface{}{
+			"acceptance_id": accID, "acceptance_number": accNum, "acceptance_amount": amount,
+			"status": st, "item_count": itemCount, "total_quantity": totalQty,
+		}
+		if accDate.Valid { item["acceptance_date"] = accDate.String }
+		if periodFrom.Valid { item["period_from"] = periodFrom.String }
+		if periodTo.Valid { item["period_to"] = periodTo.String }
+		items = append(items, item)
+	}
+	respondJSON(w, http.StatusOK, items)
 }

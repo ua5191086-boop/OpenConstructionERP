@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPC vs Физический Прогресс — OpenConstructionERP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 20px 30px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #334155; }
+.header h1 { font-size: 24px; color: #f1f5f9; }
+.header p { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.filters select, .filters input { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-size: 14px; min-width: 200px; }
+.filters select:focus { outline: none; border-color: #3b82f6; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
+.stat-card .value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f1f5f9; }
+.stat-card .sub { font-size: 13px; color: #64748b; margin-top: 4px; }
+.stat-card.positive { border-left: 3px solid #22c55e; }
+.stat-card.warning { border-left: 3px solid #f59e0b; }
+.stat-card.negative { border-left: 3px solid #ef4444; }
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+.table-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 8px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+td { padding: 10px 8px; border-bottom: 1px solid #1e293b; font-size: 14px; }
+tr:hover { background: #1e293b; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.badge-green { background: #166534; color: #86efac; }
+.badge-yellow { background: #854d0e; color: #fde047; }
+.badge-red { background: #991b1b; color: #fca5a5; }
+.badge-blue { background: #1e3a5f; color: #93c5fd; }
+.progress-bar { width: 100%; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.progress-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.loading { text-align: center; padding: 60px; color: #64748b; }
+.loading .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { text-align: center; padding: 40px; color: #fca5a5; }
+.detail-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } .detail-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📊 IPC vs Физический Прогресс</h1>
+    <p>Сравнение сумм актов КС-2/КС-3 (IPC) с физическими замерами с площадки</p>
+  </div>
+
+  <div class="filters">
+    <select id="projectFilter"><option value="">Все проекты</option></select>
+    <select id="contractFilter"><option value="">Все контракты</option></select>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="charts-row" id="chartsRow"></div>
+  <div class="table-card" id="tableCard"></div>
+  <div class="table-card" id="detailCard" style="display:none"></div>
+</div>
+
+<script>
+let allData = [];
+let projects = new Set();
+let contracts = new Map();
+
+async function loadData() {
+  const container = document.getElementById('statsGrid');
+  container.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка данных...</div>';
+
+  try {
+    const resp = await fetch('/api/v1/protected/finance/ipc-vs-physical');
+    if (!resp.ok) {
+      // Try legacy endpoint
+      const resp2 = await fetch('/api/v1/finance/ipc-vs-physical');
+      if (!resp2.ok) throw new Error('API недоступен');
+      allData = await resp2.json();
+    } else {
+      allData = await resp.json();
+    }
+
+    if (!Array.isArray(allData)) allData = [];
+
+    // Build filters
+    projects.clear();
+    contracts.clear();
+    allData.forEach(d => {
+      if (d.project_id) projects.add(d.project_id);
+      if (d.contract_id && d.contract_code) {
+        contracts.set(d.contract_id, d.contract_code + ' — ' + (d.contract_name || ''));
+      }
+    });
+
+    const projSel = document.getElementById('projectFilter');
+    projSel.innerHTML = '<option value="">Все проекты</option>' +
+      Array.from(projects).map(p => `<option value="${p}">${p.substring(0,8)}</option>`).join('');
+
+    const contrSel = document.getElementById('contractFilter');
+    contrSel.innerHTML = '<option value="">Все контракты</option>' +
+      Array.from(contracts.entries()).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+
+    render();
+  } catch(e) {
+    container.innerHTML = `<div class="error">❌ Ошибка: ${e.message}</div>`;
+  }
+}
+
+function getFiltered() {
+  const proj = document.getElementById('projectFilter').value;
+  const contr = document.getElementById('contractFilter').value;
+  return allData.filter(d =>
+    (!proj || d.project_id === proj) &&
+    (!contr || d.contract_id === contr)
+  );
+}
+
+function render() {
+  const data = getFiltered();
+
+  // Stats
+  const totalIPC = data.reduce((s, d) => s + (d.total_accepted_ipc || 0), 0);
+  const totalProgress = data.reduce((s, d) => s + (d.total_ipc_from_progress || 0), 0);
+  const variance = totalIPC - totalProgress;
+  const avgPhys = data.length > 0 ? data.reduce((s, d) => s + (d.avg_physical_completion_pct || 0), 0) / data.length : 0;
+  const positives = data.filter(d => d.ipc_variance >= 0).length;
+  const negatives = data.filter(d => d.ipc_variance < 0).length;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card positive">
+      <div class="label">Принято по актам (IPC)</div>
+      <div class="value">$${totalIPC.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+      <div class="sub">${data.length} контрактов</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Физический прогресс (замеры)</div>
+      <div class="value">$${totalProgress.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+      <div class="sub">${data.reduce((s, d) => s + (d.progress_entries || 0), 0)} замеров</div>
+    </div>
+    <div class="stat-card ${variance > 0 ? 'positive' : variance < 0 ? 'negative' : 'warning'}">
+      <div class="label">Разница IPC vs Прогресс</div>
+      <div class="value">${variance >= 0 ? '+' : ''}$${variance.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:0})}</div>
+      <div class="sub">${positives} контрактов IPC ≥ прогноз, ${negatives} IPC < прогноз</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Средний физический прогресс</div>
+      <div class="value">${avgPhys.toFixed(1)}%</div>
+      <div class="sub">взвешенный по контрактам</div>
+    </div>
+  `;
+
+  // Charts
+  document.getElementById('chartsRow').innerHTML = `
+    <div class="chart-card">
+      <h3>📈 IPC vs Физический прогресс по контрактам</h3>
+      <canvas id="ipcChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>📊 Разница (IPC - Прогресс)</h3>
+      <canvas id="varianceChart"></canvas>
+    </div>
+  `;
+
+  const labels = data.map(d => d.contract_code || d.contract_id?.substring(0, 8) || 'N/A');
+  const ipcValues = data.map(d => d.total_accepted_ipc || 0);
+  const progressValues = data.map(d => d.total_ipc_from_progress || 0);
+  const varianceValues = data.map(d => d.ipc_variance || 0);
+  const physPctValues = data.map(d => d.avg_physical_completion_pct || 0);
+  const ipcPctValues = data.map(d => d.ipc_pct_of_contract || 0);
+
+  new Chart(document.getElementById('ipcChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'IPC (акты)', data: ipcValues, backgroundColor: '#3b82f6', borderRadius: 4 },
+        { label: 'Прогресс (замеры)', data: progressValues, backgroundColor: '#22c55e', borderRadius: 4 }
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: { y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+               x: { ticks: { color: '#94a3b8' } } } }
+  });
+
+  new Chart(document.getElementById('varianceChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Разница', data: varianceValues, backgroundColor: varianceValues.map(v => v >= 0 ? '#3b82f6' : '#ef4444'), borderRadius: 4 },
+        { label: 'Физ. прогресс %', data: physPctValues, backgroundColor: '#22c55e', borderRadius: 4, yAxisID: 'y1' },
+        { label: 'IPC % от контракта', data: ipcPctValues, backgroundColor: '#f59e0b', borderRadius: 4, yAxisID: 'y1' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { labels: { color: '#94a3b8' } } },
+      scales: {
+        y: { position: 'left', ticks: { color: '#64748b' }, grid: { color: '#1e293b' } },
+        y1: { position: 'right', ticks: { color: '#64748b', callback: v => v + '%' }, grid: { display: false } },
+        x: { ticks: { color: '#94a3b8' } }
+      }
+    }
+  });
+
+  // Table
+  document.getElementById('tableCard').innerHTML = `
+    <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">
+      📋 Детализация по контрактам
+    </h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Контракт</th>
+          <th>Замеров</th>
+          <th>IPC (акты)</th>
+          <th>Прогресс (замеры)</th>
+          <th>Разница</th>
+          <th>Физ. %</th>
+          <th>IPC %</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(d => {
+          const v = d.ipc_variance || 0;
+          const badge = v > 0 ? 'badge-green' : v < 0 ? 'badge-red' : 'badge-yellow';
+          const label = v > 0 ? 'IPC > Прогресс' : v < 0 ? 'IPC < Прогресс' : 'Равно';
+          return `<tr>
+            <td><strong>${d.contract_code || 'N/A'}</strong><br><small style="color:#64748b">${d.contract_name || ''}</small></td>
+            <td>${d.progress_entries || 0}</td>
+            <td>$${(d.total_accepted_ipc || 0).toLocaleString()}</td>
+            <td>$${(d.total_ipc_from_progress || 0).toLocaleString()}</td>
+            <td><span class="badge ${badge}">${v >= 0 ? '+' : ''}$${v.toLocaleString()}</span></td>
+            <td>
+              ${(d.avg_physical_completion_pct || 0).toFixed(1)}%
+              <div class="progress-bar"><div class="fill" style="width:${Math.min(d.avg_physical_completion_pct || 0, 100)}%;background:#22c55e"></div></div>
+            </td>
+            <td>
+              ${(d.ipc_pct_of_contract || 0).toFixed(1)}%
+              <div class="progress-bar"><div class="fill" style="width:${Math.min(d.ipc_pct_of_contract || 0, 100)}%;background:#3b82f6"></div></div>
+            </td>
+            <td><button onclick="showDetail('${d.contract_id}')" style="background:#3b82f6;color:white;border:none;padding:6px 12px;border-radius:6px;cursor:pointer">Детали</button></td>
+          </tr>`;
+        }).join('')}
+        ${data.length === 0 ? '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:40px;">Нет данных по выбранным фильтрам</td></tr>' : ''}
+      </tbody>
+    </table>
+  `;
+}
+
+async function showDetail(contractId) {
+  const card = document.getElementById('detailCard');
+  card.style.display = 'block';
+  card.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка деталей...</div>';
+
+  try {
+    const resp = await fetch(`/api/v1/protected/finance/ipc-vs-physical/contract/${contractId}`);
+    if (!resp.ok) throw new Error('Не удалось загрузить');
+    const data = await resp.json();
+
+    const items = data.items || [];
+    card.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:14px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.5px;">
+          📋 Детали по контракту ${data.contract_id?.substring(0,8) || ''}
+        </h3>
+        <span style="font-size:13px;color:#64748b">
+          Сумма: $${(data.contract_amount || 0).toLocaleString()} |
+          Акты: $${(data.total_accepted_ipc || 0).toLocaleString()} |
+          Замеры: $${(data.total_ipc_from_progress || 0).toLocaleString()}
+        </span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Позиция</th>
+            <th>Описание</th>
+            <th>Ед.</th>
+            <th>Кол-во по договору</th>
+            <th>Выполнено</th>
+            <th>%</th>
+            <th>Расценка</th>
+            <th>IPC сумма</th>
+            <th>Дата</th>
+            <th>Источник</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${items.map(item => `<tr>
+            <td><strong>${item.item_code || ''}</strong></td>
+            <td><small>${item.description || ''}</small></td>
+            <td>${item.unit || ''}</td>
+            <td>${(item.contract_quantity || 0).toLocaleString()}</td>
+            <td>${(item.total_cumulative_qty || 0).toLocaleString()}</td>
+            <td>
+              ${(item.completion_pct || 0).toFixed(1)}%
+              <div class="progress-bar"><div class="fill" style="width:${Math.min(item.completion_pct || 0, 100)}%;background:${(item.completion_pct || 0) >= 100 ? '#22c55e' : '#3b82f6'}"></div></div>
+            </td>
+            <td>$${(item.unit_price || 0).toLocaleString()}</td>
+            <td>$${(item.ipc_amount || 0).toLocaleString()}</td>
+            <td><small>${item.measurement_date || ''}</small></td>
+            <td><span class="badge badge-blue">${item.source || ''}</span></td>
+          </tr>`).join('')}
+          ${items.length === 0 ? '<tr><td colspan="10" style="text-align:center;color:#64748b;padding:40px;">Нет данных по замерам</td></tr>' : ''}
+        </tbody>
+      </table>
+    `;
+  } catch(e) {
+    card.innerHTML = `<div class="error">❌ ${e.message}</div>`;
+  }
+}
+
+document.getElementById('projectFilter').addEventListener('change', render);
+document.getElementById('contractFilter').addEventListener('change', render);
+
+loadData();
+</script>
+</body>
+</html>
