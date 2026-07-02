@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Складской учёт — OpenConstructionERP</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #e2e8f0; min-height: 100vh; }
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+.header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 20px 30px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #334155; }
+.header h1 { font-size: 24px; color: #f1f5f9; }
+.header p { color: #94a3b8; font-size: 14px; margin-top: 4px; }
+.filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+.filters select, .filters input { background: #1e293b; border: 1px solid #334155; color: #e2e8f0; padding: 10px 16px; border-radius: 8px; font-size: 14px; min-width: 200px; }
+.filters select:focus { outline: none; border-color: #3b82f6; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.stat-card .label { font-size: 12px; text-transform: uppercase; color: #94a3b8; letter-spacing: 0.5px; }
+.stat-card .value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f1f5f9; }
+.stat-card .sub { font-size: 13px; color: #64748b; margin-top: 4px; }
+.stat-card.danger { border-left: 3px solid #ef4444; }
+.stat-card.warning { border-left: 3px solid #f59e0b; }
+.stat-card.success { border-left: 3px solid #22c55e; }
+.stat-card.info { border-left: 3px solid #3b82f6; }
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+.chart-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; }
+.chart-card h3 { font-size: 14px; color: #94a3b8; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+.tabs { display: flex; gap: 4px; margin-bottom: 16px; background: #1e293b; border-radius: 8px; padding: 4px; border: 1px solid #334155; }
+.tab { padding: 8px 20px; border-radius: 6px; cursor: pointer; font-size: 13px; color: #94a3b8; transition: all 0.2s; }
+.tab:hover { color: #e2e8f0; }
+.tab.active { background: #3b82f6; color: white; }
+.table-card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px; margin-bottom: 24px; overflow-x: auto; display: none; }
+.table-card.active { display: block; }
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 12px 8px; font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #334155; }
+td { padding: 10px 8px; border-bottom: 1px solid #1e293b; font-size: 14px; }
+tr:hover { background: #1e293b; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+.badge-green { background: #166534; color: #86efac; }
+.badge-yellow { background: #854d0e; color: #fde047; }
+.badge-red { background: #991b1b; color: #fca5a5; }
+.badge-blue { background: #1e3a5f; color: #93c5fd; }
+.progress-bar { width: 100%; height: 8px; background: #1e293b; border-radius: 4px; overflow: hidden; margin-top: 4px; }
+.progress-bar .fill { height: 100%; border-radius: 4px; transition: width 0.5s; }
+.loading { text-align: center; padding: 60px; color: #64748b; }
+.loading .spinner { width: 40px; height: 40px; border: 3px solid #334155; border-top-color: #3b82f6; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 16px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.error { text-align: center; padding: 40px; color: #fca5a5; }
+@media (max-width: 768px) { .charts-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>📦 Складской учёт / Inventory</h1>
+    <p>Материалы, остатки, движения, оповещения о запасах</p>
+  </div>
+
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="charts-row" id="chartsRow"></div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('inventory')">📋 Номенклатура</div>
+    <div class="tab" onclick="switchTab('alerts')">⚠️ Оповещения</div>
+    <div class="tab" onclick="switchTab('movements')">🔄 Движения</div>
+  </div>
+
+  <div class="table-card active" id="tab-inventory"></div>
+  <div class="table-card" id="tab-alerts"></div>
+  <div class="table-card" id="tab-movements"></div>
+</div>
+
+<script>
+let inventory = [];
+let movements = [];
+let alerts = [];
+
+async function loadData() {
+  document.getElementById('statsGrid').innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка...</div>';
+
+  try {
+    const [invResp, movResp, alertResp, sumResp] = await Promise.all([
+      fetch('/api/v1/protected/procurement/inventory').then(r => r.ok ? r.json() : []),
+      fetch('/api/v1/protected/procurement/inventory-movements').then(r => r.ok ? r.json() : []),
+      fetch('/api/v1/protected/procurement/stock-alerts').then(r => r.ok ? r.json() : []),
+      fetch('/api/v1/protected/procurement/inventory-summary').then(r => r.ok ? r.json() : {})
+    ]);
+
+    inventory = Array.isArray(invResp) ? invResp : [];
+    movements = Array.isArray(movResp) ? movResp : [];
+    alerts = Array.isArray(alertResp) ? alertResp : [];
+
+    render(sumResp);
+  } catch(e) {
+    document.getElementById('statsGrid').innerHTML = `<div class="error">❌ ${e.message}</div>`;
+  }
+}
+
+function render(summary) {
+  const totalItems = summary.total_items || inventory.length;
+  const totalValue = summary.total_stock_value || 0;
+  const lowStock = summary.low_stock_count || alerts.length;
+  const outOfStock = summary.out_of_stock_count || 0;
+
+  document.getElementById('statsGrid').innerHTML = `
+    <div class="stat-card info">
+      <div class="label">Позиций на складе</div>
+      <div class="value">${totalItems}</div>
+      <div class="sub">${summary.category_count || 0} категорий, ${summary.warehouse_count || 1} складов</div>
+    </div>
+    <div class="stat-card success">
+      <div class="label">Стоимость запасов</div>
+      <div class="value">$${totalValue.toLocaleString('en-US', {minimumFractionDigits:0})}</div>
+      <div class="sub">${summary.total_units || 0} единиц</div>
+    </div>
+    <div class="stat-card ${lowStock > 0 ? 'warning' : 'success'}">
+      <div class="label">Низкий запас</div>
+      <div class="value">${lowStock}</div>
+      <div class="sub">позиций ниже минимума</div>
+    </div>
+    <div class="stat-card ${outOfStock > 0 ? 'danger' : 'success'}">
+      <div class="label">Нулевой остаток</div>
+      <div class="value">${outOfStock}</div>
+      <div class="sub">позиций без запаса</div>
+    </div>
+  `;
+
+  // Chart: top categories by stock value
+  const catMap = {};
+  inventory.forEach(item => {
+    const cat = item.category || 'Без категории';
+    const val = (item.current_quantity || 0) * (item.unit_price || 0);
+    catMap[cat] = (catMap[cat] || 0) + val;
+  });
+  const cats = Object.entries(catMap).sort((a,b) => b[1] - a[1]).slice(0, 10);
+
+  document.getElementById('chartsRow').innerHTML = `
+    <div class="chart-card">
+      <h3>📊 Остатки по категориям</h3>
+      <canvas id="catChart"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>📈 Движения склада</h3>
+      <canvas id="movChart"></canvas>
+    </div>
+  `;
+
+  new Chart(document.getElementById('catChart'), {
+    type: 'doughnut',
+    data: {
+      labels: cats.map(c => c[0]),
+      datasets: [{
+        data: cats.map(c => c[1]),
+        backgroundColor: ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#14b8a6','#6366f1'],
+        borderWidth: 0
+      }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'right', labels: { color: '#94a3b8', boxWidth: 12 } } } }
+  });
+
+  // Movement chart
+  const movTypes = {};
+  movements.forEach(m => {
+    movTypes[m.movement_type] = (movTypes[m.movement_type] || 0) + m.quantity;
+  });
+  new Chart(document.getElementById('movChart'), {
+    type: 'bar',
+    data: {
+      labels: Object.keys(movTypes),
+      datasets: [{ label: 'Количество', data: Object.values(movTypes), backgroundColor: '#3b82f6', borderRadius: 4 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } },
+      scales: { y: { ticks: { color: '#64748b' }, grid: { color: '#1e293b' } }, x: { ticks: { color: '#94a3b8' } } } }
+  });
+
+  renderInventory();
+  renderAlerts();
+  renderMovements();
+}
+
+function renderInventory() {
+  document.getElementById('tab-inventory').innerHTML = `
+    <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">📋 Номенклатура (${inventory.length})</h3>
+    <table>
+      <thead><tr>
+        <th>Код</th><th>Наименование</th><th>Категория</th><th>Ед.</th><th>Остаток</th><th>Резерв</th><th>Доступно</th><th>Мин.</th><th>Макс.</th><th>Цена</th><th>Склад</th>
+      </tr></thead>
+      <tbody>
+        ${inventory.map(item => {
+          const isLow = item.current_quantity <= item.min_quantity;
+          const pct = item.max_quantity > 0 ? (item.current_quantity / item.max_quantity) * 100 : 0;
+          const barColor = isLow ? '#ef4444' : pct < 30 ? '#f59e0b' : '#22c55e';
+          return `<tr>
+            <td><strong>${item.item_code || ''}</strong></td>
+            <td>${item.name || ''}</td>
+            <td><span class="badge badge-blue">${item.category || '-'}</span></td>
+            <td>${item.unit || ''}</td>
+            <td>${item.current_quantity?.toLocaleString() || 0}</td>
+            <td>${item.reserved_quantity || 0}</td>
+            <td>${item.available_quantity?.toLocaleString() || 0}</td>
+            <td>${item.min_quantity || 0}</td>
+            <td>${item.max_quantity || '-'}</td>
+            <td>$${(item.unit_price || 0).toLocaleString()}</td>
+            <td><small>${item.storage_location || item.warehouse || '-'}</small></td>
+          </tr>`;
+        }).join('')}
+        ${inventory.length === 0 ? '<tr><td colspan="11" style="text-align:center;color:#64748b;padding:40px;">Нет данных по складу</td></tr>' : ''}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderAlerts() {
+  document.getElementById('tab-alerts').innerHTML = `
+    <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">⚠️ Оповещения о низком запасе (${alerts.length})</h3>
+    <table>
+      <thead><tr>
+        <th>Код</th><th>Наименование</th><th>Категория</th><th>Остаток</th><th>Мин.</th><th>Макс.</th><th>К заказу</th><th>Расположение</th>
+      </tr></thead>
+      <tbody>
+        ${alerts.map(item => `<tr>
+          <td><strong>${item.item_code || ''}</strong></td>
+          <td>${item.name || ''}</td>
+          <td><span class="badge badge-yellow">${item.category || '-'}</span></td>
+          <td><span class="badge ${item.current_quantity <= 0 ? 'badge-red' : 'badge-yellow'}">${item.current_quantity?.toLocaleString() || 0}</span></td>
+          <td>${item.min_quantity || 0}</td>
+          <td>${item.max_quantity || '-'}</td>
+          <td><strong>${item.reorder_quantity?.toLocaleString() || 0}</strong></td>
+          <td><small>${item.storage_location || item.warehouse || '-'}</small></td>
+        </tr>`).join('')}
+        ${alerts.length === 0 ? '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:40px;">Все позиции выше минимального запаса ✅</td></tr>' : ''}
+      </tbody>
+    </table>
+  `;
+}
+
+function renderMovements() {
+  document.getElementById('tab-movements').innerHTML = `
+    <h3 style="font-size:14px;color:#94a3b8;margin-bottom:16px;text-transform:uppercase;letter-spacing:0.5px;">🔄 Последние движения (${movements.length})</h3>
+    <table>
+      <thead><tr>
+        <th>Дата</th><th>Номенклатура</th><th>Тип</th><th>Кол-во</th><th>Цена</th><th>Сумма</th><th>Источник</th><th>Откуда</th><th>Куда</th><th>Кто</th>
+      </tr></thead>
+      <tbody>
+        ${movements.map(m => {
+          const tBadge = m.movement_type === 'receipt' ? 'badge-green' : m.movement_type === 'issue' ? 'badge-red' : m.movement_type === 'transfer' ? 'badge-blue' : 'badge-yellow';
+          return `<tr>
+            <td><small>${m.movement_date ? new Date(m.movement_date).toLocaleDateString() : ''}</small></td>
+            <td><strong>${m.item_code || ''}</strong><br><small style="color:#64748b">${m.item_name || ''}</small></td>
+            <td><span class="badge ${tBadge}">${m.movement_type || ''}</span></td>
+            <td>${m.quantity?.toLocaleString() || 0}</td>
+            <td>$${(m.unit_price || 0).toLocaleString()}</td>
+            <td>$${(m.total_price || 0).toLocaleString()}</td>
+            <td><small>${m.reference_type || '-'}</small></td>
+            <td><small>${m.from_location || '-'}</small></td>
+            <td><small>${m.to_location || '-'}</small></td>
+            <td><small>${m.performed_by || '-'}</small></td>
+          </tr>`;
+        }).join('')}
+        ${movements.length === 0 ? '<tr><td colspan="10" style="text-align:center;color:#64748b;padding:40px;">Нет движений</td></tr>' : ''}
+      </tbody>
+    </table>
+  `;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.table-card').forEach(t => t.classList.remove('active'));
+  document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+  document.getElementById(`tab-${name}`).classList.add('active');
+}
+
+loadData();
+</script>
+</body>
+</html>
