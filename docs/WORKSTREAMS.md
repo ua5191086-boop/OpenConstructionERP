@@ -81,7 +81,8 @@
 | V082 | Seed Data TTZ V3 | applied | — |
 | V082 | Telegram Bot Messages Subscribers | applied | — |
 | V083 | Segment Factory Module | applied | — |
-| V084 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
+| V084 | Telegram Bot Messages Subscribers (перенумерован из 5-го дубля — V082) | applied | — |
+| V085 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
 
 **Инцидент 02.07:** на main лежали 6 неустанавливаемых миграций (дубль V009, дубль таблиц projects/document_revisions/hse_incidents, BIGINT-ключи против UUID, phantom-таблицы sections/hr_employees/pm_projects, expression в UNIQUE, не-IMMUTABLE индекс). Всё исправлено. CI теперь дополнительно запрещает BIGSERIAL/BIGINT в миграциях.
 
