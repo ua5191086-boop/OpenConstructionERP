@@ -29,8 +29,8 @@ CREATE TABLE settlement_monitoring_points (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, point_code)
 );
-CREATE INDEX idx_settle_point_project ON settlement_monitoring_points(project_id);
-CREATE INDEX idx_settle_point_chainage ON settlement_monitoring_points(chainage_m);
+CREATE INDEX IF NOT EXISTS idx_settle_point_project ON settlement_monitoring_points(project_id);
+CREATE INDEX IF NOT EXISTS idx_settle_point_chainage ON settlement_monitoring_points(chainage_m);
 COMMENT ON TABLE settlement_monitoring_points IS 'Точки мониторинга осадок';
 
 CREATE TABLE settlement_readings (
@@ -46,9 +46,9 @@ CREATE TABLE settlement_readings (
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_settle_read_point ON settlement_readings(point_id);
-CREATE INDEX idx_settle_read_time ON settlement_readings(reading_time);
-CREATE INDEX idx_settle_read_alert ON settlement_readings(is_alert) WHERE is_alert = TRUE;
+CREATE INDEX IF NOT EXISTS idx_settle_read_point ON settlement_readings(point_id);
+CREATE INDEX IF NOT EXISTS idx_settle_read_time ON settlement_readings(reading_time);
+CREATE INDEX IF NOT EXISTS idx_settle_read_alert ON settlement_readings(is_alert) WHERE is_alert = TRUE;
 COMMENT ON TABLE settlement_readings IS 'Замеры осадок';
 
 -- ============================================================================
@@ -79,11 +79,11 @@ CREATE TABLE grouting_activities (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, grout_code)
 );
-CREATE INDEX idx_grout_project ON grouting_activities(project_id);
-CREATE INDEX idx_grout_chainage ON grouting_activities(chainage_from_m);
+CREATE INDEX IF NOT EXISTS idx_grout_project ON grouting_activities(project_id);
+CREATE INDEX IF NOT EXISTS idx_grout_chainage ON grouting_activities(chainage_from_m);
 COMMENT ON TABLE grouting_activities IS 'Тампонажные / инъекционные работы';
 
-CREATE TABLE grouting_records (
+CREATE TABLE IF NOT EXISTS grouting_records (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     grout_id        UUID NOT NULL REFERENCES grouting_activities(id) ON DELETE CASCADE,
     record_time     TIMESTAMPTZ NOT NULL,
@@ -95,7 +95,7 @@ CREATE TABLE grouting_records (
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_grout_rec_activity ON grouting_records(grout_id);
+-- (fix) canonical grouting_records (V023) has no grout_id; index dropped as redundant
 COMMENT ON TABLE grouting_records IS 'Поточные записи тампонажа';
 
 -- ============================================================================
@@ -124,7 +124,7 @@ CREATE TABLE ventilation_systems (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, system_code)
 );
-CREATE INDEX idx_vent_project ON ventilation_systems(project_id);
+CREATE INDEX IF NOT EXISTS idx_vent_project ON ventilation_systems(project_id);
 COMMENT ON TABLE ventilation_systems IS 'Вентиляционные системы';
 
 CREATE TABLE ventilation_readings (
@@ -143,8 +143,8 @@ CREATE TABLE ventilation_readings (
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_vent_read_system ON ventilation_readings(system_id);
-CREATE INDEX idx_vent_read_time ON ventilation_readings(reading_time);
+CREATE INDEX IF NOT EXISTS idx_vent_read_system ON ventilation_readings(system_id);
+CREATE INDEX IF NOT EXISTS idx_vent_read_time ON ventilation_readings(reading_time);
 COMMENT ON TABLE ventilation_readings IS 'Показатели вентиляции и空气质量';
 
 CREATE VIEW settlement_grouting_summary AS

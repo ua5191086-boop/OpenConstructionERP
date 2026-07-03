@@ -23,16 +23,16 @@ CREATE TABLE retention_releases (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_retention_contract ON retention_releases(contract_id);
-CREATE INDEX idx_retention_project ON retention_releases(project_id);
-CREATE INDEX idx_retention_status ON retention_releases(release_status);
+CREATE INDEX IF NOT EXISTS idx_retention_contract ON retention_releases(contract_id);
+CREATE INDEX IF NOT EXISTS idx_retention_project ON retention_releases(project_id);
+CREATE INDEX IF NOT EXISTS idx_retention_status ON retention_releases(release_status);
 
 COMMENT ON TABLE retention_releases IS 'Гарантийные удержания из платежей по контрактам';
 
 -- ============================================================================
 -- 2. Банковские гарантии (Guarantees)
 -- ============================================================================
-CREATE TABLE guarantees (
+CREATE TABLE IF NOT EXISTS guarantees (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     contract_id         UUID NOT NULL REFERENCES contracts(id) ON DELETE CASCADE,
     project_id          UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -54,10 +54,10 @@ CREATE TABLE guarantees (
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_guarantees_contract ON guarantees(contract_id);
-CREATE INDEX idx_guarantees_project ON guarantees(project_id);
-CREATE INDEX idx_guarantees_status ON guarantees(status);
-CREATE INDEX idx_guarantees_expiry ON guarantees(expiry_date);
+CREATE INDEX IF NOT EXISTS idx_guarantees_contract ON guarantees(contract_id);
+CREATE INDEX IF NOT EXISTS idx_guarantees_project ON guarantees(project_id);
+CREATE INDEX IF NOT EXISTS idx_guarantees_status ON guarantees(status);
+CREATE INDEX IF NOT EXISTS idx_guarantees_expiry ON guarantees(expiry_date);
 
 COMMENT ON TABLE guarantees IS 'Банковские гарантии по контрактам';
 
@@ -77,8 +77,8 @@ CREATE TABLE currency_rates (
     UNIQUE(base_currency, target_currency, rate_date)
 );
 
-CREATE INDEX idx_currency_rates_date ON currency_rates(rate_date);
-CREATE INDEX idx_currency_rates_pair ON currency_rates(base_currency, target_currency);
+CREATE INDEX IF NOT EXISTS idx_currency_rates_date ON currency_rates(rate_date);
+CREATE INDEX IF NOT EXISTS idx_currency_rates_pair ON currency_rates(base_currency, target_currency);
 
 COMMENT ON TABLE currency_rates IS 'Кросс-курсы валют для мультивалютного учёта';
 
@@ -104,8 +104,8 @@ CREATE TABLE multi_currency_transactions (
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_mct_project ON multi_currency_transactions(project_id);
-CREATE INDEX idx_mct_date ON multi_currency_transactions(transaction_date);
-CREATE INDEX idx_mct_type ON multi_currency_transactions(transaction_type);
+CREATE INDEX IF NOT EXISTS idx_mct_project ON multi_currency_transactions(project_id);
+CREATE INDEX IF NOT EXISTS idx_mct_date ON multi_currency_transactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_mct_type ON multi_currency_transactions(transaction_type);
 
 COMMENT ON TABLE multi_currency_transactions IS 'Мультивалютные транзакции и курсовая переоценка';

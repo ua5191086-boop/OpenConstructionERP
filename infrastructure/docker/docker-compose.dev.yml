@@ -6,7 +6,7 @@ name: oce-dev
 
 services:
   postgres:
-    image: timescale/timescaledb:latest-pg16
+    image: timescale/timescaledb-ha:pg16
     container_name: oce-postgres
     environment:
       POSTGRES_DB: oce

@@ -7,7 +7,7 @@
 -- ============================================================================
 -- PART 1: Cross Passage
 -- ============================================================================
-CREATE TABLE cross_passages (
+CREATE TABLE IF NOT EXISTS cross_passages (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id      UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
     cp_code         VARCHAR(30) NOT NULL,
@@ -34,8 +34,9 @@ CREATE TABLE cross_passages (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, cp_code)
 );
-CREATE INDEX idx_cp_project ON cross_passages(project_id);
-CREATE INDEX idx_cp_chainage ON cross_passages(chainage_m);
+CREATE INDEX IF NOT EXISTS idx_cp_project ON cross_passages(project_id);
+ALTER TABLE cross_passages ADD COLUMN IF NOT EXISTS chainage_m NUMERIC(10,2);
+CREATE INDEX IF NOT EXISTS idx_cp_chainage ON cross_passages(chainage_m);
 COMMENT ON TABLE cross_passages IS 'Пикеты / Cross Passages между тоннелями';
 
 CREATE TABLE cp_construction_stages (
@@ -57,7 +58,7 @@ CREATE TABLE cp_construction_stages (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (cp_id, stage_number)
 );
-CREATE INDEX idx_cp_stage ON cp_construction_stages(cp_id);
+CREATE INDEX IF NOT EXISTS idx_cp_stage ON cp_construction_stages(cp_id);
 COMMENT ON TABLE cp_construction_stages IS 'Этапы строительства пикета';
 
 -- ============================================================================
@@ -82,7 +83,7 @@ CREATE TABLE geology_units (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, unit_code)
 );
-CREATE INDEX idx_geo_unit_project ON geology_units(project_id);
+CREATE INDEX IF NOT EXISTS idx_geo_unit_project ON geology_units(project_id);
 COMMENT ON TABLE geology_units IS 'Геологические единицы / слои';
 
 CREATE TABLE geology_boreholes (
@@ -107,8 +108,8 @@ CREATE TABLE geology_boreholes (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (project_id, borehole_code)
 );
-CREATE INDEX idx_geo_bh_project ON geology_boreholes(project_id);
-CREATE INDEX idx_geo_bh_chainage ON geology_boreholes(chainage_m);
+CREATE INDEX IF NOT EXISTS idx_geo_bh_project ON geology_boreholes(project_id);
+CREATE INDEX IF NOT EXISTS idx_geo_bh_chainage ON geology_boreholes(chainage_m);
 COMMENT ON TABLE geology_boreholes IS 'Геологические скважины';
 
 CREATE TABLE geology_stratigraphy (
@@ -125,7 +126,7 @@ CREATE TABLE geology_stratigraphy (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     UNIQUE (borehole_id, depth_from_m)
 );
-CREATE INDEX idx_geo_strat_bh ON geology_stratigraphy(borehole_id);
+CREATE INDEX IF NOT EXISTS idx_geo_strat_bh ON geology_stratigraphy(borehole_id);
 COMMENT ON TABLE geology_stratigraphy IS 'Стратиграфия / разрезы скважин';
 
 CREATE TABLE geology_face_mapping (
@@ -145,8 +146,8 @@ CREATE TABLE geology_face_mapping (
     notes           TEXT,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_geo_face_project ON geology_face_mapping(project_id);
-CREATE INDEX idx_geo_face_chainage ON geology_face_mapping(chainage_from_m);
+CREATE INDEX IF NOT EXISTS idx_geo_face_project ON geology_face_mapping(project_id);
+CREATE INDEX IF NOT EXISTS idx_geo_face_chainage ON geology_face_mapping(chainage_from_m);
 COMMENT ON TABLE geology_face_mapping IS 'Геологическая карта забоя (калотта)';
 
 CREATE VIEW geology_summary AS

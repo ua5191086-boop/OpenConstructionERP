@@ -3,7 +3,7 @@
 -- Пожарная сигнализация, эвакуация, огнезащита обделки
 -- ============================================================================
 
-CREATE TABLE tunnel_fire_zones (
+CREATE TABLE IF NOT EXISTS tunnel_fire_zones (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id),
     zone_code VARCHAR(50) NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE tunnel_fire_zones (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE tunnel_fire_incidents (
+CREATE TABLE IF NOT EXISTS tunnel_fire_incidents (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id),
     zone_id UUID REFERENCES tunnel_fire_zones(id),
@@ -49,7 +49,7 @@ CREATE TABLE tunnel_fire_incidents (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE TABLE tunnel_fire_drills (
+CREATE TABLE IF NOT EXISTS tunnel_fire_drills (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id UUID NOT NULL REFERENCES projects(id),
     drill_date DATE NOT NULL,
@@ -65,6 +65,6 @@ CREATE TABLE tunnel_fire_drills (
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
-CREATE INDEX idx_tfz_project ON tunnel_fire_zones(project_id);
-CREATE INDEX idx_tfi_zone ON tunnel_fire_incidents(zone_id);
-CREATE INDEX idx_tfi_time ON tunnel_fire_incidents(alarm_time);
+CREATE INDEX IF NOT EXISTS idx_tfz_project ON tunnel_fire_zones(project_id);
+CREATE INDEX IF NOT EXISTS idx_tfi_zone ON tunnel_fire_incidents(zone_id);
+CREATE INDEX IF NOT EXISTS idx_tfi_time ON tunnel_fire_incidents(alarm_time);

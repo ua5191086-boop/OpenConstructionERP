@@ -108,7 +108,7 @@ COMMENT ON COLUMN esg_metrics.metric_code IS 'G—COMPLIANCE: compliance_breache
 CREATE TABLE supply_chain_sustainability (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     project_id          UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    supplier_id         UUID REFERENCES procurement_suppliers(id) ON DELETE SET NULL,
+    supplier_id         UUID REFERENCES organizations(id) ON DELETE SET NULL,
     supplier_name       VARCHAR(500) NOT NULL,
     assessment_date     DATE NOT NULL,
     assessment_type     VARCHAR(100) NOT NULL,                  -- environmental, social, ethical, compliance

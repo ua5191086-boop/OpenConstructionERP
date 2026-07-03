@@ -28,7 +28,7 @@ CREATE TABLE tunnel_logistics_deliveries (
     destination_zone UUID REFERENCES tunnel_logistics_zones(id),
     delivery_date DATE NOT NULL,
     shift VARCHAR(20), -- day, night
-    tbm_ring_id UUID REFERENCES tbm_ring_builds(id),
+    tbm_ring_id UUID REFERENCES tunnel_rings(id),
     transport_method VARCHAR(50), -- locomotive, conveyor, truck, crane
     batch_number VARCHAR(100),
     status VARCHAR(50) DEFAULT 'scheduled', -- scheduled, in_transit, delivered, delayed, cancelled
