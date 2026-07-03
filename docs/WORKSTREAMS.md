@@ -80,7 +80,7 @@
 | V081 | Tunnel Fire Safety | applied | — |
 | V082 | Seed Data TTZ V3 | applied | — |
 | V082 | Telegram Bot Messages Subscribers | applied | — |
-| V083 | Segment Factory Module | applied | — |
+| V0 | Segment Factory Module (слот до V053 — от него зависит Fire Safety) | applied | — |
 | V084 | Telegram Bot Messages Subscribers (перенумерован из 5-го дубля — V082) | applied | — |
 | V085 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
 
