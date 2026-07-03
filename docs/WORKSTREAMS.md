@@ -65,7 +65,9 @@
 | V050 | Mobile API Notifications | applied | — |
 | V051 | Tunnel Logistics | applied | — |
 | V052 | Tunnel Ventilation Design | applied | — |
-| V053 | Tunnel Fire Safety Systems | applied | — |
+| V085 | Segment Factory Module (перенесён: плотная нумерация 37-52) | applied | — |
+| V086 | Tunnel Fire Safety Systems (за своей зависимостью V085) | applied | — |
+| V087 | Tunnel Fire Safety ext (за V086) | applied | — |
 | V054 | Financial Consolidation | applied | — |
 | V055 | Project Financing Loans | applied | — |
 | V056_058 | AI Classifier Cost Schedule | applied | — |
@@ -77,12 +79,12 @@
 | V077 | Project Management | applied | — |
 | V079 | Variation Orders | applied | — |
 | V080 | Cost Tx Chapter Level | applied | — |
-| V081 | Tunnel Fire Safety | applied | — |
+
 | V082 | Seed Data TTZ V3 | applied | — |
 | V082 | Telegram Bot Messages Subscribers | applied | — |
 | V0 | Segment Factory Module (слот до V053 — от него зависит Fire Safety) | applied | — |
 | V084 | Telegram Bot Messages Subscribers (перенумерован из 5-го дубля — V082) | applied | — |
-| V085 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
+| V088 | — СЛЕДУЮЩИЙ СВОБОДНЫЙ — бронировать строкой в том же коммите | | |
 
 **Инцидент 02.07:** на main лежали 6 неустанавливаемых миграций (дубль V009, дубль таблиц projects/document_revisions/hse_incidents, BIGINT-ключи против UUID, phantom-таблицы sections/hr_employees/pm_projects, expression в UNIQUE, не-IMMUTABLE индекс). Всё исправлено. CI теперь дополнительно запрещает BIGSERIAL/BIGINT в миграциях.
 
